@@ -1,0 +1,33 @@
+{
+  "name": "uiforge-codegen",
+  "version": "1.0.0",
+  "description": "UIForge Code Generation Service - Generates React/Next.js components from Figma designs",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "services/*"
+  ],
+  "scripts": {
+    "bootstrap": "lerna bootstrap",
+    "build": "lerna run build",
+    "clean": "lerna clean",
+    "dev": "lerna run dev --parallel",
+    "test": "lerna run test",
+    "publish-packages": "lerna publish",
+    "generate": "node services/generator/index.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.9",
+    "lerna": "^6.6.2",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "UIForge Team",
+  "license": "MIT",
+  "dependencies": {
+    "next": "15.5.9"
+  }
+}

@@ -1,0 +1,124 @@
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+
+interface RecentFile {
+    fileKey: string;
+    fileUrl: string;
+    fileName: string;
+    lastOpened: number; // timestamp
+}
+
+const initialState: FigmaState = {
+    fileTree: null,
+    currentFileKey: null,
+    currentFileUrl: null,
+    selectedFile: null,
+    selectedPage: null,
+    selectedComponent: null,
+    componentData: null,
+    instanceData: null,
+    expandedNodes: [],
+    recentFiles: [],
+    loading: false,
+    error: null,
+};
+
+const figmaSlice = createSlice({
+    name: 'figma',
+    initialState,
+    reducers: {
+        setLoading: (state, action: PayloadAction<boolean>) => {
+            state.loading = action.payload;
+        },
+        setError: (state, action: PayloadAction<string>) => {
+            state.error = action.payload;
+        },
+        clearError: (state) => {
+            state.error = null;
+        },
+        setFileTree: (state, action: PayloadAction<TreeNode>) => {
+            state.fileTree = action.payload;
+        },
+        setCurrentFileKey: (state, action: PayloadAction<string>) => {
+            state.currentFileKey = action.payload;
+        },
+        setCurrentFileUrl: (state, action: PayloadAction<string>) => {
+            state.currentFileUrl = action.payload;
+        },
+        setSelectedFile: (state, action: PayloadAction<string>) => {
+            state.selectedFile = action.payload;
+            // Clear downstream selections
+            state.selectedPage = null;
+            state.selectedComponent = null;
+            state.componentData = null;
+        },
+        setSelectedPage: (state, action: PayloadAction<string>) => {
+            state.selectedPage = action.payload;
+            // Clear component selection
+            state.selectedComponent = null;
+            state.componentData = null;
+        },
+        setSelectedComponent: (state, action: PayloadAction<string>) => {
+            state.selectedComponent = action.payload;
+        },
+        setComponentData: (state, action: PayloadAction<any>) => {
+            state.componentData = action.payload;
+        },
+        setInstanceData: (state, action: PayloadAction<any>) => {
+            state.instanceData = action.payload;
+        },
+        clearSelections: (state) => {
+            state.selectedFile = null;
+            state.selectedPage = null;
+            state.selectedComponent = null;
+            state.componentData = null;
+            state.instanceData = null;
+        },
+        setExpandedNodes: (state, action: PayloadAction<string[]>) => {
+            state.expandedNodes = action.payload;
+        },
+        toggleNodeExpansion: (state, action: PayloadAction<string>) => {
+            const nodeId = action.payload;
+            const index = state.expandedNodes.indexOf(nodeId);
+            if (index > -1) {
+                state.expandedNodes.splice(index, 1);
+            } else {
+                state.expandedNodes.push(nodeId);
+            }
+        },
+        addRecentFile: (state, action: PayloadAction<RecentFile>) => {
+            const newFile = action.payload;
+            // Remove existing entry if present
+            state.recentFiles = state.recentFiles.filter(f => f.fileKey !== newFile.fileKey);
+            // Add to beginning
+            state.recentFiles.unshift(newFile);
+            // Keep only 5 most recent
+            if (state.recentFiles.length > 5) {
+                state.recentFiles = state.recentFiles.slice(0, 5);
+            }
+        },
+        setRecentFiles: (state, action: PayloadAction<RecentFile[]>) => {
+            state.recentFiles = action.payload.slice(0, 5);
+        },
+    },
+});
+
+export const {
+    setLoading,
+    setError,
+    clearError,
+    setFileTree,
+    setCurrentFileKey,
+    setCurrentFileUrl,
+    setSelectedFile,
+    setSelectedPage,
+    setSelectedComponent,
+    setComponentData,
+    setInstanceData,
+    clearSelections,
+    setExpandedNodes,
+    toggleNodeExpansion,
+    addRecentFile,
+    setRecentFiles,
+} = figmaSlice.actions;
+
+export default figmaSlice.reducer;
