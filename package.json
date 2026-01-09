@@ -1,0 +1,29 @@
+{
+  "name": "uiforge-demo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "UI Forge - Design-to-Code Platform Demo",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev:all",
+    "dev:all": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "npm run dev --workspace=apps/frontend",
+    "dev:backend": "npm run dev --workspace=apps/backend",
+    "dev:tester": "npm run dev --workspace=apps/component-tester",
+    "build": "npm run build --workspaces --if-present",
+    "build:frontend": "npm run build --workspace=apps/frontend",
+    "build:backend": "npm run build --workspace=apps/backend",
+    "lint": "npm run lint --workspaces --if-present",
+    "setup": "bash scripts/setup.sh",
+    "setup:demo": "bash scripts/setup-demo.sh"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
