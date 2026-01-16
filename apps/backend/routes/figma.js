@@ -437,4 +437,46 @@ function buildTreeStructure(node) {
     };
 }
 
+// Get rendered image of a component/node
+router.get('/image/:fileKey/:nodeId', authenticateUser, async (req, res) => {
+    try {
+        const { fileKey, nodeId } = req.params;
+        const { scale = 2, format = 'png' } = req.query;
+
+        console.log(`Fetching image for node ${nodeId} in file ${fileKey}`);
+
+        const response = await axios.get(`https://api.figma.com/v1/images/${fileKey}`, {
+            headers: { 'Authorization': `Bearer ${req.user.figmaToken}` },
+            params: {
+                ids: nodeId,
+                scale: Math.min(Math.max(parseFloat(scale), 0.5), 4), // Clamp between 0.5 and 4
+                format: ['png', 'jpg', 'svg', 'pdf'].includes(format) ? format : 'png'
+            },
+            timeout: 30000
+        });
+
+        const imageUrl = response.data.images?.[nodeId];
+
+        if (!imageUrl) {
+            return res.status(404).json({ error: 'Image not found for this node' });
+        }
+
+        res.status(200).json({
+            nodeId,
+            fileKey,
+            imageUrl,
+            scale,
+            format
+        });
+    } catch (err) {
+        console.error('Error fetching image:', err.response?.data || err.message);
+        if (err.response?.status === 403) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+        res.status(err.response?.status || 500).json({
+            error: err.response?.data?.message || 'Failed to fetch image'
+        });
+    }
+});
+
 export default router;

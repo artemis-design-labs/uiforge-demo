@@ -61,6 +61,23 @@ export const figmaService = {
             throw error;
         }
     },
+
+    // Get rendered image of a component
+    getComponentImage: async (fileKey: string, nodeId: string, options?: { scale?: number; format?: string }) => {
+        const { scale = 2, format = 'png' } = options || {};
+        console.log('🖼️ FigmaService: Fetching component image', { fileKey, nodeId, scale, format });
+
+        try {
+            const response = await axios.get(`/figma/image/${fileKey}/${nodeId}`, {
+                params: { scale, format }
+            });
+            console.log('✅ FigmaService: Image URL received', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('❌ FigmaService: Failed to fetch image', error);
+            throw error;
+        }
+    },
 };
 
 function extractFileKey(url: string): string | null {
