@@ -66,7 +66,6 @@ router.get('/figma/login', (req, res) => {
     const authUrl = `https://www.figma.com/oauth?` +
         `client_id=${process.env.BAI_FIGMA_CLIENT_ID}&` +
         `redirect_uri=${encodeURIComponent(process.env.BAI_FIGMA_REDIRECT_URI)}&` +
-        `scope=file_read&` +
         `response_type=code&` +
         `state=${state}&` +
         `code_challenge=${codeChallenge}&` +
