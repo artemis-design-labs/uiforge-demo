@@ -1,9 +1,9 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAppSelector } from '@/store/hooks';
 
-export default function LoginPage() {
+function LoginContent() {
     const searchParams = useSearchParams();
     const { isAuthenticated } = useAppSelector((state) => state.auth);
     const error = searchParams.get('error');
@@ -80,5 +80,17 @@ export default function LoginPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="text-gray-500">Loading...</div>
+            </div>
+        }>
+            <LoginContent />
+        </Suspense>
     );
 }
