@@ -6,8 +6,32 @@ import { figmaService } from '@/services/figma';
 import { activityLogger } from '@/services/activityLogger';
 import { RecentFilesPanel } from './RecentFilesPanel';
 
-// Target pages to pre-select when loading a Figma file
-const TARGET_PAGES = ['Alert', 'Avatar', 'Backdrop', 'Badge', 'Button'];
+// Only show pages that match these component names
+const ALLOWED_PAGES = [
+    'Alert',
+    'Avatar',
+    'Backdrop',
+    'Badge',
+    'Button',
+    'Checkbox',
+    'Chip',
+    'Divider',
+    'Floating Action Button',
+    'Icon',
+    'Link',
+    'Metadata',
+    'Progress',
+    'Radio Button',
+    'Scrollbar',
+    'Search',
+    'Slider',
+    'Snackbar',
+    'Switch',
+    'Text Area',
+    'Text Field',
+    'Tooltip',
+    'Accordion',
+];
 
 // Helper function to find top-level components in a tree
 // Stops recursion once a component is found (doesn't look inside components)
@@ -161,10 +185,12 @@ export default function FigmaTreeView() {
         );
     };
 
-    // Get all pages from the file tree
+    // Get only allowed pages from the file tree
     const getPages = (): any[] => {
         if (!fileTree || !fileTree.children) return [];
-        return fileTree.children.filter((child: any) => child.type === 'CANVAS');
+        return fileTree.children.filter((child: any) =>
+            child.type === 'CANVAS' && ALLOWED_PAGES.includes(child.name)
+        );
     };
 
     // Filter pages based on search query

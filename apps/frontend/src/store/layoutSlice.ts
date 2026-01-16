@@ -27,7 +27,7 @@ const layoutSlice = createSlice({
       state.rightSidebarCollapsed = !state.rightSidebarCollapsed;
     },
     setLeftSidebarWidth: (state, action: PayloadAction<number>) => {
-      state.leftSidebarWidth = Math.max(200, Math.min(500, action.payload));
+      state.leftSidebarWidth = Math.max(200, Math.min(800, action.payload));
     },
     setRightSidebarWidth: (state, action: PayloadAction<number>) => {
       state.rightSidebarWidth = Math.max(250, Math.min(600, action.payload));
