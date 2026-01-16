@@ -49,7 +49,7 @@ export function CodeGenModal({ isOpen, onClose, componentData }: CodeGenModalPro
 
   const fetchOptions = async () => {
     try {
-      const response = await axios.get('http://localhost:8080/api/v1/codegen/options');
+      const response = await axios.get('/api/v1/codegen/options');
       setOptions(response.data);
     } catch (err) {
       console.error('Failed to fetch options:', err);
@@ -119,7 +119,7 @@ export function CodeGenModal({ isOpen, onClose, componentData }: CodeGenModalPro
       updateStage('Generating Code', 'active');
       setProgress({ message: 'Generating component with CodeLlama 13B...', progress: 20 });
 
-      const response = await axios.post(`http://localhost:8080${endpoint}`, {
+      const response = await axios.post(endpoint, {
         componentData: componentData || instanceData,
         config
       }, {
