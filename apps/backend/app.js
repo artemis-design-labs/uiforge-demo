@@ -20,6 +20,9 @@ import { errorLoggingMiddleware } from './routes/utils/errorLogger.js';
 // Initialize Express App
 const app = express();
 
+// Trust proxy for Railway/Vercel (needed for rate limiting and getting real client IP)
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet({
     crossOriginEmbedderPolicy: false,
@@ -50,7 +53,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: isProduction ? 10 : 1000,
+    max: isProduction ? 100 : 1000,  // Temporarily increased for testing
     message: 'Too many authentication attempts, please try again later.',
     standardHeaders: true,
     legacyHeaders: false,
