@@ -186,11 +186,17 @@ export default function FigmaTreeView() {
     };
 
     // Get only allowed pages from the file tree
+    // Matches if page name contains any allowed component name (case-insensitive)
     const getPages = (): any[] => {
         if (!fileTree || !fileTree.children) return [];
-        return fileTree.children.filter((child: any) =>
-            child.type === 'CANVAS' && ALLOWED_PAGES.includes(child.name)
-        );
+        return fileTree.children.filter((child: any) => {
+            if (child.type !== 'CANVAS') return false;
+            const pageName = child.name.toLowerCase();
+            return ALLOWED_PAGES.some(allowed =>
+                pageName.includes(allowed.toLowerCase()) ||
+                allowed.toLowerCase().includes(pageName)
+            );
+        });
     };
 
     // Filter pages based on search query
