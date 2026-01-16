@@ -73,9 +73,24 @@ router.get('/file/:fileKey', authenticateUser, async (req, res) => {
 
         // If not cached, fetch from Figma API
         console.log(`Fetching file data from Figma API for ${fileKey}`);
-        const response = await axios.get(`https://api.figma.com/v1/files/${fileKey}`, {
-            headers: { 'Authorization': `Bearer ${req.user.figmaToken}` }
-        });
+        let response;
+        try {
+            response = await axios.get(`https://api.figma.com/v1/files/${fileKey}`, {
+                headers: { 'Authorization': `Bearer ${req.user.figmaToken}` },
+                timeout: 120000 // 2 minute timeout
+            });
+        } catch (apiError) {
+            console.error('Figma API error:', apiError.response?.status, apiError.response?.data || apiError.message);
+            if (apiError.response?.status === 403) {
+                return res.status(403).json({ error: 'Access denied. You may not have permission to view this file.' });
+            }
+            if (apiError.code === 'ECONNABORTED') {
+                return res.status(504).json({ error: 'Request timeout. The file may be too large.' });
+            }
+            return res.status(apiError.response?.status || 500).json({
+                error: apiError.response?.data?.message || 'Failed to fetch file from Figma'
+            });
+        }
 
         const tree = buildTreeStructure(response.data.document);
         const fileName = response.data.name;
