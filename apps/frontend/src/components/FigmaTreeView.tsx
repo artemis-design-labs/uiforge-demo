@@ -9,14 +9,18 @@ import { RecentFilesPanel } from './RecentFilesPanel';
 // Target pages to pre-select when loading a Figma file
 const TARGET_PAGES = ['Alert', 'Avatar', 'Backdrop', 'Badge', 'Button'];
 
-// Helper function to recursively find all components in a tree
+// Helper function to find top-level components in a tree
+// Stops recursion once a component is found (doesn't look inside components)
 function findComponents(node: any): any[] {
     const components: any[] = [];
 
+    // If this node is a component, add it and DON'T recurse into its children
     if (node.type === 'COMPONENT' || node.type === 'INSTANCE' || node.type === 'COMPONENT_SET') {
         components.push(node);
+        return components; // Stop here - don't look inside components
     }
 
+    // Otherwise, recurse into children to find components
     if (node.children && node.children.length > 0) {
         for (const child of node.children) {
             components.push(...findComponents(child));
