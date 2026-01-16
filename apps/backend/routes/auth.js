@@ -82,7 +82,7 @@ router.get('/figma/callback', async (req, res) => {
         // Validate state parameter
         if (!state || !stateStore.has(state)) {
             console.error('Invalid or missing state parameter');
-            return res.redirect('http://localhost:3000/login?error=invalid_state');
+            return res.redirect(`${process.env.FRONTEND_URL}/login?error=invalid_state`);
         }
         
         const stateData = stateStore.get(state);
@@ -90,7 +90,7 @@ router.get('/figma/callback', async (req, res) => {
         
         if (!pkceData) {
             console.error('PKCE data not found');
-            return res.redirect('http://localhost:3000/login?error=pkce_missing');
+            return res.redirect(`${process.env.FRONTEND_URL}/login?error=pkce_missing`);
         }
         
         // Clean up used state and PKCE data
@@ -172,7 +172,7 @@ router.get('/figma/callback', async (req, res) => {
         });
 
         // Redirect back to frontend
-        res.redirect('http://localhost:3000');
+        res.redirect(`${process.env.FRONTEND_URL}/design`);
     } catch (err) {
         console.error('OAuth callback error:', err.message);
         console.error('Error details:', {
@@ -185,7 +185,7 @@ router.get('/figma/callback', async (req, res) => {
         });
         // Don't expose internal error details to client
         const errorType = err.response?.status === 400 ? 'invalid_grant' : 'auth_failed';
-        res.redirect(`http://localhost:3000/login?error=${errorType}`);
+        res.redirect(`${process.env.FRONTEND_URL}/login?error=${errorType}`);
     }
 
 });

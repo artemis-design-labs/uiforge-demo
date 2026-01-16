@@ -1,48 +1,41 @@
 'use client';
-import { useState } from 'react';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { loginStart, loginSuccess, loginFailure } from '@/store/authSlice';
+import { useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useAppSelector } from '@/store/hooks';
 
 export default function LoginPage() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const dispatch = useAppDispatch();
-    const { isAuthenticated, loading, error } = useAppSelector((state) => state.auth);
+    const searchParams = useSearchParams();
+    const { isAuthenticated } = useAppSelector((state) => state.auth);
+    const error = searchParams.get('error');
 
     // Redirect if already authenticated
+    useEffect(() => {
+        if (isAuthenticated) {
+            window.location.href = '/design';
+        }
+    }, [isAuthenticated]);
+
     if (isAuthenticated) {
-        window.location.href = '/design';
         return <div className="min-h-screen flex items-center justify-center">Redirecting to dashboard...</div>;
     }
 
-    const handleDemoLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
-        dispatch(loginStart());
+    const handleFigmaLogin = () => {
+        // Redirect to backend OAuth endpoint
+        window.location.href = '/api/v1/auth/figma/login';
+    };
 
-        // Simulate login delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        // Demo credentials check
-        if (password === 'demo123' || password === 'demo') {
-            const demoUser = {
-                id: 'demo-user-1',
-                email: email || 'demo@uiforge.ai',
-                name: 'Demo User',
-                handle: 'demo_user',
-                img_url: '',
-            };
-            
-            // Store in localStorage for persistence
-            localStorage.setItem('figma_user', JSON.stringify(demoUser));
-            localStorage.setItem('figma_token', 'demo-token-xyz');
-            
-            // Dispatch to Redux
-            dispatch(loginSuccess(demoUser));
-            
-            // Redirect
-            window.location.href = '/design';
-        } else {
-            dispatch(loginFailure('Use password: demo123'));
+    const getErrorMessage = (errorCode: string | null) => {
+        switch (errorCode) {
+            case 'invalid_state':
+                return 'Authentication session expired. Please try again.';
+            case 'pkce_missing':
+                return 'Authentication error. Please try again.';
+            case 'invalid_grant':
+                return 'Authorization failed. Please try again.';
+            case 'auth_failed':
+                return 'Authentication failed. Please try again.';
+            default:
+                return null;
         }
     };
 
@@ -57,53 +50,34 @@ export default function LoginPage() {
                         Convert your Figma designs to React components
                     </p>
                 </div>
-                
-                <form onSubmit={handleDemoLogin} className="mt-8 space-y-6">
-                    <div className="space-y-4">
-                        <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                                Email
-                            </label>
-                            <input
-                                id="email"
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="demo@uiforge.ai"
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                                Password
-                            </label>
-                            <input
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="demo123"
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                            />
-                        </div>
-                    </div>
 
+                <div className="mt-8 space-y-6">
                     {error && (
-                        <p className="text-center text-sm text-red-600">{error}</p>
+                        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                            <p className="text-center text-sm text-red-600">
+                                {getErrorMessage(error)}
+                            </p>
+                        </div>
                     )}
 
                     <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                        onClick={handleFigmaLogin}
+                        className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
                     >
-                        {loading ? 'Signing in...' : 'Sign In'}
+                        <svg width="24" height="24" viewBox="0 0 38 57" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M19 28.5C19 23.2533 23.2533 19 28.5 19C33.7467 19 38 23.2533 38 28.5C38 33.7467 33.7467 38 28.5 38C23.2533 38 19 33.7467 19 28.5Z" fill="#1ABCFE"/>
+                            <path d="M0 47.5C0 42.2533 4.25329 38 9.5 38H19V47.5C19 52.7467 14.7467 57 9.5 57C4.25329 57 0 52.7467 0 47.5Z" fill="#0ACF83"/>
+                            <path d="M19 0V19H28.5C33.7467 19 38 14.7467 38 9.5C38 4.25329 33.7467 0 28.5 0H19Z" fill="#FF7262"/>
+                            <path d="M0 9.5C0 14.7467 4.25329 19 9.5 19H19V0H9.5C4.25329 0 0 4.25329 0 9.5Z" fill="#F24E1E"/>
+                            <path d="M0 28.5C0 33.7467 4.25329 38 9.5 38H19V19H9.5C4.25329 19 0 23.2533 0 28.5Z" fill="#A259FF"/>
+                        </svg>
+                        Continue with Figma
                     </button>
-                    
+
                     <p className="text-center text-xs text-gray-500">
-                        Demo: Use any email with password <strong>demo123</strong>
+                        Sign in with your Figma account to access your design files
                     </p>
-                </form>
+                </div>
             </div>
         </div>
     );
