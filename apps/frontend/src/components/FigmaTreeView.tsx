@@ -6,6 +6,9 @@ import { figmaService } from '@/services/figma';
 import { activityLogger } from '@/services/activityLogger';
 import { RecentFilesPanel } from './RecentFilesPanel';
 
+// Target pages to pre-select when loading a Figma file
+const TARGET_PAGES = ['Alert', 'Avatar', 'Backdrop', 'Badge', 'Button'];
+
 interface TreeNodeProps {
     node: {
         id: string;
@@ -97,6 +100,8 @@ export default function FigmaTreeView() {
     const [url, setURL] = useState(currentFileUrl || '');
     const [nodeObj, setNodeObj] = useState({});
     const [searchQuery, setSearchQuery] = useState('');
+    const [availablePages, setAvailablePages] = useState<{id: string, name: string}[]>([]);
+    const [selectedPages, setSelectedPages] = useState<string[]>([]);
 
     // Auto-load last file on mount if exists
     useEffect(() => {
@@ -126,6 +131,16 @@ export default function FigmaTreeView() {
             return () => clearTimeout(timer);
         }
     }, [searchQuery, currentFileKey]);
+
+    // Auto-expand selected pages when selection changes
+    useEffect(() => {
+        if (fileTree && selectedPages.length > 0) {
+            const pageIds = fileTree.children
+                ?.filter((c: any) => c.type === 'CANVAS' && selectedPages.includes(c.name))
+                .map((c: any) => c.id) || [];
+            dispatch(setExpandedNodes([fileTree.id, ...pageIds]));
+        }
+    }, [selectedPages]);
 
     // Filter tree based on search query - only search through currently visible/expanded nodes
     const filterTree = (node: any, query: string): any => {
@@ -159,6 +174,18 @@ export default function FigmaTreeView() {
         }
 
         return null;
+    };
+
+    // Filter tree to only show selected pages (CANVAS nodes)
+    const filterTreeByPages = (tree: any, pageNames: string[]): any => {
+        if (!tree || tree.type !== 'DOCUMENT') return tree;
+        if (pageNames.length === 0) return tree; // Show all if none selected
+
+        const filteredChildren = tree.children?.filter((child: any) =>
+            child.type === 'CANVAS' && pageNames.includes(child.name)
+        ) || [];
+
+        return { ...tree, children: filteredChildren };
     };
 
     const handleNodeSelect = (nodeId: string, nodeType: string) => {
@@ -241,9 +268,22 @@ export default function FigmaTreeView() {
             dispatch(setFileTree(res.tree));
             setNodeObj(res);
 
-            // Auto-expand the DOCUMENT node when file is loaded
+            // Extract all CANVAS pages from the file
+            const pages = res.tree.children?.filter((c: any) => c.type === 'CANVAS') || [];
+            setAvailablePages(pages.map((p: any) => ({ id: p.id, name: p.name })));
+
+            // Pre-select pages matching TARGET_PAGES, or all pages if none match
+            const preSelected = pages
+                .filter((p: any) => TARGET_PAGES.includes(p.name))
+                .map((p: any) => p.name);
+            setSelectedPages(preSelected.length > 0 ? preSelected : pages.map((p: any) => p.name));
+
+            // Auto-expand the DOCUMENT node and matching pages when file is loaded
             if (res.tree && res.tree.id) {
-                dispatch(setExpandedNodes([res.tree.id]));
+                const matchingPageIds = pages
+                    .filter((p: any) => preSelected.length > 0 ? preSelected.includes(p.name) : true)
+                    .map((p: any) => p.id);
+                dispatch(setExpandedNodes([res.tree.id, ...matchingPageIds]));
             }
 
             // Add to recent files
@@ -277,9 +317,12 @@ export default function FigmaTreeView() {
             })
     }
 
-    // Get filtered tree
-    const filteredTree = fileTree && Object.keys(fileTree).length > 0
-        ? filterTree(fileTree, searchQuery)
+    // Get filtered tree - first filter by selected pages, then by search query
+    const pageFilteredTree = fileTree && Object.keys(fileTree).length > 0
+        ? filterTreeByPages(fileTree, selectedPages)
+        : null;
+    const filteredTree = pageFilteredTree
+        ? filterTree(pageFilteredTree, searchQuery)
         : null;
 
     return (
@@ -314,6 +357,32 @@ export default function FigmaTreeView() {
                     </button>
                 </div>
             </div>
+
+            {/* Page filter checkboxes */}
+            {availablePages.length > 0 && (
+                <div className="p-4 border-b border-border">
+                    <div className="text-xs font-medium text-muted-foreground mb-2">Filter Pages</div>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {availablePages.map((page) => (
+                            <label key={page.id} className="flex items-center gap-2 cursor-pointer hover:bg-accent/50 px-2 py-1 rounded-md transition-colors">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedPages.includes(page.name)}
+                                    onChange={(e) => {
+                                        if (e.target.checked) {
+                                            setSelectedPages([...selectedPages, page.name]);
+                                        } else {
+                                            setSelectedPages(selectedPages.filter(n => n !== page.name));
+                                        }
+                                    }}
+                                    className="rounded border-input h-4 w-4 accent-primary"
+                                />
+                                <span className="text-sm">{page.name}</span>
+                            </label>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Search input */}
             {fileTree && Object.keys(fileTree).length > 0 && (
