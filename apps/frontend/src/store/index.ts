@@ -3,11 +3,9 @@ import authSlice from './authSlice';
 // import codeSlice from './codeSlice';
 import figmaSlice from './figmaSlice';
 import layoutSlice from './layoutSlice';
-import { persistenceMiddleware, loadPersistedState } from './persistence';
+import { persistenceMiddleware } from './persistence';
 
-// Load persisted state
-const preloadedState = loadPersistedState();
-
+// Create store first without preloadedState to establish types
 export const store = configureStore({
     reducer: {
         auth: authSlice,
@@ -17,7 +15,6 @@ export const store = configureStore({
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware().concat(persistenceMiddleware),
-    preloadedState,
 });
 
 export type RootState = ReturnType<typeof store.getState>;

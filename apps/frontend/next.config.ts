@@ -39,17 +39,8 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // Optimize bundle
-  webpack: (config, { isServer }) => {
-    // Enable tree shaking
-    config.optimization = {
-      ...config.optimization,
-      usedExports: true,
-      sideEffects: false,
-    };
-
-    return config;
-  },
+  // Turbopack config (Next.js 16+ default bundler)
+  turbopack: {},
 
   // Production source maps (smaller size)
   productionBrowserSourceMaps: false,

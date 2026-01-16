@@ -1,8 +1,26 @@
 import { Middleware } from '@reduxjs/toolkit';
 import axios from 'axios';
-import type { RootState } from './index';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
+// Define state shape locally to avoid circular import with index.ts
+interface PersistedFigmaState {
+    currentFileKey: string | null;
+    currentFileUrl: string | null;
+    selectedFile: unknown;
+    selectedPage: unknown;
+    selectedComponent: unknown;
+    expandedNodes: string[];
+    recentFiles: unknown[];
+    loading?: boolean;
+    error?: string | null;
+}
+
+interface AppState {
+    figma: PersistedFigmaState;
+    auth: unknown;
+    layout: unknown;
+}
 
 // Keys for localStorage
 const STORAGE_KEYS = {
@@ -17,14 +35,14 @@ const SYNC_DELAY = 30000; // 30 seconds
 /**
  * Load persisted state from localStorage
  */
-export function loadPersistedState(): Partial<RootState> | undefined {
+export function loadPersistedState(): Partial<AppState> | undefined {
     if (typeof window === 'undefined') return undefined;
 
     try {
         const figmaStateJSON = localStorage.getItem(STORAGE_KEYS.FIGMA_STATE);
         const recentFilesJSON = localStorage.getItem(STORAGE_KEYS.RECENT_FILES);
 
-        const persistedState: Partial<RootState> = {};
+        const persistedState: Partial<AppState> = {};
 
         if (figmaStateJSON) {
             const figmaState = JSON.parse(figmaStateJSON);
@@ -53,7 +71,7 @@ export function loadPersistedState(): Partial<RootState> | undefined {
 /**
  * Save state to localStorage
  */
-function saveToLocalStorage(state: RootState): void {
+function saveToLocalStorage(state: AppState): void {
     if (typeof window === 'undefined') return;
 
     try {
@@ -84,7 +102,7 @@ function saveToLocalStorage(state: RootState): void {
 /**
  * Sync state to backend (debounced)
  */
-function syncToBackend(state: RootState): void {
+function syncToBackend(state: AppState): void {
     if (syncTimer) {
         clearTimeout(syncTimer);
     }
@@ -119,7 +137,7 @@ function syncToBackend(state: RootState): void {
 /**
  * Redux middleware for state persistence
  */
-export const persistenceMiddleware: Middleware<{}, RootState> =
+export const persistenceMiddleware: Middleware<{}, AppState> =
     (store) => (next) => (action) => {
         const result = next(action);
         const state = store.getState();
