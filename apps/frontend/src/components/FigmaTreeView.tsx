@@ -9,84 +9,101 @@ import { RecentFilesPanel } from './RecentFilesPanel';
 // Target pages to pre-select when loading a Figma file
 const TARGET_PAGES = ['Alert', 'Avatar', 'Backdrop', 'Badge', 'Button'];
 
-interface TreeNodeProps {
+// Helper function to recursively find all components in a tree
+function findComponents(node: any): any[] {
+    const components: any[] = [];
+
+    if (node.type === 'COMPONENT' || node.type === 'INSTANCE' || node.type === 'COMPONENT_SET') {
+        components.push(node);
+    }
+
+    if (node.children && node.children.length > 0) {
+        for (const child of node.children) {
+            components.push(...findComponents(child));
+        }
+    }
+
+    return components;
+}
+
+interface ComponentItemProps {
     node: {
+        id: string;
+        name: string;
+        type: string;
+    };
+    onSelect: (nodeId: string, nodeType: string) => void;
+    isSelected: boolean;
+}
+
+function ComponentItem({ node, onSelect, isSelected }: ComponentItemProps) {
+    return (
+        <div
+            className={`flex items-center py-2 px-4 cursor-pointer hover:bg-accent transition-colors ${
+                isSelected ? 'bg-accent text-accent-foreground' : ''
+            }`}
+            onClick={() => onSelect(node.id, node.type)}
+        >
+            <span className="mr-2 text-xs">
+                {node.type === 'COMPONENT' && '🧩'}
+                {node.type === 'INSTANCE' && '📦'}
+                {node.type === 'COMPONENT_SET' && '🗂️'}
+            </span>
+            <span className="text-sm truncate">{node.name}</span>
+        </div>
+    );
+}
+
+interface PageAccordionProps {
+    page: {
         id: string;
         name: string;
         type: string;
         children?: any[];
     };
-    level: number;
-    onSelect: (nodeId: string, nodeType: string) => void;
-    expandedNodes: string[];
-    onToggleExpand: (nodeId: string) => void;
+    isExpanded: boolean;
+    onToggle: () => void;
+    onSelectComponent: (nodeId: string, nodeType: string) => void;
+    selectedComponentId: string | null;
 }
 
-function TreeNode({ node, level, onSelect, expandedNodes, onToggleExpand }: TreeNodeProps) {
-    const isExpanded = expandedNodes.includes(node.id);
-    const { selectedFile, selectedPage, selectedComponent } = useAppSelector((state) => state.figma);
-
-
-    const isSelected =
-        selectedFile === node.id ||
-        selectedPage === node.id ||
-        selectedComponent === node.id;
-
-    const handleClick = () => {
-        console.log('🖱️ TreeNode clicked:', { id: node.id, type: node.type, name: node.name });
-        onSelect(node.id, node.type);
-        if (node.children && node.children.length > 0 && node.type !== 'INSTANCE') {
-            onToggleExpand(node.id);
-        }
-    };
+function PageAccordion({ page, isExpanded, onToggle, onSelectComponent, selectedComponentId }: PageAccordionProps) {
+    const components = findComponents(page);
 
     return (
-        <div>
+        <div className="border-b border-border">
+            {/* Page header */}
             <div
-                className={`flex items-center py-2 px-3 cursor-pointer hover:bg-accent transition-colors ${
-                    isSelected ? 'bg-accent text-accent-foreground' : ''
-                }`}
-                style={{ paddingLeft: `${level * 16 + 12}px` }}
-                onClick={handleClick}
+                className="flex items-center py-3 px-4 cursor-pointer hover:bg-accent/50 transition-colors"
+                onClick={onToggle}
             >
-                {node.children && node.children.length > 0 && node.type !== 'INSTANCE' && (
-                    <span className="mr-2 text-xs text-muted-foreground">
-                        {isExpanded ? '▼' : '▶'}
-                    </span>
-                )}
-                
-                {/* Icon based on node type */}
-                <span className="mr-2 text-xs">
-                    {node.type === 'COMPONENT' && '🧩'}
-                    {node.type === 'INSTANCE' && '📦'}
-                    {node.type === 'FRAME' && '🖼️'}
-                    {node.type === 'GROUP' && '📁'}
-                    {node.type === 'CANVAS' && '🎨'}
-                    {node.type === 'DOCUMENT' && '📄'}
+                <span className="mr-2 text-xs text-muted-foreground">
+                    {isExpanded ? '▼' : '▶'}
                 </span>
-                
-                <span className={`text-xs mr-2 uppercase font-medium ${
-                    node.type === 'COMPONENT' || node.type === 'INSTANCE' 
-                        ? 'text-blue-600' 
-                        : 'text-muted-foreground'
-                }`}>
-                    {node.type}
+                <span className="mr-2">🎨</span>
+                <span className="text-sm font-medium flex-1">{page.name}</span>
+                <span className="text-xs text-muted-foreground">
+                    {components.length} component{components.length !== 1 ? 's' : ''}
                 </span>
-                <span className="text-sm truncate">{node.name}</span>
             </div>
 
-            {isExpanded && node.children && node.type !== 'INSTANCE' && (
-                <div>
-                    {node.children.map((child) => (
-                        <TreeNode
-                            key={child.id}
-                            node={child}
-                            level={level + 1}
-                            onSelect={onSelect}
-                            expandedNodes={expandedNodes}
-                            onToggleExpand={onToggleExpand}
-                        />
-                    ))}
+            {/* Components list */}
+            {isExpanded && (
+                <div className="bg-muted/30">
+                    {components.length > 0 ? (
+                        components.map((component) => (
+                            <ComponentItem
+                                key={component.id}
+                                node={component}
+                                onSelect={onSelectComponent}
+                                isSelected={selectedComponentId === component.id}
+                            />
+                        ))
+                    ) : (
+                        <div className="py-3 px-4 text-sm text-muted-foreground italic">
+                            No components found
+                        </div>
+                    )}
                 </div>
             )}
         </div>
@@ -100,8 +117,7 @@ export default function FigmaTreeView() {
     const [url, setURL] = useState(currentFileUrl || '');
     const [nodeObj, setNodeObj] = useState({});
     const [searchQuery, setSearchQuery] = useState('');
-    const [availablePages, setAvailablePages] = useState<{id: string, name: string}[]>([]);
-    const [selectedPages, setSelectedPages] = useState<string[]>([]);
+    const [expandedPageIds, setExpandedPageIds] = useState<string[]>([]);
 
     // Auto-load last file on mount if exists
     useEffect(() => {
@@ -132,60 +148,33 @@ export default function FigmaTreeView() {
         }
     }, [searchQuery, currentFileKey]);
 
-    // Auto-expand selected pages when selection changes
-    useEffect(() => {
-        if (fileTree && selectedPages.length > 0) {
-            const pageIds = fileTree.children
-                ?.filter((c: any) => c.type === 'CANVAS' && selectedPages.includes(c.name))
-                .map((c: any) => c.id) || [];
-            dispatch(setExpandedNodes([fileTree.id, ...pageIds]));
-        }
-    }, [selectedPages]);
-
-    // Filter tree based on search query - only search through currently visible/expanded nodes
-    const filterTree = (node: any, query: string): any => {
-        if (!query) return node;
-
-        const regex = new RegExp(query, 'i');
-        const matchesQuery = regex.test(node.name) || regex.test(node.type);
-
-        // Only recursively filter children if this node is expanded
-        let filteredChildren: any[] = [];
-        const isNodeExpanded = expandedNodes.includes(node.id);
-
-        if (node.children && node.children.length > 0 && isNodeExpanded) {
-            filteredChildren = node.children
-                .map((child: any) => filterTree(child, query))
-                .filter((child: any) => child !== null);
-        }
-
-        // Include this node if it directly matches the query
-        if (matchesQuery) {
-            return {
-                ...node,
-                children: node.children
-            };
-        } else if (node.type === 'DOCUMENT' && filteredChildren.length > 0) {
-            // Keep DOCUMENT as root if it has matching children
-            return {
-                ...node,
-                children: filteredChildren
-            };
-        }
-
-        return null;
+    // Toggle page accordion expansion
+    const togglePageExpansion = (pageId: string) => {
+        setExpandedPageIds(prev =>
+            prev.includes(pageId)
+                ? prev.filter(id => id !== pageId)
+                : [...prev, pageId]
+        );
     };
 
-    // Filter tree to only show selected pages (CANVAS nodes)
-    const filterTreeByPages = (tree: any, pageNames: string[]): any => {
-        if (!tree || tree.type !== 'DOCUMENT') return tree;
-        if (pageNames.length === 0) return tree; // Show all if none selected
+    // Get all pages from the file tree
+    const getPages = (): any[] => {
+        if (!fileTree || !fileTree.children) return [];
+        return fileTree.children.filter((child: any) => child.type === 'CANVAS');
+    };
 
-        const filteredChildren = tree.children?.filter((child: any) =>
-            child.type === 'CANVAS' && pageNames.includes(child.name)
-        ) || [];
+    // Filter pages based on search query
+    const filterPages = (pages: any[], query: string): any[] => {
+        if (!query) return pages;
+        const regex = new RegExp(query, 'i');
 
-        return { ...tree, children: filteredChildren };
+        return pages.filter(page => {
+            // Match page name
+            if (regex.test(page.name)) return true;
+            // Match any component within the page
+            const components = findComponents(page);
+            return components.some(c => regex.test(c.name));
+        });
     };
 
     const handleNodeSelect = (nodeId: string, nodeType: string) => {
@@ -268,22 +257,10 @@ export default function FigmaTreeView() {
             dispatch(setFileTree(res.tree));
             setNodeObj(res);
 
-            // Extract all CANVAS pages from the file
+            // Extract all CANVAS pages and auto-expand first one
             const pages = res.tree.children?.filter((c: any) => c.type === 'CANVAS') || [];
-            setAvailablePages(pages.map((p: any) => ({ id: p.id, name: p.name })));
-
-            // Pre-select pages matching TARGET_PAGES, or all pages if none match
-            const preSelected = pages
-                .filter((p: any) => TARGET_PAGES.includes(p.name))
-                .map((p: any) => p.name);
-            setSelectedPages(preSelected.length > 0 ? preSelected : pages.map((p: any) => p.name));
-
-            // Auto-expand the DOCUMENT node and matching pages when file is loaded
-            if (res.tree && res.tree.id) {
-                const matchingPageIds = pages
-                    .filter((p: any) => preSelected.length > 0 ? preSelected.includes(p.name) : true)
-                    .map((p: any) => p.id);
-                dispatch(setExpandedNodes([res.tree.id, ...matchingPageIds]));
+            if (pages.length > 0) {
+                setExpandedPageIds([pages[0].id]);
             }
 
             // Add to recent files
@@ -317,13 +294,9 @@ export default function FigmaTreeView() {
             })
     }
 
-    // Get filtered tree - first filter by selected pages, then by search query
-    const pageFilteredTree = fileTree && Object.keys(fileTree).length > 0
-        ? filterTreeByPages(fileTree, selectedPages)
-        : null;
-    const filteredTree = pageFilteredTree
-        ? filterTree(pageFilteredTree, searchQuery)
-        : null;
+    // Get pages and filter by search
+    const allPages = getPages();
+    const filteredPages = filterPages(allPages, searchQuery);
 
     return (
         <div className="h-full flex flex-col">
@@ -358,32 +331,6 @@ export default function FigmaTreeView() {
                 </div>
             </div>
 
-            {/* Page filter checkboxes */}
-            {availablePages.length > 0 && (
-                <div className="p-4 border-b border-border">
-                    <div className="text-xs font-medium text-muted-foreground mb-2">Filter Pages</div>
-                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                        {availablePages.map((page) => (
-                            <label key={page.id} className="flex items-center gap-2 cursor-pointer hover:bg-accent/50 px-2 py-1 rounded-md transition-colors">
-                                <input
-                                    type="checkbox"
-                                    checked={selectedPages.includes(page.name)}
-                                    onChange={(e) => {
-                                        if (e.target.checked) {
-                                            setSelectedPages([...selectedPages, page.name]);
-                                        } else {
-                                            setSelectedPages(selectedPages.filter(n => n !== page.name));
-                                        }
-                                    }}
-                                    className="rounded border-input h-4 w-4 accent-primary"
-                                />
-                                <span className="text-sm">{page.name}</span>
-                            </label>
-                        ))}
-                    </div>
-                </div>
-            )}
-
             {/* Search input */}
             {fileTree && Object.keys(fileTree).length > 0 && (
                 <div className="p-4 border-b border-border">
@@ -392,7 +339,7 @@ export default function FigmaTreeView() {
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             type="text"
-                            placeholder="Search tree items..."
+                            placeholder="Search pages or components..."
                             className="w-full px-3 py-2 pr-8 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                         />
                         {searchQuery && (
@@ -419,19 +366,22 @@ export default function FigmaTreeView() {
                 </div>
             )}
 
-            {/* Tree view */}
+            {/* Pages accordion with components */}
             <div className="flex-1 overflow-auto">
-                {filteredTree ? (
-                    <TreeNode
-                        node={filteredTree}
-                        level={0}
-                        onSelect={handleNodeSelect}
-                        expandedNodes={expandedNodes}
-                        onToggleExpand={handleToggleExpand}
-                    />
+                {filteredPages.length > 0 ? (
+                    filteredPages.map((page) => (
+                        <PageAccordion
+                            key={page.id}
+                            page={page}
+                            isExpanded={expandedPageIds.includes(page.id)}
+                            onToggle={() => togglePageExpansion(page.id)}
+                            onSelectComponent={handleNodeSelect}
+                            selectedComponentId={selectedComponent}
+                        />
+                    ))
                 ) : fileTree && Object.keys(fileTree).length > 0 ? (
                     <div className="p-4 text-center text-sm text-muted-foreground">
-                        No items match your search
+                        No pages match your search
                     </div>
                 ) : (
                     <div className="p-4 text-center text-sm text-muted-foreground">
