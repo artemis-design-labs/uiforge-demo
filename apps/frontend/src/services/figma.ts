@@ -78,6 +78,21 @@ export const figmaService = {
             throw error;
         }
     },
+
+    // Clear cache for a file and reload fresh data
+    clearCacheAndReload: async (figmaUrl: string) => {
+        const fileKey = extractFileKey(figmaUrl);
+        if (!fileKey) throw new Error('Invalid Figma URL');
+
+        console.log('🗑️ FigmaService: Clearing cache for', fileKey);
+
+        // Clear the cache
+        await axios.delete(`/figma/cache/file/${fileKey}`);
+
+        // Reload the file fresh
+        const response = await axios.get(`/figma/file/${fileKey}`);
+        return response.data;
+    },
 };
 
 function extractFileKey(url: string): string | null {

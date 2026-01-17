@@ -146,6 +146,7 @@ export default function FigmaTreeView() {
     const [nodeObj, setNodeObj] = useState({});
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedPageIds, setExpandedPageIds] = useState<string[]>([]);
+    const [refreshing, setRefreshing] = useState(false);
 
     // Auto-load last file on mount if exists
     useEffect(() => {
@@ -257,6 +258,10 @@ export default function FigmaTreeView() {
                     console.warn('⚠️ No currentFileKey available for loading instance');
                 }
                 break;
+            case 'COMPONENT_SET':
+                console.log('🗂️ Selected COMPONENT_SET:', nodeId);
+                dispatch(setSelectedComponent(nodeId));
+                break;
             default:
                 console.log('❓ Unknown node type:', nodeType);
         }
@@ -330,6 +335,39 @@ export default function FigmaTreeView() {
             })
     }
 
+    // Refresh file - clear cache and reload
+    const handleRefresh = () => {
+        if (!currentFileUrl) return;
+
+        setRefreshing(true);
+        dispatch(setError(''));
+
+        figmaService.clearCacheAndReload(currentFileUrl)
+            .then((res) => {
+                console.log('Cache cleared and file reloaded:', res);
+                dispatch(setFileTree(res.tree));
+                setNodeObj(res);
+
+                // Extract all CANVAS pages and auto-expand first one
+                const pages = res.tree.children?.filter((c: any) => c.type === 'CANVAS') || [];
+                if (pages.length > 0) {
+                    setExpandedPageIds([pages[0].id]);
+                }
+
+                // Log file refresh
+                if (currentFileKey) {
+                    activityLogger.logFileOpened(currentFileKey, currentFileUrl);
+                }
+            })
+            .catch((err) => {
+                dispatch(setError(err.response?.data?.message || err.message || 'Failed to refresh file'));
+                console.error('Error refreshing file:', err);
+            })
+            .finally(() => {
+                setRefreshing(false);
+            });
+    };
+
     // Get pages and filter by search
     const allPages = getPages();
     const filteredPages = filterPages(allPages, searchQuery);
@@ -351,19 +389,40 @@ export default function FigmaTreeView() {
                         placeholder="Enter Figma file URL..."
                         className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                     />
-                    <button
-                        className="w-full px-3 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        onClick={loadFileFileByUrl}
-                        disabled={loading}
-                    >
-                        {loading && (
-                            <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                            </svg>
+                    <div className="flex gap-2">
+                        <button
+                            className="flex-1 px-3 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            onClick={loadFileFileByUrl}
+                            disabled={loading || refreshing}
+                        >
+                            {loading && (
+                                <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                                </svg>
+                            )}
+                            {loading ? 'Loading...' : 'Load File'}
+                        </button>
+                        {fileTree && (
+                            <button
+                                className="px-3 py-2 border border-input bg-background rounded-md text-sm hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                onClick={handleRefresh}
+                                disabled={loading || refreshing}
+                                title="Clear cache and reload latest version"
+                            >
+                                {refreshing ? (
+                                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                                    </svg>
+                                ) : (
+                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                )}
+                            </button>
                         )}
-                        {loading ? 'Loading...' : 'Load File'}
-                    </button>
+                    </div>
                 </div>
             </div>
 
