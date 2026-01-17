@@ -1,17 +1,44 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useAppSelector } from '@/store/hooks';
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { setSelectedVariantId } from '@/store/figmaSlice';
 import { figmaService } from '@/services/figma';
 
 export default function HomePage() {
-    const { selectedComponent, currentFileKey } = useAppSelector((state) => state.figma);
+    const dispatch = useAppDispatch();
+    const { selectedComponent, selectedVariantId, currentFileKey, instanceData } = useAppSelector((state) => state.figma);
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Fetch component image when selection changes
+    // Determine which node ID to display
+    // For COMPONENT_SET: use selectedVariantId or first child
+    // For others: use selectedComponent directly
+    const getDisplayNodeId = (): string | null => {
+        if (!selectedComponent) return null;
+
+        // If we have instance data and it's a COMPONENT_SET with children
+        if (instanceData?.data?.type === 'COMPONENT_SET' && instanceData.data.children?.length > 0) {
+            // Use selected variant or default to first child
+            if (selectedVariantId) {
+                return selectedVariantId;
+            }
+            // Auto-select first variant
+            const firstVariant = instanceData.data.children[0];
+            if (firstVariant?.id) {
+                dispatch(setSelectedVariantId(firstVariant.id));
+                return firstVariant.id;
+            }
+        }
+
+        return selectedComponent;
+    };
+
+    // Fetch component image when selection or variant changes
     useEffect(() => {
-        if (!selectedComponent || !currentFileKey) {
+        const nodeIdToDisplay = getDisplayNodeId();
+
+        if (!nodeIdToDisplay || !currentFileKey) {
             setImageUrl(null);
             return;
         }
@@ -19,7 +46,9 @@ export default function HomePage() {
         setLoading(true);
         setError(null);
 
-        figmaService.getComponentImage(currentFileKey, selectedComponent, { scale: 2 })
+        console.log('🖼️ Fetching image for node:', nodeIdToDisplay);
+
+        figmaService.getComponentImage(currentFileKey, nodeIdToDisplay, { scale: 2 })
             .then((data) => {
                 setImageUrl(data.imageUrl);
             })
@@ -30,7 +59,7 @@ export default function HomePage() {
             .finally(() => {
                 setLoading(false);
             });
-    }, [selectedComponent, currentFileKey]);
+    }, [selectedComponent, selectedVariantId, currentFileKey, instanceData]);
 
     return (
         <div className="h-full w-full flex items-center justify-center bg-[#1e1e1e] overflow-auto">

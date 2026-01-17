@@ -12,7 +12,7 @@ const initialState: LayoutState = {
   leftSidebarWidth: 320,
   rightSidebarWidth: 320,
   leftSidebarCollapsed: false,
-  rightSidebarCollapsed: true,
+  rightSidebarCollapsed: false, // Show by default so user can see properties
   isMobile: false,
 };
 

@@ -1,6 +1,7 @@
 'use client';
-import React, { useState, useEffect } from 'react';
-import { useAppSelector } from '@/store/hooks';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { setSelectedVariantId } from '@/store/figmaSlice';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -14,10 +15,49 @@ interface PropertiesPanelProps {
     onPropertyChange: (property: keyof ComponentProperties, value: string | number | boolean) => void;
 }
 
+// Parse variant name like "Size=Large, State=Hover" into object { Size: "Large", State: "Hover" }
+function parseVariantName(name: string): Record<string, string> {
+    const result: Record<string, string> = {};
+    if (!name) return result;
+
+    const parts = name.split(',').map(p => p.trim());
+    for (const part of parts) {
+        const [key, value] = part.split('=').map(s => s.trim());
+        if (key && value) {
+            result[key] = value;
+        }
+    }
+    return result;
+}
+
+// Extract all variant options from children of a COMPONENT_SET
+function extractVariantOptions(children: any[]): Record<string, string[]> {
+    const options: Record<string, Set<string>> = {};
+
+    for (const child of children) {
+        const parsed = parseVariantName(child.name);
+        for (const [key, value] of Object.entries(parsed)) {
+            if (!options[key]) {
+                options[key] = new Set();
+            }
+            options[key].add(value);
+        }
+    }
+
+    // Convert Sets to sorted arrays
+    const result: Record<string, string[]> = {};
+    for (const [key, values] of Object.entries(options)) {
+        result[key] = Array.from(values).sort();
+    }
+    return result;
+}
+
 const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ properties, onPropertyChange }) => {
-    const instanceData = useAppSelector((state) => state.figma.instanceData);
+    const dispatch = useAppDispatch();
+    const { instanceData, selectedVariantId } = useAppSelector((state) => state.figma);
     const [localProps, setLocalProps] = useState(properties);
     const [showCodeGenModal, setShowCodeGenModal] = useState(false);
+    const [selectedVariantProps, setSelectedVariantProps] = useState<Record<string, string>>({});
 
     useEffect(() => {
         setLocalProps(properties);
@@ -36,6 +76,44 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ properties, onPropert
             });
         }
     }, [properties]);
+
+    // For COMPONENT_SET: compute variant options from children
+    const isComponentSet = instanceData?.data?.type === 'COMPONENT_SET';
+    const variantChildren = instanceData?.data?.children || [];
+    const variantOptions = useMemo(() => {
+        if (!isComponentSet || variantChildren.length === 0) return {};
+        return extractVariantOptions(variantChildren);
+    }, [isComponentSet, variantChildren]);
+
+    // Initialize selectedVariantProps from current selectedVariantId
+    useEffect(() => {
+        if (!isComponentSet || !selectedVariantId || variantChildren.length === 0) return;
+
+        const selectedChild = variantChildren.find((c: any) => c.id === selectedVariantId);
+        if (selectedChild) {
+            const parsed = parseVariantName(selectedChild.name);
+            setSelectedVariantProps(parsed);
+        }
+    }, [isComponentSet, selectedVariantId, variantChildren]);
+
+    // When user changes a variant property, find matching child and update selection
+    const handleVariantChange = (propName: string, value: string) => {
+        const newProps = { ...selectedVariantProps, [propName]: value };
+        setSelectedVariantProps(newProps);
+
+        // Find the child that matches all selected properties
+        const matchingChild = variantChildren.find((child: any) => {
+            const childProps = parseVariantName(child.name);
+            return Object.entries(newProps).every(([k, v]) => childProps[k] === v);
+        });
+
+        if (matchingChild) {
+            console.log('🎯 Switching to variant:', matchingChild.name, matchingChild.id);
+            dispatch(setSelectedVariantId(matchingChild.id));
+        } else {
+            console.log('⚠️ No matching variant found for:', newProps);
+        }
+    };
 
     const handleChange = (property: keyof ComponentProperties, value: string | number | boolean) => {
         setLocalProps({ ...localProps, [property]: value });
@@ -63,17 +141,47 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ properties, onPropert
                 <h3 className="text-sm font-semibold mb-4">Component Properties</h3>
                 
                 {/* Component Info */}
-                <div className="space-y-2 mb-6 p-3 bg-gray-50 rounded">
+                <div className="space-y-2 mb-6 p-3 bg-gray-50 dark:bg-gray-800 rounded">
                     <div className="text-xs">
                         <span className="font-medium">Name:</span> {instanceData.data?.name || 'Unknown'}
                     </div>
                     <div className="text-xs">
                         <span className="font-medium">Type:</span> {instanceData.data?.type || 'Unknown'}
                     </div>
-                    <div className="text-xs">
-                        <span className="font-medium">Component ID:</span> {instanceData.data?.componentId || 'N/A'}
-                    </div>
+                    {instanceData.data?.componentId && (
+                        <div className="text-xs">
+                            <span className="font-medium">Component ID:</span> {instanceData.data.componentId}
+                        </div>
+                    )}
+                    {isComponentSet && (
+                        <div className="text-xs">
+                            <span className="font-medium">Variants:</span> {variantChildren.length}
+                        </div>
+                    )}
                 </div>
+
+                {/* Variant Switcher for COMPONENT_SET */}
+                {isComponentSet && Object.keys(variantOptions).length > 0 && (
+                    <div className="space-y-4 mb-6">
+                        <h4 className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase">Variants</h4>
+                        {Object.entries(variantOptions).map(([propName, options]) => (
+                            <div key={propName} className="space-y-2">
+                                <Label className="text-xs capitalize">{propName}</Label>
+                                <select
+                                    className="w-full h-9 px-3 text-sm border border-input rounded-md bg-background hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
+                                    value={selectedVariantProps[propName] || options[0]}
+                                    onChange={(e) => handleVariantChange(propName, e.target.value)}
+                                >
+                                    {options.map((option) => (
+                                        <option key={option} value={option}>
+                                            {option}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        ))}
+                    </div>
+                )}
 
                 {/* Action Buttons */}
                 <div className="space-y-2 mb-6">

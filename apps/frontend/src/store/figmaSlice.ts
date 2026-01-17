@@ -7,6 +7,29 @@ interface RecentFile {
     lastOpened: number; // timestamp
 }
 
+interface TreeNode {
+    id: string;
+    name: string;
+    type: string;
+    children?: TreeNode[];
+}
+
+interface FigmaState {
+    fileTree: TreeNode | null;
+    currentFileKey: string | null;
+    currentFileUrl: string | null;
+    selectedFile: string | null;
+    selectedPage: string | null;
+    selectedComponent: string | null;
+    selectedVariantId: string | null;
+    componentData: any;
+    instanceData: any;
+    expandedNodes: string[];
+    recentFiles: RecentFile[];
+    loading: boolean;
+    error: string | null;
+}
+
 const initialState: FigmaState = {
     fileTree: null,
     currentFileKey: null,
@@ -14,6 +37,7 @@ const initialState: FigmaState = {
     selectedFile: null,
     selectedPage: null,
     selectedComponent: null,
+    selectedVariantId: null, // For displaying specific variant from COMPONENT_SET
     componentData: null,
     instanceData: null,
     expandedNodes: [],
@@ -59,6 +83,10 @@ const figmaSlice = createSlice({
         },
         setSelectedComponent: (state, action: PayloadAction<string>) => {
             state.selectedComponent = action.payload;
+            state.selectedVariantId = null; // Reset variant when component changes
+        },
+        setSelectedVariantId: (state, action: PayloadAction<string | null>) => {
+            state.selectedVariantId = action.payload;
         },
         setComponentData: (state, action: PayloadAction<any>) => {
             state.componentData = action.payload;
@@ -112,6 +140,7 @@ export const {
     setSelectedFile,
     setSelectedPage,
     setSelectedComponent,
+    setSelectedVariantId,
     setComponentData,
     setInstanceData,
     clearSelections,

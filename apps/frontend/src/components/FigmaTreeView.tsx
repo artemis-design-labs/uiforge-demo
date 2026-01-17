@@ -234,6 +234,22 @@ export default function FigmaTreeView() {
             case 'COMPONENT':
                 console.log('🧩 Selected COMPONENT:', nodeId);
                 dispatch(setSelectedComponent(nodeId));
+                // Load component data
+                if (currentFileKey) {
+                    dispatch(setLoading(true));
+                    figmaService.loadInstance(currentFileKey, nodeId)
+                        .then((data) => {
+                            console.log('✅ Component data received:', data);
+                            dispatch(setInstanceData(data));
+                        })
+                        .catch((err) => {
+                            console.error('❌ Failed to load component:', err);
+                            dispatch(setError(err.message || 'Failed to load component data'));
+                        })
+                        .finally(() => {
+                            dispatch(setLoading(false));
+                        });
+                }
                 break;
             case 'INSTANCE':
                 console.log('🎯 Selected INSTANCE:', nodeId);
@@ -261,6 +277,22 @@ export default function FigmaTreeView() {
             case 'COMPONENT_SET':
                 console.log('🗂️ Selected COMPONENT_SET:', nodeId);
                 dispatch(setSelectedComponent(nodeId));
+                // Load component set data to get variants
+                if (currentFileKey) {
+                    dispatch(setLoading(true));
+                    figmaService.loadInstance(currentFileKey, nodeId)
+                        .then((data) => {
+                            console.log('✅ Component set data received:', data);
+                            dispatch(setInstanceData(data));
+                        })
+                        .catch((err) => {
+                            console.error('❌ Failed to load component set:', err);
+                            dispatch(setError(err.message || 'Failed to load component set data'));
+                        })
+                        .finally(() => {
+                            dispatch(setLoading(false));
+                        });
+                }
                 break;
             default:
                 console.log('❓ Unknown node type:', nodeType);
