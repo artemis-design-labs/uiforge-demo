@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { FigmaAccordionDarkMode } from './FigmaAccordionDarkMode';
+import { FigmaAccordion } from './FigmaAccordion';
 import { FigmaButton } from './FigmaButton';
 
 // Component registry - maps Figma component names to React components
@@ -10,26 +10,34 @@ export const COMPONENT_REGISTRY: Record<string, {
     nodeId: string;
 }> = {
     'Accordion/DarkMode': {
-        component: FigmaAccordionDarkMode,
+        component: FigmaAccordion,
         defaultProps: {
             heading: 'Heading',
             secondaryHeading: 'Secondary heading',
+            content: 'This is the accordion content that appears when expanded.',
+            expanded: false,
+            disabled: false,
+            darkMode: true, // Dark background, light text
         },
-        nodeId: '1:46',
+        nodeId: '1:45',
     },
     'Accordion/LightMode': {
-        component: FigmaAccordionDarkMode, // Same component, light mode is default
+        component: FigmaAccordion,
         defaultProps: {
             heading: 'Heading',
             secondaryHeading: 'Secondary heading',
+            content: 'This is the accordion content that appears when expanded.',
+            expanded: false,
+            disabled: false,
+            darkMode: false, // White background, dark text
         },
-        nodeId: '1:136',
+        nodeId: '1:135',
     },
     'Button/LightMode': {
         component: FigmaButton,
         defaultProps: {
             label: 'Button',
-            darkMode: false,
+            darkMode: false, // Blue background, white text
             showLeftIcon: true,
             showRightIcon: true,
         },
@@ -39,7 +47,7 @@ export const COMPONENT_REGISTRY: Record<string, {
         component: FigmaButton,
         defaultProps: {
             label: 'Button',
-            darkMode: true,
+            darkMode: true, // Light blue background, dark text
             showLeftIcon: true,
             showRightIcon: true,
         },
@@ -96,5 +104,5 @@ export function ComponentRenderer({ componentName, props = {} }: ComponentRender
     );
 }
 
-export { FigmaAccordionDarkMode } from './FigmaAccordionDarkMode';
+export { FigmaAccordion } from './FigmaAccordion';
 export { FigmaButton } from './FigmaButton';
