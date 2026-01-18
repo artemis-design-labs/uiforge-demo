@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { setSelectedVariantId } from '@/store/figmaSlice';
 import { AccordionItem, ACCORDION_VARIANTS, AccordionProps } from '@/components/figma-components/AccordionComponent';
+import { FigmaAccordionDarkMode } from '@/components/figma-components/FigmaAccordionDarkMode';
 
 // Parse variant name like "Expanded=True, Disabled=False" into props object
 function parseVariantName(name: string): Record<string, any> {
@@ -117,6 +118,28 @@ export default function HomePage() {
             return (
                 <div className="text-white/30 text-sm">
                     Select a component from the tree to preview it
+                </div>
+            );
+        }
+
+        // Check if this is the Accordion/DarkMode component set
+        const isDarkModeAccordion = componentSetName === 'Accordion/DarkMode' ||
+            componentSetName.toLowerCase().includes('accordion') && componentSetName.toLowerCase().includes('dark');
+
+        if (isComponentSet && isDarkModeAccordion) {
+            return (
+                <div className="flex flex-col items-center gap-6">
+                    {/* Render the Figma-extracted component */}
+                    <FigmaAccordionDarkMode
+                        heading="Heading"
+                        secondaryHeading="Secondary heading"
+                    />
+
+                    {/* Info label */}
+                    <div className="text-white/50 text-xs mt-2 text-center">
+                        <p>Component: {componentSetName}</p>
+                        <p className="text-white/30 mt-1">Generated from Figma Node ID: 1:46</p>
+                    </div>
                 </div>
             );
         }
