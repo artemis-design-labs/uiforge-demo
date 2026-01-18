@@ -74,7 +74,12 @@ export default function HomePage() {
 
     return (
         <div className="h-full w-full flex flex-col bg-[#1e1e1e] overflow-auto p-8">
-            {/* Debug Panel - Remove after troubleshooting */}
+            {/* VERY VISIBLE BANNER - to verify deployment */}
+            <div className="mb-4 p-4 bg-red-600 rounded text-white text-center font-bold text-lg">
+                🚀 NEW VERSION DEPLOYED - Jan 18, 2026 🚀
+            </div>
+
+            {/* Debug Panel */}
             <div className="mb-4 p-3 bg-yellow-900/50 rounded text-xs text-yellow-200 font-mono">
                 <p className="font-bold mb-2">DEBUG INFO:</p>
                 <p>selectedComponent: {debugInfo.selectedComponent || 'null'}</p>
