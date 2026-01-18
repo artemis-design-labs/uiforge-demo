@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useAppSelector } from '@/store/hooks';
 import { figmaService } from '@/services/figma';
+import { ComponentRenderer, isComponentSupported } from '@/components/figma-components';
 
 export default function DesignPage() {
     const { selectedComponent, selectedComponentName, selectedComponentType, currentFileKey } = useAppSelector((state) => state.figma);
@@ -9,18 +10,21 @@ export default function DesignPage() {
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [useFallback, setUseFallback] = useState(false);
 
     // Fetch component image when selection changes
     useEffect(() => {
         if (!selectedComponent || !currentFileKey) {
             setImageUrl(null);
             setError(null);
+            setUseFallback(false);
             return;
         }
 
         const fetchImage = async () => {
             setLoading(true);
             setError(null);
+            setUseFallback(false);
 
             try {
                 console.log('🖼️ Fetching image for:', selectedComponent, 'in file:', currentFileKey);
@@ -31,10 +35,23 @@ export default function DesignPage() {
                 setImageUrl(response.imageUrl);
             } catch (err: any) {
                 console.error('Failed to fetch component image:', err);
-                if (err.response?.status === 401) {
+
+                // Check if we have a React fallback for this component
+                if (selectedComponentName && isComponentSupported(selectedComponentName)) {
+                    console.log('Using React component fallback for:', selectedComponentName);
+                    setUseFallback(true);
+                    setError(null);
+                } else if (err.response?.status === 401) {
                     setError('Session expired. Please log in again.');
                 } else if (err.response?.status === 403) {
                     setError('Access denied. You may not have permission to view this file.');
+                } else if (err.response?.status === 404) {
+                    // Backend endpoint not available, use fallback if possible
+                    if (selectedComponentName && isComponentSupported(selectedComponentName)) {
+                        setUseFallback(true);
+                    } else {
+                        setError('Component preview unavailable. The image endpoint may not be deployed.');
+                    }
                 } else {
                     setError(err.message || 'Failed to load component image');
                 }
@@ -44,7 +61,7 @@ export default function DesignPage() {
         };
 
         fetchImage();
-    }, [selectedComponent, currentFileKey]);
+    }, [selectedComponent, currentFileKey, selectedComponentName]);
 
     const renderContent = () => {
         // No component selected
@@ -74,6 +91,18 @@ export default function DesignPage() {
             );
         }
 
+        // Use React component fallback
+        if (useFallback && selectedComponentName) {
+            return (
+                <div className="flex flex-col items-center justify-center h-full p-8">
+                    <div className="mb-2 px-3 py-1 bg-blue-500/20 text-blue-400 rounded text-xs">
+                        React Component Preview
+                    </div>
+                    <ComponentRenderer componentName={selectedComponentName} />
+                </div>
+            );
+        }
+
         // Error state
         if (error) {
             return (
@@ -85,6 +114,15 @@ export default function DesignPage() {
                         <p className="text-lg font-medium mb-2">Failed to Load Component</p>
                         <p className="text-sm opacity-75">{error}</p>
                     </div>
+
+                    {/* Show component info even on error */}
+                    <div className="mt-4 p-4 bg-muted/30 rounded-lg">
+                        <p className="text-foreground font-medium">{selectedComponentName}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Type: {selectedComponentType} | Node ID: {selectedComponent}
+                        </p>
+                    </div>
+
                     {error.includes('log in') && (
                         <a
                             href="/login"
@@ -122,12 +160,18 @@ export default function DesignPage() {
             );
         }
 
-        // Fallback
+        // Fallback - show component info
         return (
             <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                <p className="text-muted-foreground">
-                    Component: {selectedComponentName}
-                </p>
+                <div className="p-6 bg-muted/30 rounded-lg">
+                    <p className="text-foreground font-medium text-lg">{selectedComponentName}</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                        Type: {selectedComponentType}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                        Node ID: {selectedComponent}
+                    </p>
+                </div>
             </div>
         );
     };
