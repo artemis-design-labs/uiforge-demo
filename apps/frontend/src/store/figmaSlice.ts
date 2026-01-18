@@ -21,6 +21,8 @@ interface FigmaState {
     selectedFile: string | null;
     selectedPage: string | null;
     selectedComponent: string | null;
+    selectedComponentName: string | null;
+    selectedComponentType: string | null;
     selectedVariantId: string | null;
     componentData: any;
     instanceData: any;
@@ -37,6 +39,8 @@ const initialState: FigmaState = {
     selectedFile: null,
     selectedPage: null,
     selectedComponent: null,
+    selectedComponentName: null,
+    selectedComponentType: null,
     selectedVariantId: null, // For displaying specific variant from COMPONENT_SET
     componentData: null,
     instanceData: null,
@@ -81,8 +85,14 @@ const figmaSlice = createSlice({
             state.selectedComponent = null;
             state.componentData = null;
         },
-        setSelectedComponent: (state, action: PayloadAction<string>) => {
-            state.selectedComponent = action.payload;
+        setSelectedComponent: (state, action: PayloadAction<string | { id: string; name: string; type: string }>) => {
+            if (typeof action.payload === 'string') {
+                state.selectedComponent = action.payload;
+            } else {
+                state.selectedComponent = action.payload.id;
+                state.selectedComponentName = action.payload.name;
+                state.selectedComponentType = action.payload.type;
+            }
             state.selectedVariantId = null; // Reset variant when component changes
         },
         setSelectedVariantId: (state, action: PayloadAction<string | null>) => {

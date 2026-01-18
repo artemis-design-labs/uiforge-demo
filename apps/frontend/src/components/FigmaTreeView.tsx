@@ -60,7 +60,7 @@ interface ComponentItemProps {
         name: string;
         type: string;
     };
-    onSelect: (nodeId: string, nodeType: string) => void;
+    onSelect: (nodeId: string, nodeType: string, nodeName: string) => void;
     isSelected: boolean;
 }
 
@@ -70,7 +70,7 @@ function ComponentItem({ node, onSelect, isSelected }: ComponentItemProps) {
             className={`flex items-center py-2 px-4 cursor-pointer hover:bg-accent transition-colors ${
                 isSelected ? 'bg-accent text-accent-foreground' : ''
             }`}
-            onClick={() => onSelect(node.id, node.type)}
+            onClick={() => onSelect(node.id, node.type, node.name)}
         >
             <span className="mr-2 text-xs">
                 {node.type === 'COMPONENT' && '🧩'}
@@ -91,7 +91,7 @@ interface PageAccordionProps {
     };
     isExpanded: boolean;
     onToggle: () => void;
-    onSelectComponent: (nodeId: string, nodeType: string) => void;
+    onSelectComponent: (nodeId: string, nodeType: string, nodeName: string) => void;
     selectedComponentId: string | null;
 }
 
@@ -214,8 +214,8 @@ export default function FigmaTreeView() {
         });
     };
 
-    const handleNodeSelect = (nodeId: string, nodeType: string) => {
-        console.log('🔵 FigmaTreeView: handleNodeSelect called', { nodeId, nodeType, currentFileKey });
+    const handleNodeSelect = (nodeId: string, nodeType: string, nodeName: string) => {
+        console.log('🔵 FigmaTreeView: handleNodeSelect called', { nodeId, nodeType, nodeName, currentFileKey });
 
         // Log component selection (batched)
         if (currentFileKey) {
@@ -232,67 +232,19 @@ export default function FigmaTreeView() {
                 dispatch(setSelectedPage(nodeId));
                 break;
             case 'COMPONENT':
-                console.log('🧩 Selected COMPONENT:', nodeId);
-                dispatch(setSelectedComponent(nodeId));
-                // Load component data
-                if (currentFileKey) {
-                    dispatch(setLoading(true));
-                    figmaService.loadInstance(currentFileKey, nodeId)
-                        .then((data) => {
-                            console.log('✅ Component data received:', data);
-                            dispatch(setInstanceData(data));
-                        })
-                        .catch((err) => {
-                            console.error('❌ Failed to load component:', err);
-                            dispatch(setError(err.message || 'Failed to load component data'));
-                        })
-                        .finally(() => {
-                            dispatch(setLoading(false));
-                        });
-                }
+                console.log('🧩 Selected COMPONENT:', nodeId, nodeName);
+                dispatch(setSelectedComponent({ id: nodeId, name: nodeName, type: nodeType }));
+                // Skip API call for demo - component will render based on name
                 break;
             case 'INSTANCE':
-                console.log('🎯 Selected INSTANCE:', nodeId);
-                dispatch(setSelectedComponent(nodeId));
-                // Load instance data
-                if (currentFileKey) {
-                    console.log('📡 Making API call to load instance data...');
-                    dispatch(setLoading(true));
-                    figmaService.loadInstance(currentFileKey, nodeId)
-                        .then((data) => {
-                            console.log('✅ Instance data received:', data);
-                            dispatch(setInstanceData(data));
-                        })
-                        .catch((err) => {
-                            console.error('❌ Failed to load instance:', err);
-                            dispatch(setError(err.message || 'Failed to load instance data'));
-                        })
-                        .finally(() => {
-                            dispatch(setLoading(false));
-                        });
-                } else {
-                    console.warn('⚠️ No currentFileKey available for loading instance');
-                }
+                console.log('🎯 Selected INSTANCE:', nodeId, nodeName);
+                dispatch(setSelectedComponent({ id: nodeId, name: nodeName, type: nodeType }));
+                // Skip API call for demo - component will render based on name
                 break;
             case 'COMPONENT_SET':
-                console.log('🗂️ Selected COMPONENT_SET:', nodeId);
-                dispatch(setSelectedComponent(nodeId));
-                // Load component set data to get variants
-                if (currentFileKey) {
-                    dispatch(setLoading(true));
-                    figmaService.loadInstance(currentFileKey, nodeId)
-                        .then((data) => {
-                            console.log('✅ Component set data received:', data);
-                            dispatch(setInstanceData(data));
-                        })
-                        .catch((err) => {
-                            console.error('❌ Failed to load component set:', err);
-                            dispatch(setError(err.message || 'Failed to load component set data'));
-                        })
-                        .finally(() => {
-                            dispatch(setLoading(false));
-                        });
-                }
+                console.log('🗂️ Selected COMPONENT_SET:', nodeId, nodeName);
+                dispatch(setSelectedComponent({ id: nodeId, name: nodeName, type: nodeType }));
+                // Skip API call for demo - component will render based on name
                 break;
             default:
                 console.log('❓ Unknown node type:', nodeType);
