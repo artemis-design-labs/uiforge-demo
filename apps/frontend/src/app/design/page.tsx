@@ -1,9 +1,50 @@
 'use client';
+import { useEffect, useState } from 'react';
 import { useAppSelector } from '@/store/hooks';
-import { ComponentRenderer, isComponentSupported, getSupportedComponentNames } from '@/components/figma-components';
+import { figmaService } from '@/services/figma';
 
 export default function DesignPage() {
-    const { selectedComponent, selectedComponentName, selectedComponentType } = useAppSelector((state) => state.figma);
+    const { selectedComponent, selectedComponentName, selectedComponentType, currentFileKey } = useAppSelector((state) => state.figma);
+
+    const [imageUrl, setImageUrl] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    // Fetch component image when selection changes
+    useEffect(() => {
+        if (!selectedComponent || !currentFileKey) {
+            setImageUrl(null);
+            setError(null);
+            return;
+        }
+
+        const fetchImage = async () => {
+            setLoading(true);
+            setError(null);
+
+            try {
+                console.log('🖼️ Fetching image for:', selectedComponent, 'in file:', currentFileKey);
+                const response = await figmaService.getComponentImage(currentFileKey, selectedComponent, {
+                    scale: 2,
+                    format: 'png'
+                });
+                setImageUrl(response.imageUrl);
+            } catch (err: any) {
+                console.error('Failed to fetch component image:', err);
+                if (err.response?.status === 401) {
+                    setError('Session expired. Please log in again.');
+                } else if (err.response?.status === 403) {
+                    setError('Access denied. You may not have permission to view this file.');
+                } else {
+                    setError(err.message || 'Failed to load component image');
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchImage();
+    }, [selectedComponent, currentFileKey]);
 
     const renderContent = () => {
         // No component selected
@@ -19,29 +60,74 @@ export default function DesignPage() {
                             Load a Figma file and select a component from the sidebar to preview it here.
                         </p>
                     </div>
+                </div>
+            );
+        }
 
-                    {/* Show supported components */}
-                    <div className="mt-8 text-left">
-                        <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Supported Components:</p>
-                        <div className="flex flex-wrap gap-2 justify-center">
-                            {getSupportedComponentNames().map((name) => (
-                                <span
-                                    key={name}
-                                    className="px-2 py-1 bg-muted rounded text-xs text-muted-foreground"
-                                >
-                                    {name}
-                                </span>
-                            ))}
-                        </div>
+        // Loading state
+        if (loading) {
+            return (
+                <div className="flex flex-col items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+                    <p className="text-muted-foreground">Loading component...</p>
+                </div>
+            );
+        }
+
+        // Error state
+        if (error) {
+            return (
+                <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                    <div className="text-destructive mb-4">
+                        <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <p className="text-lg font-medium mb-2">Failed to Load Component</p>
+                        <p className="text-sm opacity-75">{error}</p>
+                    </div>
+                    {error.includes('log in') && (
+                        <a
+                            href="/login"
+                            className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+                        >
+                            Go to Login
+                        </a>
+                    )}
+                </div>
+            );
+        }
+
+        // Image loaded successfully
+        if (imageUrl) {
+            return (
+                <div className="flex flex-col items-center justify-center h-full p-8">
+                    {/* Component Image */}
+                    <div className="bg-white rounded-lg shadow-lg p-4 max-w-full overflow-auto">
+                        <img
+                            src={imageUrl}
+                            alt={selectedComponentName || 'Component'}
+                            className="max-w-full h-auto"
+                            style={{ maxHeight: '60vh' }}
+                        />
+                    </div>
+
+                    {/* Component Info */}
+                    <div className="mt-6 text-center">
+                        <p className="text-foreground font-medium">{selectedComponentName}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Type: {selectedComponentType} | Node ID: {selectedComponent}
+                        </p>
                     </div>
                 </div>
             );
         }
 
-        // Component selected - render it
+        // Fallback
         return (
-            <div className="flex flex-col items-center justify-center h-full p-8">
-                <ComponentRenderer componentName={selectedComponentName} />
+            <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                <p className="text-muted-foreground">
+                    Component: {selectedComponentName}
+                </p>
             </div>
         );
     };
