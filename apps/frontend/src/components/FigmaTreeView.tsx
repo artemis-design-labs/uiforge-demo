@@ -6,32 +6,9 @@ import { figmaService } from '@/services/figma';
 import { activityLogger } from '@/services/activityLogger';
 import { RecentFilesPanel } from './RecentFilesPanel';
 
-// Only show pages that match these component names
-const ALLOWED_PAGES = [
-    'Alert',
-    'Avatar',
-    'Backdrop',
-    'Badge',
-    'Button',
-    'Checkbox',
-    'Chip',
-    'Divider',
-    'Floating Action Button',
-    'Icon',
-    'Link',
-    'Metadata',
-    'Progress',
-    'Radio Button',
-    'Scrollbar',
-    'Search',
-    'Slider',
-    'Snackbar',
-    'Switch',
-    'Text Area',
-    'Text Field',
-    'Tooltip',
-    'Accordion',
-];
+// Page filter - set to null to show all pages, or provide an array of page names to filter
+// Example: ['Button', 'Accordion', 'Alert'] - only shows pages containing these names
+const ALLOWED_PAGES: string[] | null = null; // Show all pages
 
 // Helper function to find top-level components in a tree
 // Stops recursion once a component is found (doesn't look inside components)
@@ -186,12 +163,16 @@ export default function FigmaTreeView() {
         );
     };
 
-    // Get only allowed pages from the file tree
-    // Matches if page name contains any allowed component name (case-insensitive)
+    // Get pages from the file tree
+    // If ALLOWED_PAGES is null, shows all pages
+    // If ALLOWED_PAGES is an array, filters to pages matching those names (case-insensitive)
     const getPages = (): any[] => {
         if (!fileTree || !fileTree.children) return [];
         return fileTree.children.filter((child: any) => {
             if (child.type !== 'CANVAS') return false;
+            // If no filter, show all pages
+            if (!ALLOWED_PAGES) return true;
+            // Otherwise filter by allowed names
             const pageName = child.name.toLowerCase();
             return ALLOWED_PAGES.some(allowed =>
                 pageName.includes(allowed.toLowerCase()) ||
