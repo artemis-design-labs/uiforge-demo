@@ -438,6 +438,7 @@ function buildTreeStructure(node) {
 }
 
 // Get rendered image of a component/node
+// Used for dynamic component preview in the design page
 router.get('/image/:fileKey/:nodeId', authenticateUser, async (req, res) => {
     try {
         const { fileKey, nodeId } = req.params;
