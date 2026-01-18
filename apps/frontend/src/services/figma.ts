@@ -63,16 +63,25 @@ export const figmaService = {
     },
 
     // Get rendered image of a component
+    // Uses Next.js API route that directly calls Figma API (bypasses backend)
     getComponentImage: async (fileKey: string, nodeId: string, options?: { scale?: number; format?: string }) => {
         const { scale = 2, format = 'png' } = options || {};
         console.log('🖼️ FigmaService: Fetching component image', { fileKey, nodeId, scale, format });
 
         try {
-            const response = await axios.get(`/figma/image/${fileKey}/${nodeId}`, {
-                params: { scale, format }
-            });
-            console.log('✅ FigmaService: Image URL received', response.data);
-            return response.data;
+            // Use Next.js API route (direct Figma API call)
+            const response = await fetch(`/api/figma/image/${fileKey}/${nodeId}?scale=${scale}&format=${format}`);
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                const error = new Error(errorData.error || 'Failed to fetch image') as ExtendedError;
+                error.response = { status: response.status, data: errorData };
+                throw error;
+            }
+
+            const data = await response.json();
+            console.log('✅ FigmaService: Image URL received', data);
+            return data;
         } catch (error) {
             console.error('❌ FigmaService: Failed to fetch image', error);
             throw error;
