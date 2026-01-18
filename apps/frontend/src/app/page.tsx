@@ -165,9 +165,35 @@ export default function HomePage() {
         );
     };
 
+    // Debug info
+    const debugInfo = {
+        selectedComponent,
+        hasInstanceData: !!instanceData,
+        instanceDataType: instanceData?.data?.type,
+        componentSetName,
+        isComponentSet,
+        isAccordion,
+        variantChildrenCount: variantChildren.length,
+    };
+
     return (
-        <div className="h-full w-full flex items-center justify-center bg-[#1e1e1e] overflow-auto p-8">
-            {renderComponent()}
+        <div className="h-full w-full flex flex-col bg-[#1e1e1e] overflow-auto p-8">
+            {/* Debug Panel - Remove after troubleshooting */}
+            <div className="mb-4 p-3 bg-yellow-900/50 rounded text-xs text-yellow-200 font-mono">
+                <p className="font-bold mb-2">DEBUG INFO:</p>
+                <p>selectedComponent: {debugInfo.selectedComponent || 'null'}</p>
+                <p>hasInstanceData: {debugInfo.hasInstanceData ? 'true' : 'false'}</p>
+                <p>instanceDataType: {debugInfo.instanceDataType || 'null'}</p>
+                <p>componentSetName: "{debugInfo.componentSetName}"</p>
+                <p>isComponentSet: {debugInfo.isComponentSet ? 'true' : 'false'}</p>
+                <p>isAccordion: {debugInfo.isAccordion ? 'true' : 'false'}</p>
+                <p>variantChildrenCount: {debugInfo.variantChildrenCount}</p>
+            </div>
+
+            {/* Main content area */}
+            <div className="flex-1 flex items-center justify-center">
+                {renderComponent()}
+            </div>
         </div>
     );
 }
