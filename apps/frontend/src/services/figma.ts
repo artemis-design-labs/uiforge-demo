@@ -88,6 +88,33 @@ export const figmaService = {
         }
     },
 
+    // Get all component property definitions from a file
+    // This should be called once when a file is loaded
+    getFileComponentProperties: async (fileKey: string) => {
+        console.log('📋 FigmaService: Fetching all component properties for file', fileKey);
+
+        try {
+            const response = await fetch(`/api/figma/file-components/${fileKey}`);
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                const error = new Error(errorData.error || 'Failed to fetch file component properties') as ExtendedError;
+                error.response = { status: response.status, data: errorData };
+                throw error;
+            }
+
+            const data = await response.json();
+            console.log('✅ FigmaService: File component properties received', {
+                fileKey,
+                componentCount: data.componentCount
+            });
+            return data;
+        } catch (error) {
+            console.error('❌ FigmaService: Failed to fetch file component properties', error);
+            throw error;
+        }
+    },
+
     // Get component properties from Figma
     getComponentProperties: async (fileKey: string, nodeId: string) => {
         console.log('📋 FigmaService: Fetching component properties', { fileKey, nodeId });

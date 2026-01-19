@@ -12,7 +12,8 @@ export default function DesignPage() {
         selectedComponentName,
         selectedComponentType,
         currentFileKey,
-        figmaComponentProps
+        figmaComponentProps,
+        fileComponentDefinitions
     } = useAppSelector((state) => state.figma);
 
     const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -21,12 +22,13 @@ export default function DesignPage() {
     const [useFallback, setUseFallback] = useState(false);
     const [propsLoading, setPropsLoading] = useState(false);
 
-    // Fetch component properties from Figma API dynamically
+    // Fetch component properties from cached definitions or Figma API
     useEffect(() => {
         console.log('🔍 Component selection changed:', {
             selectedComponent,
             selectedComponentName,
-            currentFileKey
+            currentFileKey,
+            hasCachedDefinitions: Object.keys(fileComponentDefinitions).length > 0
         });
 
         if (!selectedComponent || !currentFileKey) {
@@ -37,21 +39,41 @@ export default function DesignPage() {
         const fetchComponentProperties = async () => {
             setPropsLoading(true);
 
+            // PRIORITY 1: Check cached file component definitions (fastest)
+            if (selectedComponentName && fileComponentDefinitions[selectedComponentName]) {
+                const cached = fileComponentDefinitions[selectedComponentName];
+                console.log('📦 Using cached component properties for:', selectedComponentName, cached.properties);
+
+                const propsRecord: Record<string, any> = {};
+                for (const [key, prop] of Object.entries(cached.properties)) {
+                    propsRecord[key] = {
+                        name: prop.name,
+                        type: prop.type,
+                        value: prop.defaultValue,
+                        options: prop.options,
+                    };
+                }
+                dispatch(setFigmaComponentProps(propsRecord));
+                setPropsLoading(false);
+                return;
+            }
+
+            // PRIORITY 2: Try Figma API for node-specific properties
             try {
-                // First try to get properties from Figma API
                 console.log('📋 Fetching properties from Figma API...');
                 const response = await figmaService.getComponentProperties(currentFileKey, selectedComponent);
 
                 if (response.properties && Object.keys(response.properties).length > 0) {
                     console.log('✅ Got properties from Figma API:', response.properties);
                     dispatch(setFigmaComponentProps(response.properties));
+                    setPropsLoading(false);
                     return;
                 }
             } catch (err) {
                 console.warn('⚠️ Could not fetch from Figma API, trying local registry...', err);
             }
 
-            // Fallback to local registry if API fails or returns no properties
+            // PRIORITY 3: Fallback to local registry
             if (selectedComponentName) {
                 const figmaProps = getFigmaProperties(selectedComponentName);
                 console.log('🔍 getFigmaProperties from registry:', {
@@ -84,7 +106,7 @@ export default function DesignPage() {
         };
 
         fetchComponentProperties();
-    }, [selectedComponent, selectedComponentName, currentFileKey, dispatch]);
+    }, [selectedComponent, selectedComponentName, currentFileKey, fileComponentDefinitions, dispatch]);
 
     // Fetch component image when selection changes
     useEffect(() => {

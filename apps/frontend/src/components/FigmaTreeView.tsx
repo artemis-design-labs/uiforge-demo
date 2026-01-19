@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
-import { setSelectedFile, setSelectedPage, setSelectedComponent, setError, clearError, setLoading, setFileTree, setCurrentFileKey, setCurrentFileUrl, setInstanceData, toggleNodeExpansion, setExpandedNodes, addRecentFile } from '@/store/figmaSlice';
+import { setSelectedFile, setSelectedPage, setSelectedComponent, setError, clearError, setLoading, setFileTree, setCurrentFileKey, setCurrentFileUrl, setInstanceData, toggleNodeExpansion, setExpandedNodes, addRecentFile, setFileComponentDefinitions } from '@/store/figmaSlice';
 import { figmaService } from '@/services/figma';
 import { activityLogger } from '@/services/activityLogger';
 import { RecentFilesPanel } from './RecentFilesPanel';
@@ -320,6 +320,20 @@ export default function FigmaTreeView() {
 
             // Log file opened (critical - real-time)
             activityLogger.logFileOpened(fileKey, url);
+
+            // Fetch and cache component property definitions for the file
+            // This enables dynamic property discovery for all components
+            figmaService.getFileComponentProperties(fileKey)
+                .then((propsData) => {
+                    if (propsData.components) {
+                        console.log('📦 Cached component properties for', propsData.componentCount, 'components');
+                        dispatch(setFileComponentDefinitions(propsData.components));
+                    }
+                })
+                .catch((err) => {
+                    console.warn('⚠️ Could not fetch component properties:', err.message);
+                    // Non-fatal: app continues to work with manual registry
+                });
         })
             .catch((err) => {
                 // Handle document size errors with specific message

@@ -23,6 +23,19 @@ interface FigmaComponentProperty {
     defaultValue?: boolean | string;
 }
 
+// File-level component property definitions (cached from Figma API)
+interface FileComponentDefinition {
+    nodeId: string;
+    name: string;
+    type: string;
+    properties: Record<string, {
+        name: string;
+        type: 'BOOLEAN' | 'VARIANT' | 'TEXT' | 'INSTANCE_SWAP';
+        defaultValue: boolean | string;
+        options?: string[];
+    }>;
+}
+
 interface FigmaState {
     fileTree: TreeNode | null;
     currentFileKey: string | null;
@@ -41,6 +54,8 @@ interface FigmaState {
     error: string | null;
     // Figma component properties for the currently selected component
     figmaComponentProps: Record<string, FigmaComponentProperty>;
+    // File-level component property definitions (cached from Figma)
+    fileComponentDefinitions: Record<string, FileComponentDefinition>;
 }
 
 const initialState: FigmaState = {
@@ -60,6 +75,7 @@ const initialState: FigmaState = {
     loading: false,
     error: null,
     figmaComponentProps: {},
+    fileComponentDefinitions: {},
 };
 
 const figmaSlice = createSlice({
@@ -162,6 +178,13 @@ const figmaSlice = createSlice({
         clearFigmaComponentProps: (state) => {
             state.figmaComponentProps = {};
         },
+        // File-level component definitions actions
+        setFileComponentDefinitions: (state, action: PayloadAction<Record<string, FileComponentDefinition>>) => {
+            state.fileComponentDefinitions = action.payload;
+        },
+        clearFileComponentDefinitions: (state) => {
+            state.fileComponentDefinitions = {};
+        },
     },
 });
 
@@ -186,6 +209,8 @@ export const {
     setFigmaComponentProps,
     updateFigmaComponentProp,
     clearFigmaComponentProps,
+    setFileComponentDefinitions,
+    clearFileComponentDefinitions,
 } = figmaSlice.actions;
 
 export default figmaSlice.reducer;
