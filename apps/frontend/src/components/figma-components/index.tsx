@@ -58,8 +58,22 @@ export const COMPONENT_REGISTRY: Record<string, {
         },
         nodeId: '14:3738',
     },
-    // Breadcrumb component
-    'Breadcrumb': {
+    // Breadcrumb components (note: space before "Mode" in Figma names)
+    'Breadcrumb/Dark Mode': {
+        component: FigmaBreadcrumb,
+        defaultProps: {
+            items: [
+                { label: 'Home', href: '/' },
+                { label: 'Products', href: '/products' },
+                { label: 'Category', href: '/category' },
+                { label: 'Current Page' },
+            ],
+            showHomeIcon: true,
+            darkMode: true,
+        },
+        nodeId: '15:2303',
+    },
+    'Breadcrumb/Light Mode': {
         component: FigmaBreadcrumb,
         defaultProps: {
             items: [
@@ -71,10 +85,10 @@ export const COMPONENT_REGISTRY: Record<string, {
             showHomeIcon: true,
             darkMode: false,
         },
-        nodeId: 'breadcrumb',
+        nodeId: '15:2304',
     },
     // Dropdown component
-    'Dropdown': {
+    'Dropdown/LightMode': {
         component: FigmaDropdown,
         defaultProps: {
             label: 'Label',
@@ -87,10 +101,10 @@ export const COMPONENT_REGISTRY: Record<string, {
             darkMode: false,
             expanded: false,
         },
-        nodeId: 'dropdown',
+        nodeId: '15:5690',
     },
     // Progress component
-    'Progress': {
+    'ProgressLinear/LightMode': {
         component: FigmaProgressBar,
         defaultProps: {
             value: 60,
@@ -100,7 +114,7 @@ export const COMPONENT_REGISTRY: Record<string, {
             darkMode: false,
             color: 'primary',
         },
-        nodeId: 'progress',
+        nodeId: '15:5698',
     },
 };
 
