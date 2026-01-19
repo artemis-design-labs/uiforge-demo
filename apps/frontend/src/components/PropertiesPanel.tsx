@@ -9,6 +9,7 @@ import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { ComponentProperties } from '@/types/component';
 import { CodeGenModal } from '@/components/CodeGenModal';
+import { FigmaPropertiesPanel } from '@/components/FigmaPropertiesPanel';
 
 interface PropertiesPanelProps {
     properties: ComponentProperties;
@@ -137,9 +138,12 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ properties, onPropert
 
     return (
         <div className="p-4 space-y-6">
+            {/* Figma Component Properties Panel */}
+            <FigmaPropertiesPanel />
+
             <div>
                 <h3 className="text-sm font-semibold mb-4">Component Properties</h3>
-                
+
                 {/* Component Info */}
                 <div className="space-y-2 mb-6 p-3 bg-gray-50 dark:bg-gray-800 rounded">
                     <div className="text-xs">

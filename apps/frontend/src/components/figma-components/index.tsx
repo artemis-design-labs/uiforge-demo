@@ -6,11 +6,20 @@ import { FigmaBreadcrumb } from './FigmaBreadcrumb';
 import { FigmaDropdown } from './FigmaDropdown';
 import { FigmaProgressBar } from './FigmaProgressBar';
 
+// Figma property definition type
+export interface FigmaPropertyDefinition {
+    name: string;
+    type: 'BOOLEAN' | 'VARIANT' | 'TEXT';
+    defaultValue: boolean | string;
+    options?: string[]; // For VARIANT type
+}
+
 // Component registry - maps Figma component names to React components
 export const COMPONENT_REGISTRY: Record<string, {
     component: React.ComponentType<any>;
     defaultProps: Record<string, any>;
     nodeId: string;
+    figmaProperties?: FigmaPropertyDefinition[];
 }> = {
     // Accordion components
     'Accordion/DarkMode': {
@@ -107,14 +116,32 @@ export const COMPONENT_REGISTRY: Record<string, {
     'ProgressLinear/LightMode': {
         component: FigmaProgressBar,
         defaultProps: {
-            value: 60,
-            label: 'Progress',
-            showLabel: true,
-            showPercentage: true,
+            number: true,
+            color: 'Primary',
+            small: 'False',
+            value: 25,
             darkMode: false,
-            color: 'primary',
         },
         nodeId: '15:5698',
+        figmaProperties: [
+            {
+                name: 'number',
+                type: 'BOOLEAN',
+                defaultValue: true,
+            },
+            {
+                name: 'color',
+                type: 'VARIANT',
+                defaultValue: 'Primary',
+                options: ['Primary'],
+            },
+            {
+                name: 'small',
+                type: 'VARIANT',
+                defaultValue: 'False',
+                options: ['False', 'True'],
+            },
+        ],
     },
 };
 
@@ -131,6 +158,12 @@ export function isComponentSupported(name: string): boolean {
 // Get all supported component names
 export function getSupportedComponentNames(): string[] {
     return Object.keys(COMPONENT_REGISTRY);
+}
+
+// Get Figma properties for a component
+export function getFigmaProperties(name: string): FigmaPropertyDefinition[] | null {
+    const registration = COMPONENT_REGISTRY[name];
+    return registration?.figmaProperties || null;
 }
 
 // Dynamic component renderer

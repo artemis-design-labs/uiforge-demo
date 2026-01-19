@@ -14,6 +14,14 @@ interface TreeNode {
     children?: TreeNode[];
 }
 
+// Figma component property definition
+interface FigmaComponentProperty {
+    name: string;
+    type: 'BOOLEAN' | 'VARIANT' | 'TEXT';
+    value: boolean | string;
+    options?: string[]; // For VARIANT type
+}
+
 interface FigmaState {
     fileTree: TreeNode | null;
     currentFileKey: string | null;
@@ -30,6 +38,8 @@ interface FigmaState {
     recentFiles: RecentFile[];
     loading: boolean;
     error: string | null;
+    // Figma component properties for the currently selected component
+    figmaComponentProps: Record<string, FigmaComponentProperty>;
 }
 
 const initialState: FigmaState = {
@@ -48,6 +58,7 @@ const initialState: FigmaState = {
     recentFiles: [],
     loading: false,
     error: null,
+    figmaComponentProps: {},
 };
 
 const figmaSlice = createSlice({
@@ -137,6 +148,19 @@ const figmaSlice = createSlice({
         setRecentFiles: (state, action: PayloadAction<RecentFile[]>) => {
             state.recentFiles = action.payload.slice(0, 5);
         },
+        // Figma component properties actions
+        setFigmaComponentProps: (state, action: PayloadAction<Record<string, FigmaComponentProperty>>) => {
+            state.figmaComponentProps = action.payload;
+        },
+        updateFigmaComponentProp: (state, action: PayloadAction<{ name: string; value: boolean | string }>) => {
+            const { name, value } = action.payload;
+            if (state.figmaComponentProps[name]) {
+                state.figmaComponentProps[name].value = value;
+            }
+        },
+        clearFigmaComponentProps: (state) => {
+            state.figmaComponentProps = {};
+        },
     },
 });
 
@@ -158,6 +182,9 @@ export const {
     toggleNodeExpansion,
     addRecentFile,
     setRecentFiles,
+    setFigmaComponentProps,
+    updateFigmaComponentProp,
+    clearFigmaComponentProps,
 } = figmaSlice.actions;
 
 export default figmaSlice.reducer;

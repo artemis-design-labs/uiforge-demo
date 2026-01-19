@@ -1,16 +1,49 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useAppSelector } from '@/store/hooks';
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { setFigmaComponentProps, clearFigmaComponentProps } from '@/store/figmaSlice';
 import { figmaService } from '@/services/figma';
-import { ComponentRenderer, isComponentSupported } from '@/components/figma-components';
+import { ComponentRenderer, isComponentSupported, getFigmaProperties } from '@/components/figma-components';
 
 export default function DesignPage() {
-    const { selectedComponent, selectedComponentName, selectedComponentType, currentFileKey } = useAppSelector((state) => state.figma);
+    const dispatch = useAppDispatch();
+    const {
+        selectedComponent,
+        selectedComponentName,
+        selectedComponentType,
+        currentFileKey,
+        figmaComponentProps
+    } = useAppSelector((state) => state.figma);
 
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [useFallback, setUseFallback] = useState(false);
+
+    // Initialize Figma component props when component is selected
+    useEffect(() => {
+        if (!selectedComponentName) {
+            dispatch(clearFigmaComponentProps());
+            return;
+        }
+
+        const figmaProps = getFigmaProperties(selectedComponentName);
+        if (figmaProps) {
+            const propsRecord: Record<string, any> = {};
+            for (const prop of figmaProps) {
+                propsRecord[prop.name] = {
+                    name: prop.name,
+                    type: prop.type,
+                    value: prop.defaultValue,
+                    options: prop.options,
+                };
+            }
+            dispatch(setFigmaComponentProps(propsRecord));
+            console.log('📊 Initialized Figma props for', selectedComponentName, propsRecord);
+        } else {
+            dispatch(clearFigmaComponentProps());
+        }
+    }, [selectedComponentName, dispatch]);
 
     // Fetch component image when selection changes
     useEffect(() => {
@@ -63,6 +96,15 @@ export default function DesignPage() {
         fetchImage();
     }, [selectedComponent, currentFileKey, selectedComponentName]);
 
+    // Convert figmaComponentProps to props object for ComponentRenderer
+    const getComponentProps = () => {
+        const props: Record<string, any> = {};
+        for (const [key, prop] of Object.entries(figmaComponentProps)) {
+            props[key] = prop.value;
+        }
+        return props;
+    };
+
     const renderContent = () => {
         // No component selected
         if (!selectedComponent || !selectedComponentName) {
@@ -98,7 +140,10 @@ export default function DesignPage() {
                     <div className="mb-2 px-3 py-1 bg-blue-500/20 text-blue-400 rounded text-xs">
                         React Component Preview
                     </div>
-                    <ComponentRenderer componentName={selectedComponentName} />
+                    <ComponentRenderer
+                        componentName={selectedComponentName}
+                        props={getComponentProps()}
+                    />
                 </div>
             );
         }
