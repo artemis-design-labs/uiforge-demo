@@ -128,7 +128,12 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ properties, onPropert
         }
     };
 
-    if (!instanceData) {
+    // Get figma component props from Redux
+    const { figmaComponentProps } = useAppSelector((state) => state.figma);
+    const hasFigmaProps = figmaComponentProps && Object.keys(figmaComponentProps).length > 0;
+
+    // Show message only if no component is selected AND no figma props
+    if (!instanceData && !hasFigmaProps) {
         return (
             <div className="p-4 text-sm text-gray-500">
                 Select a component to view its properties
@@ -138,9 +143,11 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ properties, onPropert
 
     return (
         <div className="p-4 space-y-6">
-            {/* Figma Component Properties Panel */}
+            {/* Figma Component Properties Panel - Always show if we have figma props */}
             <FigmaPropertiesPanel />
 
+            {/* Instance-specific properties - only show if instanceData exists */}
+            {instanceData && (
             <div>
                 <h3 className="text-sm font-semibold mb-4">Component Properties</h3>
 
@@ -520,6 +527,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ properties, onPropert
                     </div>
                 )}
             </div>
+            )}
 
             {/* Code Generation Modal */}
             <CodeGenModal
