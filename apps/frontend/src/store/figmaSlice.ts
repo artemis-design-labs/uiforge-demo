@@ -17,9 +17,10 @@ interface TreeNode {
 // Figma component property definition
 interface FigmaComponentProperty {
     name: string;
-    type: 'BOOLEAN' | 'VARIANT' | 'TEXT';
+    type: 'BOOLEAN' | 'VARIANT' | 'TEXT' | 'INSTANCE_SWAP';
     value: boolean | string;
     options?: string[]; // For VARIANT type
+    defaultValue?: boolean | string;
 }
 
 interface FigmaState {

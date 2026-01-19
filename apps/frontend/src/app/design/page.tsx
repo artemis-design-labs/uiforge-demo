@@ -19,43 +19,72 @@ export default function DesignPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [useFallback, setUseFallback] = useState(false);
+    const [propsLoading, setPropsLoading] = useState(false);
 
-    // Initialize Figma component props when component is selected
+    // Fetch component properties from Figma API dynamically
     useEffect(() => {
         console.log('🔍 Component selection changed:', {
+            selectedComponent,
             selectedComponentName,
-            hasName: !!selectedComponentName
+            currentFileKey
         });
 
-        if (!selectedComponentName) {
+        if (!selectedComponent || !currentFileKey) {
             dispatch(clearFigmaComponentProps());
             return;
         }
 
-        const figmaProps = getFigmaProperties(selectedComponentName);
-        console.log('🔍 getFigmaProperties result:', {
-            componentName: selectedComponentName,
-            figmaProps,
-            hasProps: !!figmaProps
-        });
+        const fetchComponentProperties = async () => {
+            setPropsLoading(true);
 
-        if (figmaProps) {
-            const propsRecord: Record<string, any> = {};
-            for (const prop of figmaProps) {
-                propsRecord[prop.name] = {
-                    name: prop.name,
-                    type: prop.type,
-                    value: prop.defaultValue,
-                    options: prop.options,
-                };
+            try {
+                // First try to get properties from Figma API
+                console.log('📋 Fetching properties from Figma API...');
+                const response = await figmaService.getComponentProperties(currentFileKey, selectedComponent);
+
+                if (response.properties && Object.keys(response.properties).length > 0) {
+                    console.log('✅ Got properties from Figma API:', response.properties);
+                    dispatch(setFigmaComponentProps(response.properties));
+                    return;
+                }
+            } catch (err) {
+                console.warn('⚠️ Could not fetch from Figma API, trying local registry...', err);
             }
-            dispatch(setFigmaComponentProps(propsRecord));
-            console.log('📊 Dispatched Figma props for', selectedComponentName, propsRecord);
-        } else {
-            console.log('⚠️ No Figma properties found for:', selectedComponentName);
-            dispatch(clearFigmaComponentProps());
-        }
-    }, [selectedComponentName, dispatch]);
+
+            // Fallback to local registry if API fails or returns no properties
+            if (selectedComponentName) {
+                const figmaProps = getFigmaProperties(selectedComponentName);
+                console.log('🔍 getFigmaProperties from registry:', {
+                    componentName: selectedComponentName,
+                    figmaProps,
+                    hasProps: !!figmaProps
+                });
+
+                if (figmaProps) {
+                    const propsRecord: Record<string, any> = {};
+                    for (const prop of figmaProps) {
+                        propsRecord[prop.name] = {
+                            name: prop.name,
+                            type: prop.type,
+                            value: prop.defaultValue,
+                            options: prop.options,
+                        };
+                    }
+                    dispatch(setFigmaComponentProps(propsRecord));
+                    console.log('📊 Dispatched Figma props from registry for', selectedComponentName, propsRecord);
+                } else {
+                    console.log('⚠️ No Figma properties found for:', selectedComponentName);
+                    dispatch(clearFigmaComponentProps());
+                }
+            } else {
+                dispatch(clearFigmaComponentProps());
+            }
+
+            setPropsLoading(false);
+        };
+
+        fetchComponentProperties();
+    }, [selectedComponent, selectedComponentName, currentFileKey, dispatch]);
 
     // Fetch component image when selection changes
     useEffect(() => {

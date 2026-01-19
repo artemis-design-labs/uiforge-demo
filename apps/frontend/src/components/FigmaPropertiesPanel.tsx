@@ -94,6 +94,28 @@ export function FigmaPropertiesPanel() {
                                 placeholder={`Enter ${key}...`}
                             />
                         )}
+
+                        {/* INSTANCE_SWAP property - Dropdown for swappable instances */}
+                        {prop.type === 'INSTANCE_SWAP' && prop.options && (
+                            <select
+                                className="w-full h-9 px-3 text-sm border border-gray-300 rounded-md bg-white text-gray-800 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer"
+                                value={prop.value as string}
+                                onChange={(e) => handlePropertyChange(key, e.target.value)}
+                            >
+                                {prop.options.map((option: string) => (
+                                    <option key={option} value={option}>
+                                        {option}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
+
+                        {/* INSTANCE_SWAP without options - show as text */}
+                        {prop.type === 'INSTANCE_SWAP' && !prop.options && (
+                            <div className="p-2 bg-gray-50 rounded border border-gray-200 text-xs text-gray-600">
+                                Instance: {prop.value as string}
+                            </div>
+                        )}
                     </div>
                 ))}
             </div>

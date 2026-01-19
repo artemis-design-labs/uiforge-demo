@@ -88,6 +88,29 @@ export const figmaService = {
         }
     },
 
+    // Get component properties from Figma
+    getComponentProperties: async (fileKey: string, nodeId: string) => {
+        console.log('📋 FigmaService: Fetching component properties', { fileKey, nodeId });
+
+        try {
+            const response = await fetch(`/api/figma/component/${fileKey}/${nodeId}`);
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                const error = new Error(errorData.error || 'Failed to fetch component properties') as ExtendedError;
+                error.response = { status: response.status, data: errorData };
+                throw error;
+            }
+
+            const data = await response.json();
+            console.log('✅ FigmaService: Component properties received', data);
+            return data;
+        } catch (error) {
+            console.error('❌ FigmaService: Failed to fetch component properties', error);
+            throw error;
+        }
+    },
+
     // Clear cache for a file and reload fresh data
     clearCacheAndReload: async (figmaUrl: string) => {
         const fileKey = extractFileKey(figmaUrl);
