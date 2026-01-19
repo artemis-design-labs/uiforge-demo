@@ -30,9 +30,27 @@ export const COMPONENT_REGISTRY: Record<string, {
             content: 'This is the accordion content that appears when expanded.',
             expanded: false,
             disabled: false,
+            showSecondaryHeading: true,
             darkMode: true, // Dark background, light text
         },
         nodeId: '1:45',
+        figmaProperties: [
+            {
+                name: 'expanded',
+                type: 'BOOLEAN',
+                defaultValue: false,
+            },
+            {
+                name: 'disabled',
+                type: 'BOOLEAN',
+                defaultValue: false,
+            },
+            {
+                name: 'showSecondaryHeading',
+                type: 'BOOLEAN',
+                defaultValue: true,
+            },
+        ],
     },
     'Accordion/LightMode': {
         component: FigmaAccordion,
@@ -42,9 +60,27 @@ export const COMPONENT_REGISTRY: Record<string, {
             content: 'This is the accordion content that appears when expanded.',
             expanded: false,
             disabled: false,
+            showSecondaryHeading: true,
             darkMode: false, // White background, dark text
         },
         nodeId: '1:135',
+        figmaProperties: [
+            {
+                name: 'expanded',
+                type: 'BOOLEAN',
+                defaultValue: false,
+            },
+            {
+                name: 'disabled',
+                type: 'BOOLEAN',
+                defaultValue: false,
+            },
+            {
+                name: 'showSecondaryHeading',
+                type: 'BOOLEAN',
+                defaultValue: true,
+            },
+        ],
     },
     // Button components
     'Button/LightMode': {
@@ -56,6 +92,18 @@ export const COMPONENT_REGISTRY: Record<string, {
             showRightIcon: true,
         },
         nodeId: '14:3737',
+        figmaProperties: [
+            {
+                name: 'showLeftIcon',
+                type: 'BOOLEAN',
+                defaultValue: true,
+            },
+            {
+                name: 'showRightIcon',
+                type: 'BOOLEAN',
+                defaultValue: true,
+            },
+        ],
     },
     'Button/DarkMode': {
         component: FigmaButton,
@@ -66,6 +114,18 @@ export const COMPONENT_REGISTRY: Record<string, {
             showRightIcon: true,
         },
         nodeId: '14:3738',
+        figmaProperties: [
+            {
+                name: 'showLeftIcon',
+                type: 'BOOLEAN',
+                defaultValue: true,
+            },
+            {
+                name: 'showRightIcon',
+                type: 'BOOLEAN',
+                defaultValue: true,
+            },
+        ],
     },
     // Breadcrumb components (note: space before "Mode" in Figma names)
     'Breadcrumb/Dark Mode': {
@@ -81,6 +141,13 @@ export const COMPONENT_REGISTRY: Record<string, {
             darkMode: true,
         },
         nodeId: '15:2303',
+        figmaProperties: [
+            {
+                name: 'showHomeIcon',
+                type: 'BOOLEAN',
+                defaultValue: true,
+            },
+        ],
     },
     'Breadcrumb/Light Mode': {
         component: FigmaBreadcrumb,
@@ -95,6 +162,13 @@ export const COMPONENT_REGISTRY: Record<string, {
             darkMode: false,
         },
         nodeId: '15:2304',
+        figmaProperties: [
+            {
+                name: 'showHomeIcon',
+                type: 'BOOLEAN',
+                defaultValue: true,
+            },
+        ],
     },
     // Dropdown component
     'Dropdown/LightMode': {
@@ -109,8 +183,28 @@ export const COMPONENT_REGISTRY: Record<string, {
             ],
             darkMode: false,
             expanded: false,
+            showIcon: true,
+            showHelperText: true,
         },
         nodeId: '15:5690',
+        figmaProperties: [
+            {
+                name: 'showIcon',
+                type: 'BOOLEAN',
+                defaultValue: true,
+            },
+            {
+                name: 'showHelperText',
+                type: 'BOOLEAN',
+                defaultValue: true,
+            },
+            {
+                name: 'state',
+                type: 'VARIANT',
+                defaultValue: 'Enabled',
+                options: ['Enabled', 'Hovered', 'Focused'],
+            },
+        ],
     },
     // Progress component
     'ProgressLinear/LightMode': {

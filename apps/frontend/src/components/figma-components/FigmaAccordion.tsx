@@ -21,6 +21,7 @@ export interface FigmaAccordionProps {
     content?: string;
     expanded?: boolean;
     disabled?: boolean;
+    showSecondaryHeading?: boolean;
     darkMode?: boolean;
 }
 
@@ -37,6 +38,7 @@ export function FigmaAccordion({
     content = 'This is the accordion content that appears when expanded.',
     expanded = false,
     disabled = false,
+    showSecondaryHeading = true,
     darkMode = false,
 }: FigmaAccordionProps) {
     // Colors based on mode
@@ -90,21 +92,23 @@ export function FigmaAccordion({
                     </div>
 
                     {/* Secondary Heading Text */}
-                    <div className="flex-1 flex flex-col items-start py-[12px]">
-                        <p
-                            className="w-full text-left whitespace-pre-wrap"
-                            style={{
-                                fontFamily: "'Roboto', sans-serif",
-                                fontWeight: 400,
-                                fontSize: '16px',
-                                lineHeight: 1.5,
-                                letterSpacing: '0.15px',
-                                color: textSecondary,
-                            }}
-                        >
-                            {secondaryHeading}
-                        </p>
-                    </div>
+                    {showSecondaryHeading && (
+                        <div className="flex-1 flex flex-col items-start py-[12px]">
+                            <p
+                                className="w-full text-left whitespace-pre-wrap"
+                                style={{
+                                    fontFamily: "'Roboto', sans-serif",
+                                    fontWeight: 400,
+                                    fontSize: '16px',
+                                    lineHeight: 1.5,
+                                    letterSpacing: '0.15px',
+                                    color: textSecondary,
+                                }}
+                            >
+                                {secondaryHeading}
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Content (only shown when expanded and not disabled) */}
