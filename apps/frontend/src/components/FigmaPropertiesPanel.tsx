@@ -14,6 +14,13 @@ export function FigmaPropertiesPanel() {
     const dispatch = useAppDispatch();
     const { figmaComponentProps, selectedComponentName } = useAppSelector((state) => state.figma);
 
+    // Debug logging
+    console.log('🎛️ FigmaPropertiesPanel render:', {
+        selectedComponentName,
+        figmaComponentProps,
+        propCount: Object.keys(figmaComponentProps || {}).length
+    });
+
     const handlePropertyChange = (name: string, value: boolean | string) => {
         dispatch(updateFigmaComponentProp({ name, value }));
         console.log('🎨 Property changed:', name, '=', value);
@@ -21,6 +28,7 @@ export function FigmaPropertiesPanel() {
 
     // Don't render if no props available
     if (!figmaComponentProps || Object.keys(figmaComponentProps).length === 0) {
+        console.log('🎛️ FigmaPropertiesPanel: No props, not rendering');
         return null;
     }
 

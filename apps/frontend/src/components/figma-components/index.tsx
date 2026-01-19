@@ -162,7 +162,10 @@ export function getSupportedComponentNames(): string[] {
 
 // Get Figma properties for a component
 export function getFigmaProperties(name: string): FigmaPropertyDefinition[] | null {
+    console.log('🔎 getFigmaProperties called with:', name);
+    console.log('🔎 Available registry keys:', Object.keys(COMPONENT_REGISTRY));
     const registration = COMPONENT_REGISTRY[name];
+    console.log('🔎 Registration found:', !!registration, registration?.figmaProperties ? 'has props' : 'no props');
     return registration?.figmaProperties || null;
 }
 

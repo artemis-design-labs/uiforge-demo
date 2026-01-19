@@ -22,12 +22,23 @@ export default function DesignPage() {
 
     // Initialize Figma component props when component is selected
     useEffect(() => {
+        console.log('🔍 Component selection changed:', {
+            selectedComponentName,
+            hasName: !!selectedComponentName
+        });
+
         if (!selectedComponentName) {
             dispatch(clearFigmaComponentProps());
             return;
         }
 
         const figmaProps = getFigmaProperties(selectedComponentName);
+        console.log('🔍 getFigmaProperties result:', {
+            componentName: selectedComponentName,
+            figmaProps,
+            hasProps: !!figmaProps
+        });
+
         if (figmaProps) {
             const propsRecord: Record<string, any> = {};
             for (const prop of figmaProps) {
@@ -39,8 +50,9 @@ export default function DesignPage() {
                 };
             }
             dispatch(setFigmaComponentProps(propsRecord));
-            console.log('📊 Initialized Figma props for', selectedComponentName, propsRecord);
+            console.log('📊 Dispatched Figma props for', selectedComponentName, propsRecord);
         } else {
+            console.log('⚠️ No Figma properties found for:', selectedComponentName);
             dispatch(clearFigmaComponentProps());
         }
     }, [selectedComponentName, dispatch]);
