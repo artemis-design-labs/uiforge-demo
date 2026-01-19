@@ -18,56 +18,128 @@ const ArrowRightIcon = ({ color = 'currentColor' }: { color?: string }) => (
 export interface FigmaButtonProps {
     label?: string;
     darkMode?: boolean;
-    showLeftIcon?: boolean;
-    showRightIcon?: boolean;
+    // Boolean properties (matching Figma)
+    iconLeft?: boolean;
+    iconRight?: boolean;
+    showLeftIcon?: boolean;  // Legacy alias for iconLeft
+    showRightIcon?: boolean; // Legacy alias for iconRight
+    // Variant properties (matching Figma)
+    size?: 'Small' | 'Medium' | 'Large';
+    color?: 'Primary' | 'Secondary' | 'Error' | 'Warning' | 'Info' | 'Success';
+    state?: 'Enabled' | 'Hovered' | 'Focused' | 'Disabled';
+    type?: 'Contained' | 'Outlined' | 'Text';
     disabled?: boolean;
 }
 
 /**
  * FigmaButton - Generated from Figma design
- * Supports LightMode and DarkMode variants
+ * Supports LightMode and DarkMode variants with full property support
  *
- * LightMode: Blue background (#1976d2), white text
- * DarkMode: Light blue background (#90caf9), dark text
+ * Properties:
+ * - iconLeft/iconRight: Show/hide icons
+ * - size: Small, Medium, Large
+ * - color: Primary, Secondary, Error, Warning, Info, Success
+ * - state: Enabled, Hovered, Focused, Disabled
+ * - type: Contained, Outlined, Text
  */
 export function FigmaButton({
     label = 'Button',
     darkMode = false,
-    showLeftIcon = true,
-    showRightIcon = true,
+    iconLeft,
+    iconRight,
+    showLeftIcon,
+    showRightIcon,
+    size = 'Large',
+    color = 'Primary',
+    state = 'Enabled',
+    type = 'Contained',
     disabled = false,
 }: FigmaButtonProps) {
-    // Colors based on mode
-    const bgColor = darkMode ? '#90caf9' : '#1976d2';
-    const textColor = darkMode ? 'rgba(0, 0, 0, 0.87)' : 'white';
+    // Use iconLeft/iconRight if provided, otherwise fall back to showLeftIcon/showRightIcon
+    const showLeft = iconLeft ?? showLeftIcon ?? true;
+    const showRight = iconRight ?? showRightIcon ?? true;
+
+    // Determine if disabled from state or disabled prop
+    const isDisabled = disabled || state === 'Disabled';
+
+    // Size configurations
+    const sizeConfig = {
+        Small: { height: 'h-[30px]', padding: 'px-[10px] py-[4px]', fontSize: 'text-[13px]', iconSize: 'w-[18px] h-[18px]' },
+        Medium: { height: 'h-[36px]', padding: 'px-[16px] py-[6px]', fontSize: 'text-[14px]', iconSize: 'w-[20px] h-[20px]' },
+        Large: { height: 'h-[42px]', padding: 'px-[22px] py-[8px]', fontSize: 'text-[15px]', iconSize: 'w-[24px] h-[24px]' },
+    };
+
+    // Color palette
+    const colorPalette = {
+        Primary: { main: '#1976d2', dark: '#1565c0', contrast: 'white' },
+        Secondary: { main: '#9c27b0', dark: '#7b1fa2', contrast: 'white' },
+        Error: { main: '#d32f2f', dark: '#c62828', contrast: 'white' },
+        Warning: { main: '#ed6c02', dark: '#e65100', contrast: 'white' },
+        Info: { main: '#0288d1', dark: '#01579b', contrast: 'white' },
+        Success: { main: '#2e7d32', dark: '#1b5e20', contrast: 'white' },
+    };
+
+    const currentSize = sizeConfig[size] || sizeConfig.Large;
+    const currentColor = colorPalette[color] || colorPalette.Primary;
+
+    // Calculate colors based on type, state, and mode
+    let bgColor: string;
+    let textColor: string;
+    let borderColor: string | undefined;
+
+    if (darkMode) {
+        // Dark mode uses lighter versions
+        const lightColor = currentColor.main.replace('#', '');
+        bgColor = type === 'Contained' ? `#${lightColor}` : 'transparent';
+        textColor = type === 'Contained' ? 'rgba(0, 0, 0, 0.87)' : currentColor.main;
+        borderColor = type === 'Outlined' ? currentColor.main : undefined;
+    } else {
+        bgColor = type === 'Contained' ? currentColor.main : 'transparent';
+        textColor = type === 'Contained' ? currentColor.contrast : currentColor.main;
+        borderColor = type === 'Outlined' ? currentColor.main : undefined;
+    }
+
+    // State modifications
+    if (state === 'Hovered' && type === 'Contained') {
+        bgColor = currentColor.dark;
+    } else if (state === 'Hovered' && type !== 'Contained') {
+        bgColor = `${currentColor.main}14`; // 8% opacity
+    } else if (state === 'Focused') {
+        bgColor = type === 'Contained' ? currentColor.dark : `${currentColor.main}1F`; // 12% opacity
+    }
 
     return (
         <div
             data-node-id={darkMode ? "14:3738" : "14:3737"}
+            data-figma-props={JSON.stringify({ iconLeft: showLeft, iconRight: showRight, size, color, state, type })}
             className="flex items-start"
         >
             <button
-                disabled={disabled}
+                disabled={isDisabled}
                 className={`
                     flex items-center justify-center
-                    h-[40px] px-[22px] py-[8px]
+                    ${currentSize.height} ${currentSize.padding}
                     rounded-[4px] overflow-hidden
-                    ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:opacity-90'}
-                    transition-opacity
+                    ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                    transition-all duration-200
+                    ${type === 'Outlined' ? 'border' : ''}
                 `}
-                style={{ backgroundColor: bgColor }}
+                style={{
+                    backgroundColor: bgColor,
+                    borderColor: borderColor,
+                }}
             >
                 <div className="flex items-center gap-[8px]">
-                    {/* Left Arrow Icon */}
-                    {showLeftIcon && (
-                        <div className="w-[24px] h-[24px] flex items-center justify-center">
+                    {/* Left Icon */}
+                    {showLeft && (
+                        <div className={`${currentSize.iconSize} flex items-center justify-center`}>
                             <ArrowLeftIcon color={textColor} />
                         </div>
                     )}
 
                     {/* Button Label */}
                     <span
-                        className="text-[16px] font-normal leading-[1.5] tracking-[0.15px]"
+                        className={`${currentSize.fontSize} font-medium leading-[1.5] tracking-[0.15px]`}
                         style={{
                             fontFamily: "'Roboto', sans-serif",
                             color: textColor,
@@ -76,9 +148,9 @@ export function FigmaButton({
                         {label}
                     </span>
 
-                    {/* Right Arrow Icon */}
-                    {showRightIcon && (
-                        <div className="w-[24px] h-[24px] flex items-center justify-center">
+                    {/* Right Icon */}
+                    {showRight && (
+                        <div className={`${currentSize.iconSize} flex items-center justify-center`}>
                             <ArrowRightIcon color={textColor} />
                         </div>
                     )}
