@@ -2,6 +2,9 @@
 import React from 'react';
 import { FigmaAccordion } from './FigmaAccordion';
 import { FigmaButton } from './FigmaButton';
+import { FigmaBreadcrumb } from './FigmaBreadcrumb';
+import { FigmaDropdown } from './FigmaDropdown';
+import { FigmaProgressBar } from './FigmaProgressBar';
 
 // Component registry - maps Figma component names to React components
 export const COMPONENT_REGISTRY: Record<string, {
@@ -9,6 +12,7 @@ export const COMPONENT_REGISTRY: Record<string, {
     defaultProps: Record<string, any>;
     nodeId: string;
 }> = {
+    // Accordion components
     'Accordion/DarkMode': {
         component: FigmaAccordion,
         defaultProps: {
@@ -33,6 +37,7 @@ export const COMPONENT_REGISTRY: Record<string, {
         },
         nodeId: '1:135',
     },
+    // Button components
     'Button/LightMode': {
         component: FigmaButton,
         defaultProps: {
@@ -52,6 +57,50 @@ export const COMPONENT_REGISTRY: Record<string, {
             showRightIcon: true,
         },
         nodeId: '14:3738',
+    },
+    // Breadcrumb component
+    'Breadcrumb': {
+        component: FigmaBreadcrumb,
+        defaultProps: {
+            items: [
+                { label: 'Home', href: '/' },
+                { label: 'Products', href: '/products' },
+                { label: 'Category', href: '/category' },
+                { label: 'Current Page' },
+            ],
+            showHomeIcon: true,
+            darkMode: false,
+        },
+        nodeId: 'breadcrumb',
+    },
+    // Dropdown component
+    'Dropdown': {
+        component: FigmaDropdown,
+        defaultProps: {
+            label: 'Label',
+            placeholder: 'Select an option',
+            options: [
+                { value: 'option1', label: 'Option 1' },
+                { value: 'option2', label: 'Option 2' },
+                { value: 'option3', label: 'Option 3' },
+            ],
+            darkMode: false,
+            expanded: false,
+        },
+        nodeId: 'dropdown',
+    },
+    // Progress component
+    'Progress': {
+        component: FigmaProgressBar,
+        defaultProps: {
+            value: 60,
+            label: 'Progress',
+            showLabel: true,
+            showPercentage: true,
+            darkMode: false,
+            color: 'primary',
+        },
+        nodeId: 'progress',
     },
 };
 
@@ -106,3 +155,6 @@ export function ComponentRenderer({ componentName, props = {} }: ComponentRender
 
 export { FigmaAccordion } from './FigmaAccordion';
 export { FigmaButton } from './FigmaButton';
+export { FigmaBreadcrumb } from './FigmaBreadcrumb';
+export { FigmaDropdown } from './FigmaDropdown';
+export { FigmaProgressBar } from './FigmaProgressBar';
