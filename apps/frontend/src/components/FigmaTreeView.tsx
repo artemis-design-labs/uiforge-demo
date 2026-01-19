@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { setSelectedFile, setSelectedPage, setSelectedComponent, setError, clearError, setLoading, setFileTree, setCurrentFileKey, setCurrentFileUrl, setInstanceData, toggleNodeExpansion, setExpandedNodes, addRecentFile } from '@/store/figmaSlice';
 import { figmaService } from '@/services/figma';
@@ -124,6 +124,47 @@ export default function FigmaTreeView() {
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedPageIds, setExpandedPageIds] = useState<string[]>([]);
     const [refreshing, setRefreshing] = useState(false);
+
+    // Vertical resize state for header section
+    const [headerHeight, setHeaderHeight] = useState<number | null>(null); // null = auto height
+    const isResizingVertical = useRef(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const headerRef = useRef<HTMLDivElement>(null);
+
+    const startVerticalResize = useCallback((e: React.MouseEvent) => {
+        isResizingVertical.current = true;
+        document.body.style.cursor = 'row-resize';
+        document.body.style.userSelect = 'none';
+        e.preventDefault();
+    }, []);
+
+    const stopVerticalResize = useCallback(() => {
+        isResizingVertical.current = false;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+    }, []);
+
+    const handleVerticalResize = useCallback((e: MouseEvent) => {
+        if (!isResizingVertical.current || !containerRef.current) return;
+
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const newHeight = e.clientY - containerRect.top;
+
+        // Constrain height between min and max values
+        const minHeight = 100; // Minimum header height
+        const maxHeight = containerRect.height - 150; // Leave at least 150px for tree view
+
+        setHeaderHeight(Math.min(Math.max(newHeight, minHeight), maxHeight));
+    }, []);
+
+    useEffect(() => {
+        window.addEventListener('mousemove', handleVerticalResize);
+        window.addEventListener('mouseup', stopVerticalResize);
+        return () => {
+            window.removeEventListener('mousemove', handleVerticalResize);
+            window.removeEventListener('mouseup', stopVerticalResize);
+        };
+    }, [handleVerticalResize, stopVerticalResize]);
 
     // Auto-load last file on mount if exists
     useEffect(() => {
@@ -338,96 +379,112 @@ export default function FigmaTreeView() {
     const filteredPages = filterPages(allPages, searchQuery);
 
     return (
-        <div className="h-full flex flex-col">
-            {/* Recently Opened Files */}
-            <RecentFilesPanel />
+        <div ref={containerRef} className="h-full flex flex-col">
+            {/* Resizable Header Section */}
+            <div
+                ref={headerRef}
+                className="flex flex-col shrink-0 overflow-auto"
+                style={headerHeight ? { height: `${headerHeight}px` } : {}}
+            >
+                {/* Recently Opened Files */}
+                <RecentFilesPanel />
 
-            {/* File input */}
-            <div className="p-4 border-b border-border">
-                <div className="space-y-3">
-                    <input
-                        value={url}
-                        onChange={(e: any) => {
-                            setURL(e.target.value)
-                        }}
-                        type="url"
-                        placeholder="Enter Figma file URL..."
-                        className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                    <div className="flex gap-2">
-                        <button
-                            className="flex-1 px-3 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                            onClick={loadFileFileByUrl}
-                            disabled={loading || refreshing}
-                        >
-                            {loading && (
-                                <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                                </svg>
-                            )}
-                            {loading ? 'Loading...' : 'Load File'}
-                        </button>
-                        {fileTree && (
+                {/* File input */}
+                <div className="p-4 border-b border-border">
+                    <div className="space-y-3">
+                        <input
+                            value={url}
+                            onChange={(e: any) => {
+                                setURL(e.target.value)
+                            }}
+                            type="url"
+                            placeholder="Enter Figma file URL..."
+                            className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                        <div className="flex gap-2">
                             <button
-                                className="px-3 py-2 border border-input bg-background rounded-md text-sm hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                onClick={handleRefresh}
+                                className="flex-1 px-3 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                onClick={loadFileFileByUrl}
                                 disabled={loading || refreshing}
-                                title="Clear cache and reload latest version"
                             >
-                                {refreshing ? (
+                                {loading && (
                                     <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
                                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
                                     </svg>
-                                ) : (
-                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                    </svg>
                                 )}
+                                {loading ? 'Loading...' : 'Load File'}
                             </button>
-                        )}
+                            {fileTree && (
+                                <button
+                                    className="px-3 py-2 border border-input bg-background rounded-md text-sm hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    onClick={handleRefresh}
+                                    disabled={loading || refreshing}
+                                    title="Clear cache and reload latest version"
+                                >
+                                    {refreshing ? (
+                                        <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                                        </svg>
+                                    ) : (
+                                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                    )}
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
+
+                {/* Search input */}
+                {fileTree && Object.keys(fileTree).length > 0 && (
+                    <div className="p-4 border-b border-border">
+                        <div className="relative">
+                            <input
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                type="text"
+                                placeholder="Search pages or components..."
+                                className="w-full px-3 py-2 pr-8 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                            />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery('')}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                    aria-label="Clear search"
+                                >
+                                    <svg
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 16 16"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                    >
+                                        <line x1="4" y1="4" x2="12" y2="12" />
+                                        <line x1="12" y1="4" x2="4" y2="12" />
+                                    </svg>
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
 
-            {/* Search input */}
-            {fileTree && Object.keys(fileTree).length > 0 && (
-                <div className="p-4 border-b border-border">
-                    <div className="relative">
-                        <input
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            type="text"
-                            placeholder="Search pages or components..."
-                            className="w-full px-3 py-2 pr-8 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                        />
-                        {searchQuery && (
-                            <button
-                                onClick={() => setSearchQuery('')}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                                aria-label="Clear search"
-                            >
-                                <svg
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 16 16"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                >
-                                    <line x1="4" y1="4" x2="12" y2="12" />
-                                    <line x1="12" y1="4" x2="4" y2="12" />
-                                </svg>
-                            </button>
-                        )}
-                    </div>
-                </div>
-            )}
+            {/* Vertical Resize Handle */}
+            <div
+                className="h-2 cursor-row-resize bg-border hover:bg-primary/50 active:bg-primary transition-colors flex items-center justify-center shrink-0"
+                onMouseDown={startVerticalResize}
+                title="Drag to resize"
+            >
+                <div className="w-8 h-1 bg-muted-foreground/30 rounded-full" />
+            </div>
 
             {/* Pages accordion with components */}
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1 overflow-auto min-h-0">
                 {filteredPages.length > 0 ? (
                     filteredPages.map((page) => (
                         <PageAccordion
