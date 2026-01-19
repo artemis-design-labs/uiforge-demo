@@ -4,7 +4,7 @@ import React from 'react';
 export interface FigmaProgressBarProps {
     // Figma component properties (matching exact Figma schema)
     number?: boolean;      // Show/hide percentage number
-    color?: 'Primary';     // Color variant
+    color?: 'Primary' | 'Secondary' | 'Error' | 'Warning' | 'Info' | 'Success';
     small?: 'True' | 'False'; // Size variant
 
     // Additional props for flexibility
@@ -34,13 +34,19 @@ export function FigmaProgressBar({
     const barHeight = isSmall ? 2 : 4;
     const containerWidth = isSmall ? 150 : 200;
 
-    // Colors based on mode
-    const trackColor = darkMode
-        ? 'rgba(25, 118, 210, 0.3)'
-        : 'rgba(25, 118, 210, 0.3)';
-    const progressColor = darkMode
-        ? '#90caf9'
-        : '#1976d2';
+    // Color palette based on Figma semantic tokens
+    const colorPalette: Record<string, { main: string; track: string }> = {
+        Primary: { main: '#1976d2', track: 'rgba(25, 118, 210, 0.3)' },
+        Secondary: { main: '#9c27b0', track: 'rgba(156, 39, 176, 0.3)' },
+        Error: { main: '#d32f2f', track: 'rgba(211, 47, 47, 0.3)' },
+        Warning: { main: '#ed6c02', track: 'rgba(237, 108, 2, 0.3)' },
+        Info: { main: '#0288d1', track: 'rgba(2, 136, 209, 0.3)' },
+        Success: { main: '#2e7d32', track: 'rgba(46, 125, 50, 0.3)' },
+    };
+
+    const currentColor = colorPalette[color] || colorPalette.Primary;
+    const trackColor = currentColor.track;
+    const progressColor = currentColor.main;
     const textColor = darkMode
         ? 'rgba(255, 255, 255, 0.87)'
         : 'rgba(0, 0, 0, 0.87)';

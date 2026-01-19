@@ -133,7 +133,7 @@ export const COMPONENT_REGISTRY: Record<string, {
                 name: 'color',
                 type: 'VARIANT',
                 defaultValue: 'Primary',
-                options: ['Primary'],
+                options: ['Primary', 'Secondary', 'Error', 'Warning', 'Info', 'Success'],
             },
             {
                 name: 'small',

@@ -35,10 +35,10 @@ export function FigmaPropertiesPanel() {
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
-                <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                <h4 className="text-xs font-medium text-gray-600 uppercase tracking-wide">
                     Figma Properties
                 </h4>
-                <span className="text-xs text-blue-400 bg-blue-500/20 px-2 py-0.5 rounded">
+                <span className="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded">
                     {Object.keys(figmaComponentProps).length} props
                 </span>
             </div>
@@ -48,18 +48,18 @@ export function FigmaPropertiesPanel() {
                     <div key={key} className="space-y-2">
                         {/* Property label and type badge */}
                         <div className="flex items-center justify-between">
-                            <Label className="text-xs text-gray-300 capitalize">
+                            <Label className="text-xs text-gray-700 capitalize">
                                 {key.replace(/([A-Z])/g, ' $1').trim()}
                             </Label>
-                            <span className="text-[10px] text-gray-500 bg-gray-800 px-1.5 py-0.5 rounded">
+                            <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
                                 {prop.type}
                             </span>
                         </div>
 
                         {/* BOOLEAN property - Switch toggle */}
                         {prop.type === 'BOOLEAN' && (
-                            <div className="flex items-center justify-between p-2 bg-gray-800/50 rounded">
-                                <span className="text-xs text-gray-400">
+                            <div className="flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-200">
+                                <span className="text-xs text-gray-600">
                                     {prop.value ? 'Enabled' : 'Disabled'}
                                 </span>
                                 <Switch
@@ -72,7 +72,7 @@ export function FigmaPropertiesPanel() {
                         {/* VARIANT property - Dropdown selector */}
                         {prop.type === 'VARIANT' && prop.options && (
                             <select
-                                className="w-full h-9 px-3 text-sm border border-gray-700 rounded-md bg-gray-800 text-gray-200 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                                className="w-full h-9 px-3 text-sm border border-gray-300 rounded-md bg-white text-gray-800 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer"
                                 value={prop.value as string}
                                 onChange={(e) => handlePropertyChange(key, e.target.value)}
                             >
@@ -88,7 +88,7 @@ export function FigmaPropertiesPanel() {
                         {prop.type === 'TEXT' && (
                             <input
                                 type="text"
-                                className="w-full h-9 px-3 text-sm border border-gray-700 rounded-md bg-gray-800 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full h-9 px-3 text-sm border border-gray-300 rounded-md bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 value={prop.value as string}
                                 onChange={(e) => handlePropertyChange(key, e.target.value)}
                                 placeholder={`Enter ${key}...`}
@@ -100,9 +100,9 @@ export function FigmaPropertiesPanel() {
 
             {/* Component name info */}
             {selectedComponentName && (
-                <div className="pt-3 border-t border-gray-800">
+                <div className="pt-3 border-t border-gray-200">
                     <p className="text-xs text-gray-500">
-                        Component: <span className="text-gray-400">{selectedComponentName}</span>
+                        Component: <span className="text-gray-700">{selectedComponentName}</span>
                     </p>
                 </div>
             )}
