@@ -196,9 +196,13 @@ router.get('/figma/callback', async (req, res) => {
 
 // Check current user authentication
 router.get('/me', async (req, res) => {
+    console.log('/auth/me called - cookies received:', Object.keys(req.cookies || {}));
+    console.log('/auth/me - has token cookie:', !!req.cookies?.token);
+
     try {
         const token = req.cookies.token;
         if (!token) {
+            console.log('/auth/me - No token cookie found');
             return res.status(401).json({ error: 'Not authenticated' });
         }
 
