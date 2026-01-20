@@ -1,6 +1,8 @@
 export interface FigmaContext {
   selectedComponentName: string | null;
   selectedComponentType: string | null;
+  fileKey: string | null;
+  nodeId: string | null;
   componentProperties: Record<string, {
     name: string;
     type: string;

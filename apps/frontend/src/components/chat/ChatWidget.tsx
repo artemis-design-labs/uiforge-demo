@@ -20,6 +20,8 @@ export function ChatWidget() {
   const {
     selectedComponentName,
     selectedComponentType,
+    selectedComponent,
+    currentFileKey,
     figmaComponentProps,
     fileComponentDefinitions,
   } = useAppSelector((state) => state.figma);
@@ -61,6 +63,8 @@ export function ChatWidget() {
       const figmaContext: FigmaContext = {
         selectedComponentName,
         selectedComponentType,
+        fileKey: currentFileKey,
+        nodeId: selectedComponent,
         componentProperties: figmaComponentProps,
         fileComponentDefinitions,
       };
@@ -85,7 +89,7 @@ export function ChatWidget() {
         }
       );
     },
-    [dispatch, selectedComponentName, selectedComponentType, figmaComponentProps, fileComponentDefinitions, messages]
+    [dispatch, selectedComponentName, selectedComponentType, currentFileKey, selectedComponent, figmaComponentProps, fileComponentDefinitions, messages]
   );
 
   return (
