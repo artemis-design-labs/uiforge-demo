@@ -183,6 +183,7 @@ export async function GET(
                     headers: {
                         'Authorization': `Bearer ${userToken}`,
                     },
+                    cache: 'no-store', // Always fetch fresh data
                 });
 
                 if (fileResponse.ok) {
@@ -213,6 +214,7 @@ export async function GET(
                 headers: {
                     'Authorization': `Bearer ${figmaToken}`,
                 },
+                cache: 'no-store', // Always fetch fresh data
             }
         );
 

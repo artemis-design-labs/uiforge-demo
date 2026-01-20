@@ -357,7 +357,7 @@ export default function FigmaTreeView() {
 
     // Refresh file - clear cache and reload
     const handleRefresh = () => {
-        if (!currentFileUrl) return;
+        if (!currentFileUrl || !currentFileKey) return;
 
         setRefreshing(true);
         dispatch(setError(''));
@@ -377,6 +377,15 @@ export default function FigmaTreeView() {
                 // Log file refresh
                 if (currentFileKey) {
                     activityLogger.logFileOpened(currentFileKey, currentFileUrl);
+                }
+
+                // Re-fetch component property definitions (this also needs refresh)
+                return figmaService.getFileComponentProperties(currentFileKey);
+            })
+            .then((propsData) => {
+                if (propsData?.components) {
+                    console.log('📦 Refreshed component properties for', propsData.componentCount, 'components');
+                    dispatch(setFileComponentDefinitions(propsData.components));
                 }
             })
             .catch((err) => {
