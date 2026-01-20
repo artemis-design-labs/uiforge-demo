@@ -27,22 +27,25 @@ interface ComponentInfo {
     }>;
 }
 
-// Recursively find all COMPONENT_SET nodes and their properties
+// Recursively find all COMPONENT_SET and COMPONENT nodes and their properties
 function findComponentSetsWithProperties(node: FigmaNode, results: Map<string, ComponentInfo> = new Map()): Map<string, ComponentInfo> {
     // Check if this node is a COMPONENT_SET with property definitions
-    if (node.type === 'COMPONENT_SET' && node.componentPropertyDefinitions) {
+    if (node.type === 'COMPONENT_SET') {
         const properties: ComponentInfo['properties'] = {};
 
-        for (const [key, prop] of Object.entries(node.componentPropertyDefinitions)) {
-            // Clean the property name (remove Figma ID suffix like #123:456)
-            const cleanKey = key.replace(/#\d+:\d+$/, '');
+        // Extract properties from componentPropertyDefinitions if available
+        if (node.componentPropertyDefinitions) {
+            for (const [key, prop] of Object.entries(node.componentPropertyDefinitions)) {
+                // Clean the property name (remove Figma ID suffix like #123:456)
+                const cleanKey = key.replace(/#\d+:\d+$/, '');
 
-            properties[cleanKey] = {
-                name: cleanKey,
-                type: prop.type === 'INSTANCE_SWAP' ? 'INSTANCE_SWAP' : prop.type,
-                defaultValue: prop.defaultValue,
-                options: prop.variantOptions,
-            };
+                properties[cleanKey] = {
+                    name: cleanKey,
+                    type: prop.type === 'INSTANCE_SWAP' ? 'INSTANCE_SWAP' : prop.type,
+                    defaultValue: prop.defaultValue,
+                    options: prop.variantOptions,
+                };
+            }
         }
 
         // Store by component set name for easy lookup
@@ -66,6 +69,33 @@ function findComponentSetsWithProperties(node: FigmaNode, results: Map<string, C
                     });
                 }
             }
+        }
+    }
+    // Also handle standalone COMPONENT nodes (not in a COMPONENT_SET)
+    else if (node.type === 'COMPONENT') {
+        // Check if this component is already mapped (as child of a COMPONENT_SET)
+        if (!results.has(node.name)) {
+            const properties: ComponentInfo['properties'] = {};
+
+            // Extract properties from componentPropertyDefinitions if available
+            if (node.componentPropertyDefinitions) {
+                for (const [key, prop] of Object.entries(node.componentPropertyDefinitions)) {
+                    const cleanKey = key.replace(/#\d+:\d+$/, '');
+                    properties[cleanKey] = {
+                        name: cleanKey,
+                        type: prop.type === 'INSTANCE_SWAP' ? 'INSTANCE_SWAP' : prop.type,
+                        defaultValue: prop.defaultValue,
+                        options: prop.variantOptions,
+                    };
+                }
+            }
+
+            results.set(node.name, {
+                nodeId: node.id,
+                name: node.name,
+                type: node.type,
+                properties,
+            });
         }
     }
 
@@ -208,8 +238,9 @@ export async function GET(
         console.log(`[Figma File Components API] Fetching component properties for file ${fileKey} using PAT`);
 
         // Fetch the file with depth to get component sets and their definitions
+        // Using depth=5 to ensure we capture components in deeply nested structures
         const response = await fetch(
-            `https://api.figma.com/v1/files/${fileKey}?depth=3`,
+            `https://api.figma.com/v1/files/${fileKey}?depth=5`,
             {
                 headers: {
                     'Authorization': `Bearer ${figmaToken}`,

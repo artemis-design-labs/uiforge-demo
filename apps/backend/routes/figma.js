@@ -497,16 +497,16 @@ router.get('/file-components/:fileKey', authenticateUser, async (req, res) => {
 
         console.log(`Fetching component properties for file ${fileKey}`);
 
-        // Fetch file with depth to get component sets
-        const response = await axios.get(`https://api.figma.com/v1/files/${fileKey}?depth=4`, {
+        // Fetch file with depth=5 to get component sets in deeply nested structures
+        const response = await axios.get(`https://api.figma.com/v1/files/${fileKey}?depth=5`, {
             headers: { 'Authorization': `Bearer ${req.user.figmaToken}` },
             timeout: 120000
         });
 
         const components = {};
 
-        // Recursively find component sets and their properties
-        function findComponentSets(node) {
+        // Recursively find component sets and standalone components with their properties
+        function findComponents(node) {
             if (node.type === 'COMPONENT_SET') {
                 const properties = {};
 
@@ -575,16 +575,40 @@ router.get('/file-components/:fileKey', authenticateUser, async (req, res) => {
                     }
                 }
             }
+            // Handle standalone COMPONENT nodes (not in a COMPONENT_SET)
+            else if (node.type === 'COMPONENT' && !components[node.name]) {
+                const properties = {};
+
+                // Get properties from componentPropertyDefinitions if available
+                if (node.componentPropertyDefinitions) {
+                    for (const [key, prop] of Object.entries(node.componentPropertyDefinitions)) {
+                        const cleanKey = key.replace(/#\d+:\d+$/, '');
+                        properties[cleanKey] = {
+                            name: cleanKey,
+                            type: prop.type,
+                            defaultValue: prop.defaultValue,
+                            options: prop.variantOptions,
+                        };
+                    }
+                }
+
+                components[node.name] = {
+                    nodeId: node.id,
+                    name: node.name,
+                    type: node.type,
+                    properties,
+                };
+            }
 
             // Recurse
             if (node.children) {
                 for (const child of node.children) {
-                    findComponentSets(child);
+                    findComponents(child);
                 }
             }
         }
 
-        findComponentSets(response.data.document);
+        findComponents(response.data.document);
 
         console.log(`Found ${Object.keys(components).length} components with properties`);
 
