@@ -40,22 +40,40 @@ export default function DesignPage() {
             setPropsLoading(true);
 
             // PRIORITY 1: Check cached file component definitions (fastest)
-            if (selectedComponentName && fileComponentDefinitions[selectedComponentName]) {
-                const cached = fileComponentDefinitions[selectedComponentName];
-                console.log('📦 Using cached component properties for:', selectedComponentName, cached.properties);
+            // Try multiple name formats for matching
+            const namesToTry = selectedComponentName ? [
+                selectedComponentName,                           // Exact: "Chip/Light Mode"
+                selectedComponentName.split('/')[0],             // Base: "Chip"
+                selectedComponentName.replace('/', '/'),         // As-is
+                selectedComponentName.replace(' Mode', ''),      // Without Mode suffix
+                selectedComponentName.replace('/Light Mode', ''),// Without /Light Mode
+                selectedComponentName.replace('/Dark Mode', ''), // Without /Dark Mode
+            ] : [];
 
-                const propsRecord: Record<string, any> = {};
-                for (const [key, prop] of Object.entries(cached.properties)) {
-                    propsRecord[key] = {
-                        name: prop.name,
-                        type: prop.type,
-                        value: prop.defaultValue,
-                        options: prop.options,
-                    };
+            for (const nameToTry of namesToTry) {
+                if (nameToTry && fileComponentDefinitions[nameToTry]) {
+                    const cached = fileComponentDefinitions[nameToTry];
+                    console.log('📦 Using cached component properties for:', nameToTry, '(selected:', selectedComponentName, ')', cached.properties);
+
+                    const propsRecord: Record<string, any> = {};
+                    for (const [key, prop] of Object.entries(cached.properties)) {
+                        propsRecord[key] = {
+                            name: prop.name,
+                            type: prop.type,
+                            value: prop.defaultValue,
+                            options: prop.options,
+                        };
+                    }
+                    dispatch(setFigmaComponentProps(propsRecord));
+                    setPropsLoading(false);
+                    return;
                 }
-                dispatch(setFigmaComponentProps(propsRecord));
-                setPropsLoading(false);
-                return;
+            }
+
+            // Log available definitions for debugging
+            if (selectedComponentName) {
+                console.log('🔍 No cached definition found for:', selectedComponentName);
+                console.log('📋 Available definitions:', Object.keys(fileComponentDefinitions).slice(0, 20));
             }
 
             // PRIORITY 2: Try Figma API for node-specific properties
