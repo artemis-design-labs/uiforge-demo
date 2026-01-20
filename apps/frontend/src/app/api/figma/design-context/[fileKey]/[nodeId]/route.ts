@@ -292,7 +292,7 @@ export async function GET(
       try {
         const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://uiforge-demo-production.up.railway.app';
         const railwayResponse = await fetch(
-          `${BACKEND_URL}/api/v1/figma/nodes/${fileKey}/${encodeURIComponent(nodeId)}`,
+          `${BACKEND_URL}/api/v1/figma/instance/${fileKey}/${encodeURIComponent(nodeId)}`,
           {
             headers: {
               'Authorization': `Bearer ${userToken}`,
@@ -301,7 +301,15 @@ export async function GET(
         );
 
         if (railwayResponse.ok) {
-          figmaData = await railwayResponse.json();
+          const railwayData = await railwayResponse.json();
+          // Railway returns { data: ... } format, we need to convert to Figma API format
+          figmaData = {
+            nodes: {
+              [nodeId]: {
+                document: railwayData.data
+              }
+            }
+          };
           console.log('[Design Context API] Successfully fetched via Railway');
         } else {
           console.log(`[Design Context API] Railway returned ${railwayResponse.status}, trying direct API`);
