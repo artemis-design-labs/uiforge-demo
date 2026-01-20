@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import type { ChatMessage } from '@/store/chatSlice';
 
 interface ChatMessagesProps {
@@ -33,8 +33,8 @@ function highlightCode(code: string, language: string): string {
 }
 
 // Parse markdown-like content
-function parseContent(content: string): JSX.Element[] {
-  const elements: JSX.Element[] = [];
+function parseContent(content: string): React.ReactNode[] {
+  const elements: React.ReactNode[] = [];
   const lines = content.split('\n');
   let inCodeBlock = false;
   let codeContent = '';
@@ -163,8 +163,8 @@ function parseContent(content: string): JSX.Element[] {
 }
 
 // Format inline code and bold text
-function formatInlineCode(text: string): JSX.Element {
-  const parts: (string | JSX.Element)[] = [];
+function formatInlineCode(text: string): React.ReactNode {
+  const parts: (string | React.ReactNode)[] = [];
   let remaining = text;
   let partKey = 0;
 
