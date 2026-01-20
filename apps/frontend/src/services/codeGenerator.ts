@@ -52,6 +52,44 @@ function toCamelCase(str: string): string {
 }
 
 /**
+ * Deduplicate properties with same name but different types
+ * Appends type suffix to make names unique
+ */
+function deduplicateProps(props: Record<string, FigmaComponentProp>): Record<string, FigmaComponentProp> {
+    const seenNames = new Map<string, number>();
+    const result: Record<string, FigmaComponentProp> = {};
+
+    for (const [key, prop] of Object.entries(props)) {
+        const baseName = toCamelCase(key);
+
+        if (seenNames.has(baseName)) {
+            // Duplicate found - append type suffix
+            const count = seenNames.get(baseName)! + 1;
+            seenNames.set(baseName, count);
+
+            // Create unique name based on type
+            let uniqueName: string;
+            if (prop.type === 'BOOLEAN') {
+                uniqueName = `${key}Enabled`;
+            } else if (prop.type === 'TEXT') {
+                uniqueName = `${key}Text`;
+            } else if (prop.type === 'VARIANT') {
+                uniqueName = `${key}Variant`;
+            } else {
+                uniqueName = `${key}${count}`;
+            }
+
+            result[uniqueName] = { ...prop, name: uniqueName };
+        } else {
+            seenNames.set(baseName, 1);
+            result[key] = prop;
+        }
+    }
+
+    return result;
+}
+
+/**
  * Generate TypeScript type for a property
  */
 function generatePropType(prop: FigmaComponentProp): string {
@@ -158,10 +196,14 @@ export function generateComponentCode(
     figmaProps: Record<string, FigmaComponentProp>
 ): GeneratedCode {
     const reactComponentName = toComponentName(componentName);
-    const propsInterface = generatePropsInterface(reactComponentName, figmaProps);
+
+    // Deduplicate properties with same name but different types
+    const dedupedProps = deduplicateProps(figmaProps);
+
+    const propsInterface = generatePropsInterface(reactComponentName, dedupedProps);
 
     // Generate prop destructuring with defaults
-    const propEntries = Object.entries(figmaProps);
+    const propEntries = Object.entries(dedupedProps);
     const propsDestructure = propEntries.length > 0
         ? propEntries
             .map(([key, prop]) => {
@@ -173,13 +215,13 @@ export function generateComponentCode(
         : '';
 
     // Generate style logic
-    const styleLogic = generateStyleLogic(figmaProps);
+    const styleLogic = generateStyleLogic(dedupedProps);
 
     // Determine what styles to apply based on props
-    const hasColor = Object.keys(figmaProps).some(k => k.toLowerCase().includes('color'));
-    const hasSize = Object.keys(figmaProps).some(k => k.toLowerCase().includes('size'));
-    const hasState = Object.keys(figmaProps).some(k => k.toLowerCase().includes('state'));
-    const hasType = Object.keys(figmaProps).some(k => k.toLowerCase() === 'type');
+    const hasColor = Object.keys(dedupedProps).some(k => k.toLowerCase().includes('color'));
+    const hasSize = Object.keys(dedupedProps).some(k => k.toLowerCase().includes('size'));
+    const hasState = Object.keys(dedupedProps).some(k => k.toLowerCase().includes('state'));
+    const hasType = Object.keys(dedupedProps).some(k => k.toLowerCase() === 'type');
 
     // Build style object string
     let styleObjectLines: string[] = [];
