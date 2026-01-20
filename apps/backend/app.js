@@ -83,12 +83,19 @@ const corsOptions = {
 
         if (!origin) return callback(null, true);
 
+        // Check exact matches first
         if (allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            console.warn(`CORS blocked origin: ${origin}`);
-            callback(new Error('Not allowed by CORS'));
+            return callback(null, true);
         }
+
+        // Allow all Vercel preview deployments for this project
+        const vercelPattern = /^https:\/\/uiforge-demo(-[a-z0-9]+)?(-pritish-sais-projects)?\.vercel\.app$/;
+        if (vercelPattern.test(origin)) {
+            return callback(null, true);
+        }
+
+        console.warn(`CORS blocked origin: ${origin}`);
+        callback(new Error('Not allowed by CORS'));
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
