@@ -10,7 +10,7 @@ interface LayoutState {
 
 const initialState: LayoutState = {
   leftSidebarWidth: 320,
-  rightSidebarWidth: 320,
+  rightSidebarWidth: 400,
   leftSidebarCollapsed: false,
   rightSidebarCollapsed: false, // Show by default so user can see properties
   isMobile: false,
@@ -30,7 +30,7 @@ const layoutSlice = createSlice({
       state.leftSidebarWidth = Math.max(200, Math.min(800, action.payload));
     },
     setRightSidebarWidth: (state, action: PayloadAction<number>) => {
-      state.rightSidebarWidth = Math.max(250, Math.min(600, action.payload));
+      state.rightSidebarWidth = Math.max(300, Math.min(900, action.payload));
     },
     setMobileMode: (state, action: PayloadAction<boolean>) => {
       state.isMobile = action.payload;
