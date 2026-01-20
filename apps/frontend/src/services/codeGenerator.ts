@@ -148,44 +148,11 @@ function generatePropsInterface(
 
 /**
  * Generate style object based on component properties
+ * Note: This generates a simple placeholder - customize based on your design tokens
  */
-function generateStyleLogic(props: Record<string, FigmaComponentProp>): string {
-    const styleLines: string[] = [];
-
-    // Check for common patterns
-    const hasColor = Object.keys(props).some(k => k.toLowerCase().includes('color'));
-    const hasSize = Object.keys(props).some(k => k.toLowerCase().includes('size'));
-    const hasState = Object.keys(props).some(k => k.toLowerCase().includes('state'));
-
-    if (hasColor) {
-        styleLines.push(`  // Color variants
-  const colorStyles: Record<string, { bg: string; text: string; border: string }> = {
-    Primary: { bg: '#1976d2', text: '#ffffff', border: '#1976d2' },
-    Secondary: { bg: '#9c27b0', text: '#ffffff', border: '#9c27b0' },
-    Error: { bg: '#d32f2f', text: '#ffffff', border: '#d32f2f' },
-    Warning: { bg: '#ed6c02', text: '#ffffff', border: '#ed6c02' },
-    Info: { bg: '#0288d1', text: '#ffffff', border: '#0288d1' },
-    Success: { bg: '#2e7d32', text: '#ffffff', border: '#2e7d32' },
-  };`);
-    }
-
-    if (hasSize) {
-        styleLines.push(`  // Size variants
-  const sizeStyles: Record<string, { padding: string; fontSize: string }> = {
-    Small: { padding: '4px 10px', fontSize: '13px' },
-    Medium: { padding: '6px 16px', fontSize: '14px' },
-    Large: { padding: '8px 22px', fontSize: '15px' },
-  };`);
-    }
-
-    if (hasState) {
-        styleLines.push(`  // State handling
-  const isDisabled = state === 'Disabled';
-  const isHovered = state === 'Hovered';
-  const isFocused = state === 'Focused';`);
-    }
-
-    return styleLines.join('\n\n');
+function generateStyleLogic(): string {
+    return `  // Add your styling logic here based on props
+  // This is a placeholder - customize based on your design system`;
 }
 
 /**
@@ -214,40 +181,8 @@ export function generateComponentCode(
             .join(',\n')
         : '';
 
-    // Generate style logic
-    const styleLogic = generateStyleLogic(dedupedProps);
-
-    // Determine what styles to apply based on props
-    const hasColor = Object.keys(dedupedProps).some(k => k.toLowerCase().includes('color'));
-    const hasSize = Object.keys(dedupedProps).some(k => k.toLowerCase().includes('size'));
-    const hasState = Object.keys(dedupedProps).some(k => k.toLowerCase().includes('state'));
-    const hasType = Object.keys(dedupedProps).some(k => k.toLowerCase() === 'type');
-
-    // Build style object string
-    let styleObjectLines: string[] = [];
-    if (hasColor) {
-        styleObjectLines.push(`      backgroundColor: colorStyles[color]?.bg || colorStyles.Primary.bg`);
-        styleObjectLines.push(`      color: colorStyles[color]?.text || colorStyles.Primary.text`);
-    }
-    if (hasSize) {
-        styleObjectLines.push(`      padding: sizeStyles[size]?.padding || sizeStyles.Medium.padding`);
-        styleObjectLines.push(`      fontSize: sizeStyles[size]?.fontSize || sizeStyles.Medium.fontSize`);
-    }
-    if (hasState) {
-        styleObjectLines.push(`      opacity: isDisabled ? 0.5 : 1`);
-        styleObjectLines.push(`      cursor: isDisabled ? 'not-allowed' : 'pointer'`);
-    }
-
-    const styleObject = styleObjectLines.length > 0
-        ? `style={{\n${styleObjectLines.join(',\n')},\n    }}`
-        : '';
-
-    // Build className string
-    const classNameParts: string[] = ['flex items-center justify-center rounded transition-all'];
-    if (hasType) {
-        classNameParts.push('${type === \'Outlined\' ? \'border\' : \'\'}');
-    }
-    const className = `className={\`${classNameParts.join(' ')}\`}`;
+    // Generate style logic (placeholder for customization)
+    const styleLogic = generateStyleLogic();
 
     // Generate component code
     const componentCode = `'use client';
@@ -269,10 +204,7 @@ ${propsDestructure}${propsDestructure ? ',' : ''}
 ${styleLogic}
 
   return (
-    <div
-      ${className}
-      ${styleObject}
-    >
+    <div className="flex items-center justify-center">
       {children}
     </div>
   );
