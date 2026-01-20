@@ -173,10 +173,12 @@ router.get('/figma/callback', async (req, res) => {
             path: '/'
         });
 
-        console.log('OAuth successful, redirecting to:', `${process.env.FRONTEND_URL}/design`);
+        // Redirect to Vercel's callback endpoint with the token
+        // This allows Vercel to set the cookie on its own domain
+        const callbackUrl = `${process.env.FRONTEND_URL}/api/auth/callback?token=${encodeURIComponent(token)}`;
+        console.log('OAuth successful, redirecting to Vercel callback');
 
-        // Redirect back to frontend
-        res.redirect(`${process.env.FRONTEND_URL}/design`);
+        res.redirect(callbackUrl);
     } catch (err) {
         console.error('OAuth callback error:', err.message);
         console.error('Error details:', {
@@ -189,7 +191,7 @@ router.get('/figma/callback', async (req, res) => {
         });
         // Don't expose internal error details to client
         const errorType = err.response?.status === 400 ? 'invalid_grant' : 'auth_failed';
-        res.redirect(`${process.env.FRONTEND_URL}/login?error=${errorType}`);
+        res.redirect(`${process.env.FRONTEND_URL}/api/auth/callback?error=${errorType}`);
     }
 
 });
@@ -228,6 +230,41 @@ router.get('/me', async (req, res) => {
     } catch (err) {
         console.error('Token verification error:', err.message);
         res.clearCookie('token');
+        res.status(401).json({ error: 'Invalid or expired token' });
+    }
+});
+
+// Check authentication via Authorization header (for Vercel proxy)
+router.get('/me-with-token', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'No token provided' });
+        }
+
+        const token = authHeader.split(' ')[1];
+
+        const decoded = jwt.verify(token, process.env.BAI_JWT_SECRET, {
+            algorithms: ['HS256'],
+            issuer: 'uiforge-ai',
+            maxAge: '7d'
+        });
+        const user = await User.findById(decoded.userId);
+
+        if (!user) {
+            return res.status(401).json({ error: 'User not found' });
+        }
+
+        res.json({
+            user: {
+                id: user._id,
+                email: user.email,
+                name: user.name,
+                figmaId: user.figmaId
+            }
+        });
+    } catch (err) {
+        console.error('Token verification error:', err.message);
         res.status(401).json({ error: 'Invalid or expired token' });
     }
 });

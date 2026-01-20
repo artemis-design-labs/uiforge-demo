@@ -1,7 +1,7 @@
 import axios from '@/lib/axios';
 
-// Use Railway backend if configured, otherwise fall back to same-origin
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
+// Use Railway backend for OAuth initiation
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 export const authService = {
     // Check if user is authenticated
@@ -14,14 +14,21 @@ export const authService = {
             return { user: JSON.parse(demoUser) };
         }
 
-        // Otherwise check with backend
-        const response = await axios.get('auth/me');
-        return response.data;
+        // Use Vercel's local API route (which has access to the cookie)
+        const response = await fetch('/api/auth/me', {
+            credentials: 'include',
+        });
+
+        if (!response.ok) {
+            throw new Error('Not authenticated');
+        }
+
+        return response.json();
     },
 
-    // Initiate Figma login
+    // Initiate Figma login - goes to Railway for OAuth
     loginWithFigma: () => {
-        window.location.href = `${API_BASE_URL}/api/v1/auth/figma/login`;
+        window.location.href = `${BACKEND_URL}/api/v1/auth/figma/login`;
     },
 
     // Logout
@@ -29,9 +36,13 @@ export const authService = {
         // Clear demo tokens
         localStorage.removeItem('figma_user');
         localStorage.removeItem('figma_token');
-        
+
         try {
-            await axios.post('/auth/logout');
+            // Use Vercel's local API route to clear the cookie
+            await fetch('/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include',
+            });
         } catch (e) {
             // Ignore if backend not available
         }
