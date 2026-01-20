@@ -356,6 +356,15 @@ export async function GET(
     const node = nodeData.document;
 
     console.log(`[Design Context API] Processing node: ${node.name} (${node.type})`);
+    console.log(`[Design Context API] Node has:`, {
+      hasFills: !!node.fills,
+      fillsCount: node.fills?.length || 0,
+      hasStrokes: !!node.strokes,
+      strokesCount: node.strokes?.length || 0,
+      hasChildren: !!node.children,
+      childrenCount: node.children?.length || 0,
+      nodeKeys: Object.keys(node).slice(0, 20) // First 20 keys to see structure
+    });
 
     // Extract all design information
     const colors = new Map<string, { hex: string; usage: string[] }>();
@@ -386,6 +395,11 @@ export async function GET(
     };
 
     console.log(`[Design Context API] Found ${colorsList.length} colors, ${typography.length} text styles`);
+    if (colorsList.length > 0) {
+      console.log(`[Design Context API] Colors found:`, colorsList.slice(0, 5));
+    } else {
+      console.log(`[Design Context API] No colors found - check if node has fills/strokes`);
+    }
 
     return NextResponse.json(designContext);
   } catch (error) {
