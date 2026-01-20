@@ -49,20 +49,31 @@ async function fetchDesignContext(fileKey: string, nodeId: string): Promise<Desi
         ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
         : 'http://localhost:3000';
 
-    const response = await fetch(
-      `${baseUrl}/api/figma/design-context/${fileKey}/${nodeId}`,
-      {
-        headers: { 'Content-Type': 'application/json' },
-        cache: 'no-store'
-      }
-    );
+    // URL-encode the nodeId as it may contain colons (e.g., "1:234")
+    const encodedNodeId = encodeURIComponent(nodeId);
+    const url = `${baseUrl}/api/figma/design-context/${fileKey}/${encodedNodeId}`;
+
+    console.log('[Chat API] Fetching design context from:', url);
+
+    const response = await fetch(url, {
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store'
+    });
 
     if (!response.ok) {
-      console.error('[Chat API] Failed to fetch design context:', response.status);
+      const errorText = await response.text();
+      console.error('[Chat API] Failed to fetch design context:', response.status, errorText);
       return null;
     }
 
-    return await response.json();
+    const data = await response.json();
+    console.log('[Chat API] Design context received:', {
+      nodeId: data.nodeId,
+      nodeName: data.nodeName,
+      colorsCount: data.colors?.length || 0,
+      typographyCount: data.typography?.length || 0
+    });
+    return data;
   } catch (error) {
     console.error('[Chat API] Error fetching design context:', error);
     return null;
@@ -215,9 +226,23 @@ export async function POST(request: NextRequest) {
 
     // Fetch design context if we have fileKey and nodeId
     let designContext: DesignContext | null = null;
+    console.log('[Chat API] FigmaContext received:', {
+      fileKey: figmaContext.fileKey,
+      nodeId: figmaContext.nodeId,
+      selectedComponentName: figmaContext.selectedComponentName,
+      selectedComponentType: figmaContext.selectedComponentType,
+      hasComponentProperties: Object.keys(figmaContext.componentProperties || {}).length,
+      hasFileComponentDefinitions: Object.keys(figmaContext.fileComponentDefinitions || {}).length
+    });
+
     if (figmaContext.fileKey && figmaContext.nodeId) {
       console.log('[Chat API] Fetching design context for', figmaContext.fileKey, figmaContext.nodeId);
       designContext = await fetchDesignContext(figmaContext.fileKey, figmaContext.nodeId);
+      if (!designContext) {
+        console.log('[Chat API] Design context returned null - check FIGMA_ACCESS_TOKEN env var');
+      }
+    } else {
+      console.log('[Chat API] Skipping design context fetch - missing fileKey or nodeId');
     }
 
     const client = new Anthropic({ apiKey });
