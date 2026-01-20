@@ -253,14 +253,16 @@ async function fetchFigmaNode(
   authHeader: string
 ): Promise<{ ok: boolean; data?: any; status?: number; error?: string }> {
   try {
-    const response = await fetch(
-      `https://api.figma.com/v1/files/${fileKey}/nodes?ids=${nodeId}&geometry=paths`,
-      {
-        headers: {
-          'Authorization': authHeader,
-        },
-      }
-    );
+    // URL-encode nodeId as it may contain colons (e.g., "1:234" -> "1%3A234")
+    const encodedNodeId = encodeURIComponent(nodeId);
+    const url = `https://api.figma.com/v1/files/${fileKey}/nodes?ids=${encodedNodeId}&geometry=paths`;
+    console.log(`[Design Context API] Calling Figma API: ${url}`);
+
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': authHeader,
+      },
+    });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
