@@ -143,7 +143,7 @@ function generatePropsInterface(
         return `  /** ${prop.type} property */\n  ${propName}${isOptional ? '?' : ''}: ${propType};`;
     });
 
-    return `interface ${componentName}Props {\n${propLines.join('\n')}\n  children?: React.ReactNode;\n}`;
+    return `export interface ${componentName}Props {\n${propLines.join('\n')}\n  children?: React.ReactNode;\n}`;
 }
 
 /**
