@@ -90,6 +90,8 @@ function findComponentSets(node: any): any[] {
     return sets;
 }
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://uiforge-demo-production.up.railway.app';
+
 // Fetch component properties from Figma API
 export async function GET(
     request: NextRequest,
@@ -97,6 +99,55 @@ export async function GET(
 ) {
     try {
         const { fileKey, nodeId } = await params;
+
+        // Try user's OAuth token via Railway first
+        const userToken = request.cookies.get('token')?.value;
+
+        if (userToken) {
+            try {
+                const railwayResponse = await fetch(
+                    `${BACKEND_URL}/api/v1/figma/instance/${fileKey}/${nodeId}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${userToken}`,
+                        },
+                    }
+                );
+
+                if (railwayResponse.ok) {
+                    const railwayData = await railwayResponse.json();
+                    const node = railwayData.data;
+
+                    if (node) {
+                        let properties = extractComponentProperties(node);
+
+                        // Convert to standardized format
+                        const formattedProperties: Record<string, any> = {};
+                        for (const [key, prop] of Object.entries(properties)) {
+                            const cleanKey = key.replace(/#\d+:\d+$/, '');
+                            formattedProperties[cleanKey] = {
+                                name: cleanKey,
+                                type: (prop as any).type,
+                                value: (prop as any).defaultValue,
+                                options: (prop as any).variantOptions,
+                                defaultValue: (prop as any).defaultValue,
+                            };
+                        }
+
+                        console.log(`[Figma Component API] Found ${Object.keys(formattedProperties).length} properties via Railway`);
+
+                        return NextResponse.json({
+                            nodeId,
+                            nodeName: node.name,
+                            nodeType: node.type,
+                            properties: formattedProperties,
+                        });
+                    }
+                }
+            } catch (err) {
+                console.log('[Figma Component API] Railway proxy failed, falling back to PAT');
+            }
+        }
 
         const figmaToken = process.env.FIGMA_ACCESS_TOKEN;
         if (!figmaToken) {
@@ -106,7 +157,7 @@ export async function GET(
             );
         }
 
-        console.log(`[Figma Component API] Fetching properties for node ${nodeId} in file ${fileKey}`);
+        console.log(`[Figma Component API] Fetching properties for node ${nodeId} in file ${fileKey} using PAT`);
 
         // Fetch the specific node data from Figma
         const response = await fetch(

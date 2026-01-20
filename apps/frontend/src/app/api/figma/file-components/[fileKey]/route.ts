@@ -170,7 +170,33 @@ export async function GET(
     try {
         const { fileKey } = await params;
 
-        const figmaToken = process.env.FIGMA_ACCESS_TOKEN;
+        // Try user's OAuth token first, fall back to PAT
+        const userToken = request.cookies.get('token')?.value;
+        let figmaToken = process.env.FIGMA_ACCESS_TOKEN;
+
+        // If user is logged in, proxy through Railway which has user's OAuth token
+        if (userToken) {
+            try {
+                const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://uiforge-demo-production.up.railway.app';
+
+                const fileResponse = await fetch(`${BACKEND_URL}/api/v1/figma/file-components/${fileKey}`, {
+                    headers: {
+                        'Authorization': `Bearer ${userToken}`,
+                    },
+                });
+
+                if (fileResponse.ok) {
+                    const data = await fileResponse.json();
+                    console.log(`[Figma File Components API] Found ${data.componentCount} components via Railway`);
+                    return NextResponse.json(data);
+                } else {
+                    console.log(`[Figma File Components API] Railway returned ${fileResponse.status}, falling back to PAT`);
+                }
+            } catch (err) {
+                console.log('[Figma File Components API] Railway proxy failed, falling back to PAT:', err);
+            }
+        }
+
         if (!figmaToken) {
             return NextResponse.json(
                 { error: 'Figma access token not configured' },
@@ -178,7 +204,7 @@ export async function GET(
             );
         }
 
-        console.log(`[Figma File Components API] Fetching component properties for file ${fileKey}`);
+        console.log(`[Figma File Components API] Fetching component properties for file ${fileKey} using PAT`);
 
         // Fetch the file with depth to get component sets and their definitions
         const response = await fetch(

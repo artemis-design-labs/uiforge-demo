@@ -489,4 +489,120 @@ router.get('/image/:fileKey/:nodeId', authenticateUser, async (req, res) => {
     }
 });
 
+// Get all component property definitions from a file
+// Returns component sets with their variant properties
+router.get('/file-components/:fileKey', authenticateUser, async (req, res) => {
+    try {
+        const { fileKey } = req.params;
+
+        console.log(`Fetching component properties for file ${fileKey}`);
+
+        // Fetch file with depth to get component sets
+        const response = await axios.get(`https://api.figma.com/v1/files/${fileKey}?depth=4`, {
+            headers: { 'Authorization': `Bearer ${req.user.figmaToken}` },
+            timeout: 120000
+        });
+
+        const components = {};
+
+        // Recursively find component sets and their properties
+        function findComponentSets(node) {
+            if (node.type === 'COMPONENT_SET') {
+                const properties = {};
+
+                // Get properties from componentPropertyDefinitions
+                if (node.componentPropertyDefinitions) {
+                    for (const [key, prop] of Object.entries(node.componentPropertyDefinitions)) {
+                        const cleanKey = key.replace(/#\d+:\d+$/, '');
+                        properties[cleanKey] = {
+                            name: cleanKey,
+                            type: prop.type,
+                            defaultValue: prop.defaultValue,
+                            options: prop.variantOptions,
+                        };
+                    }
+                }
+
+                // If no explicit definitions, discover from child names
+                if (Object.keys(properties).length === 0 && node.children) {
+                    const discovered = {};
+                    for (const child of node.children) {
+                        if (child.type === 'COMPONENT' && child.name) {
+                            // Parse "Property=Value, Property2=Value2"
+                            const parts = child.name.split(',').map(p => p.trim());
+                            for (const part of parts) {
+                                const [propName, propValue] = part.split('=').map(p => p.trim());
+                                if (propName && propValue) {
+                                    if (!discovered[propName]) {
+                                        discovered[propName] = new Set();
+                                    }
+                                    discovered[propName].add(propValue);
+                                }
+                            }
+                        }
+                    }
+
+                    for (const [propName, values] of Object.entries(discovered)) {
+                        const options = Array.from(values);
+                        properties[propName] = {
+                            name: propName,
+                            type: 'VARIANT',
+                            defaultValue: options[0],
+                            options,
+                        };
+                    }
+                }
+
+                // Store component set by name
+                components[node.name] = {
+                    nodeId: node.id,
+                    name: node.name,
+                    type: node.type,
+                    properties,
+                };
+
+                // Also map children
+                if (node.children) {
+                    for (const child of node.children) {
+                        if (child.type === 'COMPONENT') {
+                            components[child.name] = {
+                                nodeId: child.id,
+                                name: child.name,
+                                type: child.type,
+                                properties,
+                            };
+                        }
+                    }
+                }
+            }
+
+            // Recurse
+            if (node.children) {
+                for (const child of node.children) {
+                    findComponentSets(child);
+                }
+            }
+        }
+
+        findComponentSets(response.data.document);
+
+        console.log(`Found ${Object.keys(components).length} components with properties`);
+
+        res.status(200).json({
+            fileKey,
+            fileName: response.data.name,
+            components,
+            componentCount: Object.keys(components).length,
+        });
+    } catch (err) {
+        console.error('Error fetching file components:', err.response?.data || err.message);
+        if (err.response?.status === 403) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+        res.status(err.response?.status || 500).json({
+            error: err.response?.data?.message || 'Failed to fetch file components'
+        });
+    }
+});
+
 export default router;
