@@ -10,10 +10,19 @@ const gunzip = promisify(zlib.gunzip);
 
 const router = express.Router();
 
-// Auth middleware
+// Auth middleware - supports both cookie and Authorization header
 const authenticateUser = async (req, res, next) => {
     try {
-        const token = req.cookies.token;
+        // Try cookie first, then Authorization header
+        let token = req.cookies.token;
+
+        if (!token) {
+            const authHeader = req.headers.authorization;
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+                token = authHeader.split(' ')[1];
+            }
+        }
+
         if (!token) return res.status(401).json({ error: 'Not authenticated' });
 
         const decoded = jwt.verify(token, process.env.BAI_JWT_SECRET);

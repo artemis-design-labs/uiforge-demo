@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Fetch component image directly from Figma API
-// Uses server-side Figma token to bypass backend dependency
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://uiforge-demo-production.up.railway.app';
+
+// Fetch component image - proxy through Railway to use user's OAuth token
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ fileKey: string; nodeId: string }> }
@@ -14,7 +15,33 @@ export async function GET(
             ? searchParams.get('format')
             : 'png';
 
-        // Get Figma token from environment
+        // Get user's auth token from cookie
+        const token = request.cookies.get('token')?.value;
+
+        // If user is logged in, proxy through Railway to use their OAuth token
+        if (token) {
+            console.log(`[Figma API] Using OAuth token via Railway for ${nodeId}`);
+
+            const railwayResponse = await fetch(
+                `${BACKEND_URL}/api/v1/figma/image/${fileKey}/${nodeId}?scale=${scale}&format=${format}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            if (railwayResponse.ok) {
+                const data = await railwayResponse.json();
+                return NextResponse.json(data);
+            }
+
+            // If Railway fails, fall back to PAT
+            console.log(`[Figma API] Railway failed (${railwayResponse.status}), falling back to PAT`);
+        }
+
+        // Fallback: Use PAT from environment
         const figmaToken = process.env.FIGMA_ACCESS_TOKEN;
 
         // Debug: Log token presence (not the actual token)
