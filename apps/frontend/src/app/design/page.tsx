@@ -214,12 +214,31 @@ export default function DesignPage() {
             );
         }
 
-        // Use React component fallback
-        if (useFallback && selectedComponentName) {
+        // Use React component if supported AND has editable properties
+        // This allows property changes to affect the render
+        const hasEditableProps = Object.keys(figmaComponentProps).length > 0;
+        const componentSupported = selectedComponentName && isComponentSupported(selectedComponentName);
+
+        if (componentSupported && hasEditableProps) {
             return (
                 <div className="flex flex-col items-center justify-center h-full p-8">
                     <div className="mb-2 px-3 py-1 bg-blue-500/20 text-blue-400 rounded text-xs">
-                        React Component Preview
+                        Interactive React Preview
+                    </div>
+                    <ComponentRenderer
+                        componentName={selectedComponentName}
+                        props={getComponentProps()}
+                    />
+                </div>
+            );
+        }
+
+        // Fallback for unsupported components
+        if (useFallback && selectedComponentName) {
+            return (
+                <div className="flex flex-col items-center justify-center h-full p-8">
+                    <div className="mb-2 px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs">
+                        React Component (No Interactive Props)
                     </div>
                     <ComponentRenderer
                         componentName={selectedComponentName}
