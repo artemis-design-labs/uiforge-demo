@@ -435,16 +435,10 @@ export function generatePackage(
         // Generate the component code
         const generated = generateComponentCode(baseName, mergedProps);
 
-        // Component file
+        // Component file (single index.tsx handles both component and exports)
         files.push({
             path: `src/components/${componentName}/index.tsx`,
             content: generated.componentCode,
-        });
-
-        // Re-export file for cleaner imports
-        files.push({
-            path: `src/components/${componentName}/index.ts`,
-            content: `export { ${componentName}, type ${componentName}Props } from './${componentName}';\nexport { default } from './${componentName}';\n`,
         });
     }
 
