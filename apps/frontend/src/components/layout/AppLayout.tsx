@@ -4,6 +4,7 @@ import { useAppSelector } from '@/store/hooks';
 import { AppHeader } from './AppHeader';
 import { AppToolbar } from './AppToolbar';
 import { AppMain } from './AppMain';
+import { ChatWidget } from '@/components/chat';
 import { ComponentProperties } from '@/types/component';
 
 interface AppLayoutProps {
@@ -30,6 +31,9 @@ export function AppLayout({ children, componentProperties, onPropertyChange }: A
       >
         {children}
       </AppMain>
+
+      {/* Chat Widget */}
+      <ChatWidget />
     </div>
   );
 }
