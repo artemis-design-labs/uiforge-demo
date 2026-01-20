@@ -20,8 +20,9 @@ function LoginContent() {
     }
 
     const handleFigmaLogin = () => {
-        // Redirect to backend OAuth endpoint
-        window.location.href = '/api/v1/auth/figma/login';
+        // Redirect to backend OAuth endpoint (Railway backend)
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+        window.location.href = `${apiUrl}/api/v1/auth/figma/login`;
     };
 
     const getErrorMessage = (errorCode: string | null) => {

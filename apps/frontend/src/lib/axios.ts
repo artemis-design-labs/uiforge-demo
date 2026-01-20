@@ -1,7 +1,12 @@
 import axios from 'axios';
 
+// Use Railway backend if configured, otherwise fall back to same-origin
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
+    ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1`
+    : '/api/v1';
+
 const api = axios.create({
-    baseURL: '/api/v1',
+    baseURL: API_BASE_URL,
     withCredentials: true,
 });
 
