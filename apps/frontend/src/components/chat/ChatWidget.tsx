@@ -69,6 +69,14 @@ export function ChatWidget() {
         fileComponentDefinitions,
       };
 
+      // Debug logging
+      console.log('[ChatWidget] Sending figmaContext:', {
+        selectedComponentName,
+        selectedComponentType,
+        fileKey: currentFileKey,
+        nodeId: selectedComponent,
+      });
+
       // Build message history (last 10 messages)
       const messageHistory = messages.slice(-10).map((msg) => ({
         role: msg.role,
