@@ -44,12 +44,17 @@ export default function DesignPage() {
             const namesToTry = selectedComponentName ? [
                 selectedComponentName,                           // Exact: "Chip/Light Mode"
                 selectedComponentName.split('/')[0],             // Base: "Chip"
-                selectedComponentName.replace('/', '/'),         // As-is
                 selectedComponentName.replace(' Mode', ''),      // Without Mode suffix
                 selectedComponentName.replace('/Light Mode', ''),// Without /Light Mode
                 selectedComponentName.replace('/Dark Mode', ''), // Without /Dark Mode
+                selectedComponentName.replace('/LightMode', ''), // Without /LightMode (no space)
+                selectedComponentName.replace('/DarkMode', ''),  // Without /DarkMode (no space)
             ] : [];
 
+            // Also try case-insensitive matching
+            const definitionKeys = Object.keys(fileComponentDefinitions);
+
+            // First try exact matches
             for (const nameToTry of namesToTry) {
                 if (nameToTry && fileComponentDefinitions[nameToTry]) {
                     const cached = fileComponentDefinitions[nameToTry];
@@ -70,10 +75,60 @@ export default function DesignPage() {
                 }
             }
 
+            // Try case-insensitive matching
+            for (const nameToTry of namesToTry) {
+                if (!nameToTry) continue;
+                const lowerName = nameToTry.toLowerCase();
+                const matchedKey = definitionKeys.find(key => key.toLowerCase() === lowerName);
+                if (matchedKey) {
+                    const cached = fileComponentDefinitions[matchedKey];
+                    console.log('📦 Using cached component properties (case-insensitive match):', matchedKey, '(selected:', selectedComponentName, ')', cached.properties);
+
+                    const propsRecord: Record<string, any> = {};
+                    for (const [key, prop] of Object.entries(cached.properties)) {
+                        propsRecord[key] = {
+                            name: prop.name,
+                            type: prop.type,
+                            value: prop.defaultValue,
+                            options: prop.options,
+                        };
+                    }
+                    dispatch(setFigmaComponentProps(propsRecord));
+                    setPropsLoading(false);
+                    return;
+                }
+            }
+
+            // Try partial matching - find any definition that starts with the base component name
+            const baseName = selectedComponentName?.split('/')[0];
+            if (baseName) {
+                const partialMatch = definitionKeys.find(key =>
+                    key.toLowerCase().startsWith(baseName.toLowerCase()) ||
+                    baseName.toLowerCase().startsWith(key.toLowerCase())
+                );
+                if (partialMatch) {
+                    const cached = fileComponentDefinitions[partialMatch];
+                    console.log('📦 Using cached component properties (partial match):', partialMatch, '(selected:', selectedComponentName, ')', cached.properties);
+
+                    const propsRecord: Record<string, any> = {};
+                    for (const [key, prop] of Object.entries(cached.properties)) {
+                        propsRecord[key] = {
+                            name: prop.name,
+                            type: prop.type,
+                            value: prop.defaultValue,
+                            options: prop.options,
+                        };
+                    }
+                    dispatch(setFigmaComponentProps(propsRecord));
+                    setPropsLoading(false);
+                    return;
+                }
+            }
+
             // Log available definitions for debugging
             if (selectedComponentName) {
                 console.log('🔍 No cached definition found for:', selectedComponentName);
-                console.log('📋 Available definitions:', Object.keys(fileComponentDefinitions).slice(0, 20));
+                console.log('📋 Available definitions:', definitionKeys.slice(0, 30));
             }
 
             // PRIORITY 2: Try Figma API for node-specific properties
