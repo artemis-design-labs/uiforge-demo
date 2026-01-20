@@ -96,7 +96,7 @@ export function PackageGeneratorModal({ isOpen, onClose }: PackageGeneratorModal
             />
 
             {/* Modal */}
-            <div className="relative bg-[#1e1e1e] border border-gray-700 rounded-lg shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+            <div className="relative bg-[#1e1e1e] border border-gray-700 rounded-lg shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700">
                     <div>
@@ -114,7 +114,7 @@ export function PackageGeneratorModal({ isOpen, onClose }: PackageGeneratorModal
                 </div>
 
                 {/* Content */}
-                <div className="px-6 py-4 space-y-4">
+                <div className="px-6 py-4 space-y-4 overflow-y-auto flex-1">
                     {/* Package Name */}
                     <div className="space-y-2">
                         <Label htmlFor="packageName" className="text-gray-300">
