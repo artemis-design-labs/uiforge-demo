@@ -164,13 +164,16 @@ router.get('/figma/callback', async (req, res) => {
         );
 
         // Set JWT as secure httpOnly cookie
+        // Use sameSite: 'none' for cross-origin cookies (Vercel frontend + Railway backend)
         res.cookie('token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
+            secure: true, // Required for sameSite: 'none'
+            sameSite: 'none', // Required for cross-origin cookies
             maxAge: 7 * 24 * 60 * 60 * 1000,
             path: '/'
         });
+
+        console.log('OAuth successful, redirecting to:', `${process.env.FRONTEND_URL}/design`);
 
         // Redirect back to frontend
         res.redirect(`${process.env.FRONTEND_URL}/design`);
@@ -229,8 +232,8 @@ router.get('/me', async (req, res) => {
 router.post('/logout', (req, res) => {
     res.clearCookie('token', {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: true,
+        sameSite: 'none',
         path: '/'
     });
     res.json({ message: 'Logged out successfully' });
