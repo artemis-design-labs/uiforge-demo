@@ -283,65 +283,29 @@ export async function GET(
 
     console.log(`[Design Context API] Request received - fileKey: ${fileKey}, nodeId: ${nodeId}`);
 
-    // Try user's OAuth token first (via Railway), fall back to PAT
-    const userToken = request.cookies.get('token')?.value;
-    let figmaData: any = null;
-
-    // Try Railway proxy with user's OAuth token first
-    if (userToken) {
-      try {
-        const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://uiforge-demo-production.up.railway.app';
-        const railwayResponse = await fetch(
-          `${BACKEND_URL}/api/v1/figma/instance/${fileKey}/${encodeURIComponent(nodeId)}`,
-          {
-            headers: {
-              'Authorization': `Bearer ${userToken}`,
-            },
-          }
-        );
-
-        if (railwayResponse.ok) {
-          const railwayData = await railwayResponse.json();
-          // Railway returns { data: ... } format, we need to convert to Figma API format
-          figmaData = {
-            nodes: {
-              [nodeId]: {
-                document: railwayData.data
-              }
-            }
-          };
-          console.log('[Design Context API] Successfully fetched via Railway');
-        } else {
-          console.log(`[Design Context API] Railway returned ${railwayResponse.status}, trying direct API`);
-        }
-      } catch (err) {
-        console.log('[Design Context API] Railway proxy failed, trying direct API:', err);
-      }
+    // For design context, we always use direct Figma API with geometry=paths
+    // This ensures we get fresh data with all visual properties (fills, strokes, etc.)
+    // Railway's cached data might not include these properties
+    const figmaToken = process.env.FIGMA_ACCESS_TOKEN;
+    if (!figmaToken) {
+      console.error('[Design Context API] FIGMA_ACCESS_TOKEN not configured');
+      return NextResponse.json(
+        { error: 'Figma access token not configured. Please add FIGMA_ACCESS_TOKEN to environment variables.' },
+        { status: 500 }
+      );
     }
 
-    // Fall back to direct Figma API with PAT
-    if (!figmaData) {
-      const figmaToken = process.env.FIGMA_ACCESS_TOKEN;
-      if (!figmaToken) {
-        console.error('[Design Context API] No auth available - FIGMA_ACCESS_TOKEN not configured and no user token');
-        return NextResponse.json(
-          { error: 'Figma access token not configured' },
-          { status: 500 }
-        );
-      }
+    console.log(`[Design Context API] Fetching via direct Figma API for node ${nodeId} in file ${fileKey}`);
 
-      console.log(`[Design Context API] Fetching via direct Figma API for node ${nodeId} in file ${fileKey}`);
-
-      const result = await fetchFigmaNode(fileKey, nodeId, `Bearer ${figmaToken}`);
-      if (!result.ok) {
-        console.error('[Design Context API] Figma API error:', result.status, result.error);
-        return NextResponse.json(
-          { error: result.error || 'Failed to fetch design data' },
-          { status: result.status || 500 }
-        );
-      }
-      figmaData = result.data;
+    const result = await fetchFigmaNode(fileKey, nodeId, `Bearer ${figmaToken}`);
+    if (!result.ok) {
+      console.error('[Design Context API] Figma API error:', result.status, result.error);
+      return NextResponse.json(
+        { error: result.error || 'Failed to fetch design data' },
+        { status: result.status || 500 }
+      );
     }
+    const figmaData = result.data;
 
     const nodeData = figmaData.nodes?.[nodeId] || figmaData;
 
