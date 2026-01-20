@@ -62,3 +62,4 @@ apps/component-tester/generated/
 
 # MCP config
 .mcp.json
+.vercel
