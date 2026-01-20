@@ -40,20 +40,20 @@ export async function POST(request: NextRequest) {
             zip.file(file.path, file.content);
         }
 
-        // Generate the zip buffer
-        const zipBuffer = await zip.generateAsync({
-            type: 'nodebuffer',
+        // Generate the zip as Uint8Array (works with NextResponse)
+        const zipData = await zip.generateAsync({
+            type: 'uint8array',
             compression: 'DEFLATE',
             compressionOptions: { level: 9 },
         });
 
         // Return the zip file
-        return new NextResponse(zipBuffer, {
+        return new NextResponse(zipData, {
             status: 200,
             headers: {
                 'Content-Type': 'application/zip',
                 'Content-Disposition': `attachment; filename="${config.packageName.replace('@', '').replace('/', '-')}-${config.version}.zip"`,
-                'Content-Length': zipBuffer.length.toString(),
+                'Content-Length': zipData.length.toString(),
             },
         });
     } catch (error) {
