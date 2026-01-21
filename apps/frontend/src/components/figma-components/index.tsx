@@ -5,6 +5,7 @@ import { FigmaButton } from './FigmaButton';
 import { FigmaBreadcrumb } from './FigmaBreadcrumb';
 import { FigmaDropdown } from './FigmaDropdown';
 import { FigmaProgressBar } from './FigmaProgressBar';
+import { AVAILABLE_ICONS } from './FigmaIcons';
 
 // Figma property definition type
 export interface FigmaPropertyDefinition {
@@ -92,6 +93,8 @@ export const COMPONENT_REGISTRY: Record<string, {
             darkMode: false,
             showLeftIcon: true,
             showRightIcon: true,
+            leftIcon: 'ArrowLeft',
+            rightIcon: 'ArrowRight',
             size: 'Large',
             color: 'Primary',
             state: 'Enabled',
@@ -116,16 +119,18 @@ export const COMPONENT_REGISTRY: Record<string, {
                 type: 'BOOLEAN',
                 defaultValue: true,
             },
-            // INSTANCE_SWAP properties
+            // INSTANCE_SWAP properties - now with options from icon library
             {
                 name: 'Left Icon',
                 type: 'INSTANCE_SWAP',
-                defaultValue: '',
+                defaultValue: 'ArrowLeft',
+                options: AVAILABLE_ICONS,
             },
             {
-                name: 'Right icon',
+                name: 'Right Icon',
                 type: 'INSTANCE_SWAP',
-                defaultValue: '',
+                defaultValue: 'ArrowRight',
+                options: AVAILABLE_ICONS,
             },
             // VARIANT properties
             {
@@ -161,6 +166,8 @@ export const COMPONENT_REGISTRY: Record<string, {
             darkMode: true,
             showLeftIcon: true,
             showRightIcon: true,
+            leftIcon: 'ArrowLeft',
+            rightIcon: 'ArrowRight',
             size: 'Large',
             color: 'Primary',
             state: 'Enabled',
@@ -185,16 +192,18 @@ export const COMPONENT_REGISTRY: Record<string, {
                 type: 'BOOLEAN',
                 defaultValue: true,
             },
-            // INSTANCE_SWAP properties
+            // INSTANCE_SWAP properties - now with options from icon library
             {
                 name: 'Left Icon',
                 type: 'INSTANCE_SWAP',
-                defaultValue: '',
+                defaultValue: 'ArrowLeft',
+                options: AVAILABLE_ICONS,
             },
             {
-                name: 'Right icon',
+                name: 'Right Icon',
                 type: 'INSTANCE_SWAP',
-                defaultValue: '',
+                defaultValue: 'ArrowRight',
+                options: AVAILABLE_ICONS,
             },
             // VARIANT properties
             {

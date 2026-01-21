@@ -1,29 +1,20 @@
 'use client';
 import React from 'react';
-
-// Arrow Left Icon
-const ArrowLeftIcon = ({ color = 'currentColor' }: { color?: string }) => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z" fill={color} />
-    </svg>
-);
-
-// Arrow Right Icon
-const ArrowRightIcon = ({ color = 'currentColor' }: { color?: string }) => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M4 11H16.17L10.58 5.41L12 4L20 12L12 20L10.59 18.59L16.17 13H4V11Z" fill={color} />
-    </svg>
-);
+import { getIconByName, ArrowLeftIcon, ArrowRightIcon } from './FigmaIcons';
 
 export interface FigmaButtonProps {
     label?: string;
     text?: string; // Alias for label (matches Figma "Text" property)
     darkMode?: boolean;
-    // Boolean properties (matching Figma)
+    // Boolean properties (matching Figma "Icon left" and "Icon right")
     iconLeft?: boolean;
     iconRight?: boolean;
     showLeftIcon?: boolean;  // Legacy alias for iconLeft
     showRightIcon?: boolean; // Legacy alias for iconRight
+    // INSTANCE_SWAP properties - specify which icon to use
+    // These map from Figma "Left Icon" and "Right Icon" properties
+    leftIcon?: string;   // Icon type name (e.g., 'ArrowLeft', 'Search', 'Home')
+    rightIcon?: string;  // Icon type name (e.g., 'ArrowRight', 'Settings', 'Add')
     // Variant properties (matching Figma)
     size?: 'Small' | 'Medium' | 'Large';
     color?: 'Primary' | 'Secondary' | 'Error' | 'Warning' | 'Info' | 'Success' | 'Disabled';
@@ -51,6 +42,8 @@ export function FigmaButton({
     iconRight,
     showLeftIcon,
     showRightIcon,
+    leftIcon = 'ArrowLeft',
+    rightIcon = 'ArrowRight',
     size = 'Large',
     color = 'Primary',
     state = 'Enabled',
@@ -63,6 +56,10 @@ export function FigmaButton({
     // Use iconLeft/iconRight if provided, otherwise fall back to showLeftIcon/showRightIcon
     const showLeft = iconLeft ?? showLeftIcon ?? true;
     const showRight = iconRight ?? showRightIcon ?? true;
+
+    // Get icon components from registry
+    const LeftIconComponent = getIconByName(leftIcon) || ArrowLeftIcon;
+    const RightIconComponent = getIconByName(rightIcon) || ArrowRightIcon;
 
     // Determine if disabled from state or disabled prop
     const isDisabled = disabled || state === 'Disabled';
@@ -139,7 +136,7 @@ export function FigmaButton({
                     {/* Left Icon */}
                     {showLeft && (
                         <div className={`${currentSize.iconSize} flex items-center justify-center`}>
-                            <ArrowLeftIcon color={textColor} />
+                            <LeftIconComponent color={textColor} />
                         </div>
                     )}
 
@@ -157,7 +154,7 @@ export function FigmaButton({
                     {/* Right Icon */}
                     {showRight && (
                         <div className={`${currentSize.iconSize} flex items-center justify-center`}>
-                            <ArrowRightIcon color={textColor} />
+                            <RightIconComponent color={textColor} />
                         </div>
                     )}
                 </div>
