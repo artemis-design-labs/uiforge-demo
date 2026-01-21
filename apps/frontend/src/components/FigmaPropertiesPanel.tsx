@@ -96,36 +96,31 @@ export function FigmaPropertiesPanel() {
                         </div>
                     </AccordionTrigger>
                     <AccordionContent>
-                        <div className="space-y-3 pt-2">
+                        <div className="space-y-2 pt-2">
                             {Object.entries(figmaComponentProps).map(([key, prop]) => (
-                                <div key={key} className="space-y-2">
-                                    {/* Property label and type badge */}
-                                    <div className="flex items-center justify-between">
-                                        <Label className="text-xs text-gray-400 capitalize">
-                                            {key.replace(/([A-Z])/g, ' $1').trim()}
-                                        </Label>
-                                        <span className="text-[10px] text-gray-500 bg-gray-800 px-1.5 py-0.5 rounded">
-                                            {prop.type}
-                                        </span>
-                                    </div>
+                                <div key={key} className="flex items-center gap-3">
+                                    {/* Property label */}
+                                    <Label className="text-xs text-gray-400 capitalize min-w-[80px] shrink-0">
+                                        {key.replace(/([A-Z])/g, ' $1').trim()}
+                                    </Label>
 
                                     {/* BOOLEAN property - Switch toggle */}
                                     {prop.type === 'BOOLEAN' && (
-                                        <div className="flex items-center justify-between p-2 bg-gray-800/50 rounded border border-gray-700">
-                                            <span className="text-xs text-gray-400">
-                                                {prop.value ? 'Enabled' : 'Disabled'}
-                                            </span>
+                                        <div className="flex items-center gap-2 flex-1">
                                             <Switch
                                                 checked={prop.value as boolean}
                                                 onCheckedChange={(checked) => handlePropertyChange(key, checked)}
                                             />
+                                            <span className="text-xs text-gray-400">
+                                                {prop.value ? 'On' : 'Off'}
+                                            </span>
                                         </div>
                                     )}
 
                                     {/* VARIANT property - Dropdown selector */}
                                     {prop.type === 'VARIANT' && prop.options && (
                                         <select
-                                            className="w-full h-9 px-3 text-sm border border-gray-700 rounded-md bg-gray-800 text-gray-200 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer"
+                                            className="flex-1 h-8 px-3 text-sm border border-gray-400 rounded-md bg-white text-gray-800 hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer"
                                             value={prop.value as string}
                                             onChange={(e) => handlePropertyChange(key, e.target.value)}
                                         >
@@ -141,7 +136,7 @@ export function FigmaPropertiesPanel() {
                                     {prop.type === 'TEXT' && (
                                         <input
                                             type="text"
-                                            className="w-full h-9 px-3 text-sm border border-gray-700 rounded-md bg-gray-800 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            className="flex-1 h-8 px-3 text-sm border border-gray-400 rounded-md bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                             value={prop.value as string}
                                             onChange={(e) => handlePropertyChange(key, e.target.value)}
                                             placeholder={`Enter ${key}...`}
@@ -151,7 +146,7 @@ export function FigmaPropertiesPanel() {
                                     {/* INSTANCE_SWAP property - Dropdown for swappable instances */}
                                     {prop.type === 'INSTANCE_SWAP' && (prop.options || prop.preferredValues) && (
                                         <select
-                                            className="w-full h-9 px-3 text-sm border border-gray-700 rounded-md bg-gray-800 text-gray-200 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer"
+                                            className="flex-1 h-8 px-3 text-sm border border-gray-400 rounded-md bg-white text-gray-800 hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer"
                                             value={prop.value as string}
                                             onChange={(e) => handlePropertyChange(key, e.target.value)}
                                         >
@@ -171,11 +166,11 @@ export function FigmaPropertiesPanel() {
                                         </select>
                                     )}
 
-                                    {/* INSTANCE_SWAP without options - show as info with current value */}
+                                    {/* INSTANCE_SWAP without options - show current value */}
                                     {prop.type === 'INSTANCE_SWAP' && !prop.options && !prop.preferredValues && (
-                                        <div className="p-2 bg-gray-800/50 rounded border border-gray-700 text-xs text-gray-400">
-                                            <span className="text-gray-500">Instance Swap:</span> {getIconName(String(prop.value)) || 'None'}
-                                        </div>
+                                        <span className="flex-1 text-xs text-gray-400">
+                                            {getIconName(String(prop.value)) || 'None'}
+                                        </span>
                                     )}
                                 </div>
                             ))}
