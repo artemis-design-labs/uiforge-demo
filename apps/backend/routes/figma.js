@@ -577,7 +577,7 @@ router.get('/file-components/:fileKey', authenticateUser, async (req, res) => {
             }
             // Handle standalone COMPONENT nodes (not in a COMPONENT_SET)
             else if (node.type === 'COMPONENT' && !components[node.name]) {
-                const properties = {};
+                let properties = {};
 
                 // Get properties from componentPropertyDefinitions if available
                 if (node.componentPropertyDefinitions) {
@@ -589,6 +589,25 @@ router.get('/file-components/:fileKey', authenticateUser, async (req, res) => {
                             defaultValue: prop.defaultValue,
                             options: prop.variantOptions,
                         };
+                    }
+                }
+
+                // If no properties found, try to find a related COMPONENT_SET
+                // E.g., "Button/LightMode" might have properties from "ButtonVariant" COMPONENT_SET
+                if (Object.keys(properties).length === 0) {
+                    const baseName = node.name.split('/')[0];
+                    // Look for existing component sets that might contain related properties
+                    for (const [existingName, existingComp] of Object.entries(components)) {
+                        if (existingComp.type === 'COMPONENT_SET' &&
+                            Object.keys(existingComp.properties).length > 0) {
+                            // Check if names are related (e.g., "Button" ~ "ButtonVariant")
+                            const existingBase = existingName.split('/')[0];
+                            if (existingBase.toLowerCase().includes(baseName.toLowerCase()) ||
+                                baseName.toLowerCase().includes(existingBase.toLowerCase().replace('variant', ''))) {
+                                properties = { ...existingComp.properties };
+                                break;
+                            }
+                        }
                     }
                 }
 

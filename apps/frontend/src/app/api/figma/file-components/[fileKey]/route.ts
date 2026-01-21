@@ -75,7 +75,7 @@ function findComponentSetsWithProperties(node: FigmaNode, results: Map<string, C
     else if (node.type === 'COMPONENT') {
         // Check if this component is already mapped (as child of a COMPONENT_SET)
         if (!results.has(node.name)) {
-            const properties: ComponentInfo['properties'] = {};
+            let properties: ComponentInfo['properties'] = {};
 
             // Extract properties from componentPropertyDefinitions if available
             if (node.componentPropertyDefinitions) {
@@ -87,6 +87,25 @@ function findComponentSetsWithProperties(node: FigmaNode, results: Map<string, C
                         defaultValue: prop.defaultValue,
                         options: prop.variantOptions,
                     };
+                }
+            }
+
+            // If no properties found, try to find a related COMPONENT_SET
+            // E.g., "Button/LightMode" might have properties from "ButtonVariant" COMPONENT_SET
+            if (Object.keys(properties).length === 0) {
+                const baseName = node.name.split('/')[0];
+                // Look for existing component sets that might contain related properties
+                for (const [existingName, existingComp] of results.entries()) {
+                    if (existingComp.type === 'COMPONENT_SET' &&
+                        Object.keys(existingComp.properties).length > 0) {
+                        // Check if names are related (e.g., "Button" ~ "ButtonVariant")
+                        const existingBase = existingName.split('/')[0];
+                        if (existingBase.toLowerCase().includes(baseName.toLowerCase()) ||
+                            baseName.toLowerCase().includes(existingBase.toLowerCase().replace('variant', ''))) {
+                            properties = { ...existingComp.properties };
+                            break;
+                        }
+                    }
                 }
             }
 
