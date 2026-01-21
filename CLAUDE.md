@@ -35,6 +35,9 @@ uiforge-demo/
 │   │   │   │   └── login/page.tsx   # Login page
 │   │   │   ├── components/
 │   │   │   │   ├── figma-components/  # React implementations of Figma components
+│   │   │   │   │   ├── FigmaIcons.tsx # Icon library with 50+ icons
+│   │   │   │   │   ├── FigmaButton.tsx # Button component
+│   │   │   │   │   └── index.tsx      # Component registry
 │   │   │   │   ├── ui/                # shadcn/ui components
 │   │   │   │   └── FigmaPropertiesPanel.tsx  # Right sidebar
 │   │   │   ├── services/
@@ -491,6 +494,16 @@ In Figma Developer Console:
 - Files modified:
   - `apps/frontend/src/components/FigmaPropertiesPanel.tsx`
 
+#### Icon Swapping for Button Component
+- Created comprehensive icon library with 50+ icons from Figma Icons component set
+- Button component now supports dynamic icon selection via INSTANCE_SWAP properties
+- Icons render dynamically in the React component based on selection
+- Available icons: ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Search, Settings, Home, Add, Check, Close, Person, Star, Edit, Save, Trash, and many more
+- Files created/modified:
+  - `apps/frontend/src/components/figma-components/FigmaIcons.tsx` (NEW) - Icon library with ICON_REGISTRY
+  - `apps/frontend/src/components/figma-components/FigmaButton.tsx` - Added leftIcon/rightIcon props
+  - `apps/frontend/src/components/figma-components/index.tsx` - Added AVAILABLE_ICONS to INSTANCE_SWAP options
+
 ### Earlier Fixes
 - Fixed duplicate parameter names in generated code (deduplicateProps function)
 - Fixed missing export on Props interface
@@ -502,13 +515,14 @@ In Figma Developer Console:
 ## Recent Git Commits
 
 ```
+dd6a6a0 Add icon swapping support for Button component
+df2d75a Comprehensive CLAUDE.md for developer handoff
 4348601 Update CLAUDE.md with recent session work
 38f7a46 Update component properties panel UI styling
 5947f99 Remove inner container - single white/black background only
 2ea942c Add white/black container for LightMode/DarkMode components
 3c24d5d Add all 9 Button properties and fix component name matching
 a07653c Add depth limit to file fetch endpoint for large files
-b166332 Auto-refresh component definitions and increase API depth
 ```
 
 ---
@@ -516,7 +530,7 @@ b166332 Auto-refresh component definitions and increase API depth
 ## Known Limitations
 
 1. **Component Registry is Manual**: New Figma components must be manually added to `COMPONENT_REGISTRY`
-2. **INSTANCE_SWAP Limited**: Icon swapping works but requires `iconRegistry` to be populated
+2. **Icon Library is Manual**: New icons must be added to `FigmaIcons.tsx` and `ICON_REGISTRY`
 3. **Large Files**: Files with >100 components may timeout; use `depth` parameter
 4. **No Real-time Sync**: Changes in Figma require manual refresh in UI Forge
 5. **Single File at a Time**: Cannot load multiple Figma files simultaneously
