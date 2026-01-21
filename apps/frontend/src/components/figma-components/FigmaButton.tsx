@@ -17,6 +17,7 @@ const ArrowRightIcon = ({ color = 'currentColor' }: { color?: string }) => (
 
 export interface FigmaButtonProps {
     label?: string;
+    text?: string; // Alias for label (matches Figma "Text" property)
     darkMode?: boolean;
     // Boolean properties (matching Figma)
     iconLeft?: boolean;
@@ -25,7 +26,7 @@ export interface FigmaButtonProps {
     showRightIcon?: boolean; // Legacy alias for iconRight
     // Variant properties (matching Figma)
     size?: 'Small' | 'Medium' | 'Large';
-    color?: 'Primary' | 'Secondary' | 'Error' | 'Warning' | 'Info' | 'Success';
+    color?: 'Primary' | 'Secondary' | 'Error' | 'Warning' | 'Info' | 'Success' | 'Disabled';
     state?: 'Enabled' | 'Hovered' | 'Focused' | 'Disabled';
     type?: 'Contained' | 'Outlined' | 'Text';
     disabled?: boolean;
@@ -43,7 +44,8 @@ export interface FigmaButtonProps {
  * - type: Contained, Outlined, Text
  */
 export function FigmaButton({
-    label = 'Button',
+    label,
+    text,
     darkMode = false,
     iconLeft,
     iconRight,
@@ -55,6 +57,9 @@ export function FigmaButton({
     type = 'Contained',
     disabled = false,
 }: FigmaButtonProps) {
+    // Use text if provided, otherwise fall back to label
+    const buttonLabel = text ?? label ?? 'Button';
+
     // Use iconLeft/iconRight if provided, otherwise fall back to showLeftIcon/showRightIcon
     const showLeft = iconLeft ?? showLeftIcon ?? true;
     const showRight = iconRight ?? showRightIcon ?? true;
@@ -70,13 +75,14 @@ export function FigmaButton({
     };
 
     // Color palette
-    const colorPalette = {
+    const colorPalette: Record<string, { main: string; dark: string; contrast: string }> = {
         Primary: { main: '#1976d2', dark: '#1565c0', contrast: 'white' },
         Secondary: { main: '#9c27b0', dark: '#7b1fa2', contrast: 'white' },
         Error: { main: '#d32f2f', dark: '#c62828', contrast: 'white' },
         Warning: { main: '#ed6c02', dark: '#e65100', contrast: 'white' },
         Info: { main: '#0288d1', dark: '#01579b', contrast: 'white' },
         Success: { main: '#2e7d32', dark: '#1b5e20', contrast: 'white' },
+        Disabled: { main: '#0000001f', dark: '#0000001f', contrast: '#00000042' },
     };
 
     const currentSize = sizeConfig[size] || sizeConfig.Large;
@@ -145,7 +151,7 @@ export function FigmaButton({
                             color: textColor,
                         }}
                     >
-                        {label}
+                        {buttonLabel}
                     </span>
 
                     {/* Right Icon */}

@@ -9,9 +9,10 @@ import { FigmaProgressBar } from './FigmaProgressBar';
 // Figma property definition type
 export interface FigmaPropertyDefinition {
     name: string;
-    type: 'BOOLEAN' | 'VARIANT' | 'TEXT';
+    type: 'BOOLEAN' | 'VARIANT' | 'TEXT' | 'INSTANCE_SWAP';
     defaultValue: boolean | string;
     options?: string[]; // For VARIANT type
+    preferredValues?: Array<{ type: string; key: string }>; // For INSTANCE_SWAP type
 }
 
 // Component registry - maps Figma component names to React components
@@ -82,12 +83,13 @@ export const COMPONENT_REGISTRY: Record<string, {
             },
         ],
     },
-    // Button components
+    // Button components - all 9 Figma properties
+    // Properties: Size, Color, State, Type (VARIANT), Text (TEXT), Icon left, Icon right (BOOLEAN), Left Icon, Right icon (INSTANCE_SWAP)
     'Button/LightMode': {
         component: FigmaButton,
         defaultProps: {
             label: 'Button',
-            darkMode: false, // Blue background, white text
+            darkMode: false,
             showLeftIcon: true,
             showRightIcon: true,
             size: 'Large',
@@ -97,36 +99,55 @@ export const COMPONENT_REGISTRY: Record<string, {
         },
         nodeId: '14:3737',
         figmaProperties: [
+            // TEXT property
             {
-                name: 'iconLeft',
+                name: 'Text',
+                type: 'TEXT',
+                defaultValue: 'Button',
+            },
+            // BOOLEAN properties
+            {
+                name: 'Icon left',
                 type: 'BOOLEAN',
                 defaultValue: true,
             },
             {
-                name: 'iconRight',
+                name: 'Icon right',
                 type: 'BOOLEAN',
                 defaultValue: true,
             },
+            // INSTANCE_SWAP properties
             {
-                name: 'size',
+                name: 'Left Icon',
+                type: 'INSTANCE_SWAP',
+                defaultValue: '',
+            },
+            {
+                name: 'Right icon',
+                type: 'INSTANCE_SWAP',
+                defaultValue: '',
+            },
+            // VARIANT properties
+            {
+                name: 'Size',
                 type: 'VARIANT',
                 defaultValue: 'Large',
                 options: ['Small', 'Medium', 'Large'],
             },
             {
-                name: 'color',
+                name: 'Color',
                 type: 'VARIANT',
                 defaultValue: 'Primary',
-                options: ['Primary', 'Secondary', 'Error', 'Warning', 'Info', 'Success'],
+                options: ['Primary', 'Secondary', 'Error', 'Warning', 'Info', 'Success', 'Disabled'],
             },
             {
-                name: 'state',
+                name: 'State',
                 type: 'VARIANT',
                 defaultValue: 'Enabled',
                 options: ['Enabled', 'Hovered', 'Focused', 'Disabled'],
             },
             {
-                name: 'type',
+                name: 'Type',
                 type: 'VARIANT',
                 defaultValue: 'Contained',
                 options: ['Contained', 'Outlined', 'Text'],
@@ -137,7 +158,7 @@ export const COMPONENT_REGISTRY: Record<string, {
         component: FigmaButton,
         defaultProps: {
             label: 'Button',
-            darkMode: true, // Light blue background, dark text
+            darkMode: true,
             showLeftIcon: true,
             showRightIcon: true,
             size: 'Large',
@@ -147,36 +168,55 @@ export const COMPONENT_REGISTRY: Record<string, {
         },
         nodeId: '14:3738',
         figmaProperties: [
+            // TEXT property
             {
-                name: 'iconLeft',
+                name: 'Text',
+                type: 'TEXT',
+                defaultValue: 'Button',
+            },
+            // BOOLEAN properties
+            {
+                name: 'Icon left',
                 type: 'BOOLEAN',
                 defaultValue: true,
             },
             {
-                name: 'iconRight',
+                name: 'Icon right',
                 type: 'BOOLEAN',
                 defaultValue: true,
             },
+            // INSTANCE_SWAP properties
             {
-                name: 'size',
+                name: 'Left Icon',
+                type: 'INSTANCE_SWAP',
+                defaultValue: '',
+            },
+            {
+                name: 'Right icon',
+                type: 'INSTANCE_SWAP',
+                defaultValue: '',
+            },
+            // VARIANT properties
+            {
+                name: 'Size',
                 type: 'VARIANT',
                 defaultValue: 'Large',
                 options: ['Small', 'Medium', 'Large'],
             },
             {
-                name: 'color',
+                name: 'Color',
                 type: 'VARIANT',
                 defaultValue: 'Primary',
-                options: ['Primary', 'Secondary', 'Error', 'Warning', 'Info', 'Success'],
+                options: ['Primary', 'Secondary', 'Error', 'Warning', 'Info', 'Success', 'Disabled'],
             },
             {
-                name: 'state',
+                name: 'State',
                 type: 'VARIANT',
                 defaultValue: 'Enabled',
                 options: ['Enabled', 'Hovered', 'Focused', 'Disabled'],
             },
             {
-                name: 'type',
+                name: 'Type',
                 type: 'VARIANT',
                 defaultValue: 'Contained',
                 options: ['Contained', 'Outlined', 'Text'],
@@ -295,14 +335,58 @@ export const COMPONENT_REGISTRY: Record<string, {
     },
 };
 
+// Name aliases to handle Figma naming variations (e.g., "ButtonVariant/LightMode" -> "Button/LightMode")
+const NAME_ALIASES: Record<string, string> = {
+    'ButtonVariant/LightMode': 'Button/LightMode',
+    'ButtonVariant/DarkMode': 'Button/DarkMode',
+    'ButtonVariant/Light Mode': 'Button/LightMode',
+    'ButtonVariant/Dark Mode': 'Button/DarkMode',
+};
+
+// Resolve name to canonical form (handles aliases)
+function resolveComponentName(name: string): string {
+    // Check direct alias
+    if (NAME_ALIASES[name]) {
+        return NAME_ALIASES[name];
+    }
+    // Check case-insensitive alias
+    const lowerName = name.toLowerCase();
+    for (const [alias, canonical] of Object.entries(NAME_ALIASES)) {
+        if (alias.toLowerCase() === lowerName) {
+            return canonical;
+        }
+    }
+    // Check if it's already a registry key
+    if (COMPONENT_REGISTRY[name]) {
+        return name;
+    }
+    // Try partial matching for variant names
+    const baseName = name.split('/')[0];
+    for (const key of Object.keys(COMPONENT_REGISTRY)) {
+        const keyBase = key.split('/')[0];
+        // Match "Button" to "Button/LightMode" or "ButtonVariant" to "Button/LightMode"
+        if (keyBase.toLowerCase() === baseName.toLowerCase() ||
+            keyBase.toLowerCase() === baseName.replace(/variant/i, '').toLowerCase()) {
+            // Prefer matching the mode suffix if present
+            const modeSuffix = name.split('/')[1]?.toLowerCase();
+            if (modeSuffix && key.toLowerCase().includes(modeSuffix.replace(/\s+/g, ''))) {
+                return key;
+            }
+        }
+    }
+    return name;
+}
+
 // Get component by name
 export function getComponentByName(name: string) {
-    return COMPONENT_REGISTRY[name] || null;
+    const resolvedName = resolveComponentName(name);
+    return COMPONENT_REGISTRY[resolvedName] || null;
 }
 
 // Check if component is supported
 export function isComponentSupported(name: string): boolean {
-    return name in COMPONENT_REGISTRY;
+    const resolvedName = resolveComponentName(name);
+    return resolvedName in COMPONENT_REGISTRY;
 }
 
 // Get all supported component names
@@ -313,9 +397,11 @@ export function getSupportedComponentNames(): string[] {
 // Get Figma properties for a component
 export function getFigmaProperties(name: string): FigmaPropertyDefinition[] | null {
     console.log('🔎 getFigmaProperties called with:', name);
+    const resolvedName = resolveComponentName(name);
+    console.log('🔎 Resolved name:', resolvedName);
     console.log('🔎 Available registry keys:', Object.keys(COMPONENT_REGISTRY));
-    const registration = COMPONENT_REGISTRY[name];
-    console.log('🔎 Registration found:', !!registration, registration?.figmaProperties ? 'has props' : 'no props');
+    const registration = COMPONENT_REGISTRY[resolvedName];
+    console.log('🔎 Registration found:', !!registration, registration?.figmaProperties ? `has ${registration.figmaProperties.length} props` : 'no props');
     return registration?.figmaProperties || null;
 }
 
