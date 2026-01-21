@@ -75,6 +75,10 @@ export default function DesignPage() {
             // Also try case-insensitive matching
             const definitionKeys = Object.keys(fileComponentDefinitions);
 
+            // Extract base name and mode suffix for partial matching
+            const baseName = selectedComponentName?.split('/')[0];
+            const modeSuffix = selectedComponentName?.includes('/') ? selectedComponentName.split('/')[1] : null;
+
             // First try exact matches (skip entries with empty properties)
             for (const nameToTry of namesToTry) {
                 if (nameToTry && fileComponentDefinitions[nameToTry]) {
@@ -131,18 +135,26 @@ export default function DesignPage() {
             }
 
             // Try partial matching - find any definition that starts with the base component name
-            // Prefer matches with non-empty properties
-            const baseName = selectedComponentName?.split('/')[0];
+            // Prefer matches with non-empty properties AND same mode (Light/Dark)
             if (baseName) {
                 // Find all partial matches
                 const partialMatches = definitionKeys.filter(key =>
                     key.toLowerCase().startsWith(baseName.toLowerCase()) ||
                     baseName.toLowerCase().startsWith(key.toLowerCase())
                 );
-                // Prefer matches with non-empty properties
-                const matchWithProps = partialMatches.find(key =>
-                    Object.keys(fileComponentDefinitions[key].properties).length > 0
-                );
+                // First try to find a match with same mode suffix AND non-empty properties
+                let matchWithProps = modeSuffix
+                    ? partialMatches.find(key =>
+                        key.toLowerCase().includes(modeSuffix.toLowerCase()) &&
+                        Object.keys(fileComponentDefinitions[key].properties).length > 0
+                    )
+                    : null;
+                // Fall back to any match with non-empty properties
+                if (!matchWithProps) {
+                    matchWithProps = partialMatches.find(key =>
+                        Object.keys(fileComponentDefinitions[key].properties).length > 0
+                    );
+                }
                 const partialMatch = matchWithProps || partialMatches[0];
 
                 if (partialMatch) {
@@ -212,15 +224,25 @@ export default function DesignPage() {
                             }
                         }
 
-                        // Try partial matching on refreshed data (prefer non-empty properties)
+                        // Try partial matching on refreshed data (prefer mode match + non-empty properties)
                         if (baseName) {
                             const partialMatches = refreshedKeys.filter(key =>
                                 key.toLowerCase().startsWith(baseName.toLowerCase()) ||
                                 baseName.toLowerCase().startsWith(key.toLowerCase())
                             );
-                            const matchWithProps = partialMatches.find(key =>
-                                Object.keys(propsData.components[key].properties).length > 0
-                            );
+                            // First try to find match with same mode suffix
+                            let matchWithProps = modeSuffix
+                                ? partialMatches.find(key =>
+                                    key.toLowerCase().includes(modeSuffix.toLowerCase()) &&
+                                    Object.keys(propsData.components[key].properties).length > 0
+                                )
+                                : null;
+                            // Fall back to any match with properties
+                            if (!matchWithProps) {
+                                matchWithProps = partialMatches.find(key =>
+                                    Object.keys(propsData.components[key].properties).length > 0
+                                );
+                            }
                             const partialMatch = matchWithProps || partialMatches[0];
 
                             if (partialMatch && Object.keys(propsData.components[partialMatch].properties).length > 0) {
