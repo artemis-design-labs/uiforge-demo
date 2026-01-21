@@ -38,6 +38,7 @@ interface IconEntry {
 // List of component prefixes to include (for performance on large files)
 const ALLOWED_COMPONENT_PREFIXES = [
     'accordion',
+    'alert',       // Alert component
     'breadcrumb',
     'button',
     'chip',

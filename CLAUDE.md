@@ -303,10 +303,42 @@ const NAME_ALIASES: Record<string, string> = {
 
 ### Currently Supported Components
 - `Accordion/LightMode`, `Accordion/DarkMode`
+- `Alert/LightMode`, `Alert/DarkMode` (NEW)
+- `Avatar/LightMode`, `Avatar/DarkMode` (NEW)
+- `Badge/LightMode`, `Badge/DarkMode` (NEW)
 - `Button/LightMode`, `Button/DarkMode`
 - `Breadcrumb/Light Mode`, `Breadcrumb/Dark Mode`
+- `Checkbox/LightMode`, `Checkbox/DarkMode` (NEW)
+- `Chip/LightMode`, `Chip/DarkMode` (NEW)
 - `Dropdown/LightMode`
 - `ProgressLinear/LightMode`
+
+### New Components Added (January 2026)
+
+#### Alert Component
+- **Properties**: Title (TEXT), Description (TEXT), Severity (VARIANT), Variant (VARIANT), Show Icon (BOOLEAN), Show Close (BOOLEAN), Show Title (BOOLEAN), Icon (INSTANCE_SWAP)
+- **Variants**: Severity (Error, Warning, Info, Success), Variant (Filled, Outlined, Standard)
+- **Files**: `FigmaAlert.tsx`
+
+#### Avatar Component
+- **Properties**: Initials (TEXT), Alt (TEXT), Size (VARIANT), Variant (VARIANT), Color (VARIANT), Show Image (BOOLEAN), Show Icon (BOOLEAN)
+- **Variants**: Size (Small, Medium, Large), Variant (Circular, Rounded, Square), Color (Primary, Secondary, Error, Warning, Info, Success)
+- **Files**: `FigmaAvatar.tsx`
+
+#### Badge Component
+- **Properties**: Content (TEXT), Color (VARIANT), Variant (VARIANT), Position (VARIANT), Size (VARIANT), Show Badge (BOOLEAN), Show Zero (BOOLEAN)
+- **Variants**: Color (Primary-Success), Variant (Standard, Dot), Position (Top/Bottom Right/Left), Size (Small, Medium, Large)
+- **Files**: `FigmaBadge.tsx`
+
+#### Checkbox Component
+- **Properties**: Label (TEXT), Color (VARIANT), Size (VARIANT), State (VARIANT), Checked (BOOLEAN), Indeterminate (BOOLEAN), Disabled (BOOLEAN), Show Label (BOOLEAN)
+- **Variants**: Color (Primary-Success), Size (Small, Medium, Large), State (Enabled, Hovered, Focused, Disabled)
+- **Files**: `FigmaCheckbox.tsx`
+
+#### Chip Component
+- **Properties**: Label (TEXT), Color (VARIANT), Variant (VARIANT), Size (VARIANT), State (VARIANT), Disabled (BOOLEAN), Deletable (BOOLEAN), Clickable (BOOLEAN), Show Icon (BOOLEAN), Show Avatar (BOOLEAN), Icon (INSTANCE_SWAP)
+- **Variants**: Color (Primary-Success + Default), Variant (Filled, Outlined), Size (Small, Medium), State (Enabled, Hovered, Focused, Disabled)
+- **Files**: `FigmaChip.tsx`
 
 ---
 
@@ -452,7 +484,50 @@ In Figma Developer Console:
 
 ## Recent Fixes & Improvements
 
-### Session: January 2026
+### Session: January 21, 2026 (Current)
+
+#### Added 5 New Figma Components
+Implemented 5 new components following the same pattern as the Button component:
+
+1. **FigmaAlert** - Alert/notification component with severity levels and variants
+   - Supports: Error, Warning, Info, Success severities
+   - Variants: Filled, Outlined, Standard
+   - Features: Icon swap, title toggle, close button toggle
+   - File: `apps/frontend/src/components/figma-components/FigmaAlert.tsx`
+
+2. **FigmaAvatar** - Avatar component with initials, icons, or images
+   - Sizes: Small (32px), Medium (40px), Large (56px)
+   - Shapes: Circular, Rounded, Square
+   - Colors: Primary, Secondary, Error, Warning, Info, Success
+   - File: `apps/frontend/src/components/figma-components/FigmaAvatar.tsx`
+
+3. **FigmaBadge** - Badge overlay component
+   - Variants: Standard (with number), Dot
+   - Positions: Top Right, Top Left, Bottom Right, Bottom Left
+   - Features: Show/hide badge, show zero option
+   - File: `apps/frontend/src/components/figma-components/FigmaBadge.tsx`
+
+4. **FigmaCheckbox** - Checkbox with three states
+   - States: Unchecked, Checked, Indeterminate
+   - Interactive states: Enabled, Hovered, Focused, Disabled
+   - Features: Label toggle, color variants
+   - File: `apps/frontend/src/components/figma-components/FigmaCheckbox.tsx`
+
+5. **FigmaChip** - Chip/tag component
+   - Variants: Filled, Outlined
+   - Features: Deletable, Clickable, Icon support, Avatar support
+   - Interactive states: Enabled, Hovered, Focused, Disabled
+   - File: `apps/frontend/src/components/figma-components/FigmaChip.tsx`
+
+All components registered in `COMPONENT_REGISTRY` with both LightMode and DarkMode variants.
+
+#### API Route Update
+- Added "alert" to `ALLOWED_COMPONENT_PREFIXES` in file-components API
+- File: `apps/frontend/src/app/api/figma/file-components/[fileKey]/route.ts`
+
+---
+
+### Session: January 2026 (Previous)
 
 #### Large File Loading (502 Fix)
 - Added `depth` parameter to Figma file fetch endpoint (default: 3)
