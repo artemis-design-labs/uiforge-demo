@@ -497,6 +497,34 @@ router.get('/file-components/:fileKey', authenticateUser, async (req, res) => {
 
         console.log(`Fetching component properties for file ${fileKey}`);
 
+        // List of component prefixes to include (for performance on large files)
+        // Icons are included to support instance swap functionality
+        const ALLOWED_COMPONENT_PREFIXES = [
+            'accordion',
+            'breadcrumb',
+            'button',
+            'chip',
+            'dropdown',
+            'progress',
+            'icons',       // For instance swap
+            'icon',        // Alternative icon naming
+            'checkbox',
+            'avatar',
+            'card',
+            'badge',
+        ];
+
+        // Helper to check if a component name matches allowed list
+        const isAllowedComponent = (name) => {
+            if (!name) return false;
+            const lowerName = name.toLowerCase();
+            return ALLOWED_COMPONENT_PREFIXES.some(prefix =>
+                lowerName.startsWith(prefix) ||
+                lowerName.includes('/' + prefix) ||
+                lowerName.includes(prefix + '/')
+            );
+        };
+
         // Fetch file with depth=10 to get component sets in deeply nested structures
         const response = await axios.get(`https://api.figma.com/v1/files/${fileKey}?depth=10`, {
             headers: { 'Authorization': `Bearer ${req.user.figmaToken}` },
@@ -505,10 +533,22 @@ router.get('/file-components/:fileKey', authenticateUser, async (req, res) => {
 
         const components = {};
         const standaloneComponents = []; // Store standalone components for second pass
+        const iconRegistry = {}; // Registry of icons for instance swap
 
         // PASS 1: Collect all COMPONENT_SETs first (they have the properties)
         function collectComponentSets(node) {
             if (node.type === 'COMPONENT_SET') {
+                // Skip components not in allowed list (for performance)
+                if (!isAllowedComponent(node.name)) {
+                    // Still recurse to find nested allowed components
+                    if (node.children) {
+                        for (const child of node.children) {
+                            collectComponentSets(child);
+                        }
+                    }
+                    return;
+                }
+
                 const properties = {};
 
                 // Get properties from componentPropertyDefinitions
@@ -599,7 +639,20 @@ router.get('/file-components/:fileKey', authenticateUser, async (req, res) => {
             }
             // Collect standalone COMPONENT nodes for second pass
             else if (node.type === 'COMPONENT') {
-                standaloneComponents.push(node);
+                // Only collect if in allowed list
+                if (isAllowedComponent(node.name)) {
+                    standaloneComponents.push(node);
+                }
+
+                // Build icon registry for instance swap support
+                const lowerName = node.name.toLowerCase();
+                if (lowerName.startsWith('icon') || lowerName.includes('/icon')) {
+                    iconRegistry[node.id] = {
+                        nodeId: node.id,
+                        name: node.name,
+                        type: node.type,
+                    };
+                }
             }
 
             // Recurse
@@ -680,11 +733,15 @@ router.get('/file-components/:fileKey', authenticateUser, async (req, res) => {
 
         console.log(`Found ${Object.keys(components).length} components with properties`);
 
+        console.log(`Found ${Object.keys(iconRegistry).length} icons for instance swap`);
+
         res.status(200).json({
             fileKey,
             fileName: response.data.name,
             components,
             componentCount: Object.keys(components).length,
+            iconRegistry, // Icons available for instance swap
+            iconCount: Object.keys(iconRegistry).length,
         });
     } catch (err) {
         console.error('Error fetching file components:', err.response?.data || err.message);

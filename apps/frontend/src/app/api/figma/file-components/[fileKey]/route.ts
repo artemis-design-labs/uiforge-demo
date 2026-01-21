@@ -28,13 +28,59 @@ interface ComponentInfo {
     }>;
 }
 
+// Icon registry entry
+interface IconEntry {
+    nodeId: string;
+    name: string;
+    type: string;
+}
+
+// List of component prefixes to include (for performance on large files)
+const ALLOWED_COMPONENT_PREFIXES = [
+    'accordion',
+    'breadcrumb',
+    'button',
+    'chip',
+    'dropdown',
+    'progress',
+    'icons',       // For instance swap
+    'icon',        // Alternative icon naming
+    'checkbox',
+    'avatar',
+    'card',
+    'badge',
+];
+
+// Helper to check if a component name matches allowed list
+function isAllowedComponent(name: string | null | undefined): boolean {
+    if (!name) return false;
+    const lowerName = name.toLowerCase();
+    return ALLOWED_COMPONENT_PREFIXES.some(prefix =>
+        lowerName.startsWith(prefix) ||
+        lowerName.includes('/' + prefix) ||
+        lowerName.includes(prefix + '/')
+    );
+}
+
 // PASS 1: Collect all COMPONENT_SETs first (they have the properties)
 function collectComponentSets(
     node: FigmaNode,
     results: Map<string, ComponentInfo>,
-    standaloneComponents: FigmaNode[]
+    standaloneComponents: FigmaNode[],
+    iconRegistry: Map<string, IconEntry>
 ): void {
     if (node.type === 'COMPONENT_SET') {
+        // Skip components not in allowed list (for performance)
+        if (!isAllowedComponent(node.name)) {
+            // Still recurse to find nested allowed components
+            if (node.children) {
+                for (const child of node.children) {
+                    collectComponentSets(child, results, standaloneComponents, iconRegistry);
+                }
+            }
+            return;
+        }
+
         const properties: ComponentInfo['properties'] = {};
 
         // Extract ALL property types from componentPropertyDefinitions
@@ -92,13 +138,26 @@ function collectComponentSets(
     }
     // Collect standalone COMPONENT nodes for second pass
     else if (node.type === 'COMPONENT') {
-        standaloneComponents.push(node);
+        // Only collect if in allowed list
+        if (isAllowedComponent(node.name)) {
+            standaloneComponents.push(node);
+        }
+
+        // Build icon registry for instance swap support
+        const lowerName = node.name.toLowerCase();
+        if (lowerName.startsWith('icon') || lowerName.includes('/icon')) {
+            iconRegistry.set(node.id, {
+                nodeId: node.id,
+                name: node.name,
+                type: node.type,
+            });
+        }
     }
 
     // Recurse into children
     if (node.children) {
         for (const child of node.children) {
-            collectComponentSets(child, results, standaloneComponents);
+            collectComponentSets(child, results, standaloneComponents, iconRegistry);
         }
     }
 }
@@ -170,21 +229,29 @@ function processStandaloneComponents(
     }
 }
 
+// Result type for component discovery
+interface ComponentSetsResult {
+    components: Map<string, ComponentInfo>;
+    iconRegistry: Map<string, IconEntry>;
+}
+
 // Two-pass component discovery
-function findComponentSetsWithProperties(node: FigmaNode): Map<string, ComponentInfo> {
+function findComponentSetsWithProperties(node: FigmaNode): ComponentSetsResult {
     const results = new Map<string, ComponentInfo>();
     const standaloneComponents: FigmaNode[] = [];
+    const iconRegistry = new Map<string, IconEntry>();
 
     // Pass 1: Collect all COMPONENT_SETs
-    collectComponentSets(node, results, standaloneComponents);
+    collectComponentSets(node, results, standaloneComponents, iconRegistry);
 
     console.log(`[Frontend] Pass 1: Found ${results.size} COMPONENT_SET entries`);
     console.log(`[Frontend] Pass 1: Found ${standaloneComponents.length} standalone COMPONENTs to process`);
+    console.log(`[Frontend] Pass 1: Found ${iconRegistry.size} icons for instance swap`);
 
     // Pass 2: Process standalone components with full inheritance
     processStandaloneComponents(standaloneComponents, results);
 
-    return results;
+    return { components: results, iconRegistry };
 }
 
 // Also extract properties from variant names (e.g., "Size=Large, State=Enabled")
@@ -199,10 +266,16 @@ function parseVariantName(name: string): Record<string, string> {
     return properties;
 }
 
+// Result type for buildComponentMap
+interface BuildResult {
+    components: Map<string, ComponentInfo>;
+    iconRegistry: Map<string, IconEntry>;
+}
+
 // Build a comprehensive component map including variant options discovered from component names
-function buildComponentMap(node: FigmaNode): Map<string, ComponentInfo> {
+function buildComponentMap(node: FigmaNode): BuildResult {
     // Use the two-pass approach that collects all COMPONENT_SETs first
-    const componentSets = findComponentSetsWithProperties(node);
+    const { components: componentSets, iconRegistry } = findComponentSetsWithProperties(node);
 
     // Additional pass: For component sets without explicit componentPropertyDefinitions,
     // try to discover properties from child component names
@@ -271,7 +344,7 @@ function buildComponentMap(node: FigmaNode): Map<string, ComponentInfo> {
     };
     traverse(node);
 
-    return componentSets;
+    return { components: componentSets, iconRegistry };
 }
 
 // Fetch all component property definitions from a Figma file
@@ -341,21 +414,29 @@ export async function GET(
         }
 
         const data = await response.json();
-        const componentMap = buildComponentMap(data.document);
+        const { components: componentMap, iconRegistry: iconMap } = buildComponentMap(data.document);
 
-        // Convert Map to object for JSON response
+        // Convert Maps to objects for JSON response
         const components: Record<string, ComponentInfo> = {};
         for (const [name, info] of componentMap.entries()) {
             components[name] = info;
         }
 
+        const iconRegistry: Record<string, IconEntry> = {};
+        for (const [id, entry] of iconMap.entries()) {
+            iconRegistry[id] = entry;
+        }
+
         console.log(`[Figma File Components API] Found ${Object.keys(components).length} components with properties`);
+        console.log(`[Figma File Components API] Found ${Object.keys(iconRegistry).length} icons for instance swap`);
 
         return NextResponse.json({
             fileKey,
             fileName: data.name,
             components,
             componentCount: Object.keys(components).length,
+            iconRegistry,
+            iconCount: Object.keys(iconRegistry).length,
         });
     } catch (error) {
         console.error('[Figma File Components API] Unexpected error:', error);
