@@ -506,20 +506,18 @@ export default function DesignPage() {
         if (imageUrl) {
             return (
                 <div className="flex flex-col items-center justify-center h-full p-8">
-                    {/* Component Image */}
-                    <div className="bg-white rounded-lg shadow-lg p-4 max-w-full overflow-auto">
-                        <img
-                            src={imageUrl}
-                            alt={selectedComponentName || 'Component'}
-                            className="max-w-full h-auto"
-                            style={{ maxHeight: '60vh' }}
-                        />
-                    </div>
+                    {/* Component Image - no inner container, uses parent background */}
+                    <img
+                        src={imageUrl}
+                        alt={selectedComponentName || 'Component'}
+                        className="max-w-full h-auto"
+                        style={{ maxHeight: '60vh' }}
+                    />
 
                     {/* Component Info */}
-                    <div className="mt-6 text-center">
-                        <p className="text-foreground font-medium">{selectedComponentName}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
+                    <div className={`mt-6 text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                        <p className="font-medium">{selectedComponentName}</p>
+                        <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                             Type: {selectedComponentType} | Node ID: {selectedComponent}
                         </p>
                     </div>
@@ -530,12 +528,12 @@ export default function DesignPage() {
         // Fallback - show component info
         return (
             <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                <div className="p-6 bg-muted/30 rounded-lg">
-                    <p className="text-foreground font-medium text-lg">{selectedComponentName}</p>
-                    <p className="text-sm text-muted-foreground mt-2">
+                <div className={isDarkMode ? 'text-white' : 'text-gray-800'}>
+                    <p className="font-medium text-lg">{selectedComponentName}</p>
+                    <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                         Type: {selectedComponentType}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                         Node ID: {selectedComponent}
                     </p>
                 </div>
