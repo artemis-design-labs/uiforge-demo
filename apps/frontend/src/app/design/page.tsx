@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
-import { setFigmaComponentProps, clearFigmaComponentProps, setFileComponentDefinitions } from '@/store/figmaSlice';
+import { setFigmaComponentProps, clearFigmaComponentProps, setFileComponentDefinitions, setIconRegistry } from '@/store/figmaSlice';
 import { figmaService } from '@/services/figma';
 import { ComponentRenderer, isComponentSupported, getFigmaProperties } from '@/components/figma-components';
 
@@ -31,7 +31,8 @@ export default function DesignPage() {
         selectedComponentType,
         currentFileKey,
         figmaComponentProps,
-        fileComponentDefinitions
+        fileComponentDefinitions,
+        iconRegistry
     } = useAppSelector((state) => state.figma);
 
     const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -199,6 +200,10 @@ export default function DesignPage() {
                     if (propsData.components) {
                         console.log('📦 Refreshed component properties, found', propsData.componentCount, 'components');
                         dispatch(setFileComponentDefinitions(propsData.components));
+                    }
+                    if (propsData.iconRegistry) {
+                        console.log('🎨 Refreshed icon registry, found', propsData.iconCount, 'icons');
+                        dispatch(setIconRegistry(propsData.iconRegistry));
 
                         // Check if the component is now in the refreshed definitions (skip empty properties)
                         const refreshedKeys = Object.keys(propsData.components);

@@ -23,7 +23,19 @@ import { generateComponentCode, type FigmaComponentProp } from '@/services/codeG
  */
 export function FigmaPropertiesPanel() {
     const dispatch = useAppDispatch();
-    const { figmaComponentProps, selectedComponentName } = useAppSelector((state) => state.figma);
+    const { figmaComponentProps, selectedComponentName, iconRegistry } = useAppSelector((state) => state.figma);
+
+    // Helper to get icon name from node ID using the icon registry
+    const getIconName = (nodeId: string): string => {
+        const iconEntry = iconRegistry[nodeId];
+        if (iconEntry) {
+            // Extract clean name (e.g., "Icons/Arrow Left" -> "Arrow Left")
+            const name = iconEntry.name;
+            return name.includes('/') ? name.split('/').pop() || name : name;
+        }
+        // Fallback: format the node ID for display
+        return nodeId.split(':').join('-');
+    };
 
     // Debug logging
     console.log('🎛️ FigmaPropertiesPanel render:', {
@@ -146,13 +158,13 @@ export function FigmaPropertiesPanel() {
                                             {prop.options ? (
                                                 prop.options.map((option: string) => (
                                                     <option key={option} value={option}>
-                                                        {option}
+                                                        {getIconName(option)}
                                                     </option>
                                                 ))
                                             ) : (
                                                 prop.preferredValues?.map((pv: { type: string; key: string }) => (
                                                     <option key={pv.key} value={pv.key}>
-                                                        {pv.key.split(':').join('-')} ({pv.type})
+                                                        {getIconName(pv.key)}
                                                     </option>
                                                 ))
                                             )}
@@ -162,7 +174,7 @@ export function FigmaPropertiesPanel() {
                                     {/* INSTANCE_SWAP without options - show as info with current value */}
                                     {prop.type === 'INSTANCE_SWAP' && !prop.options && !prop.preferredValues && (
                                         <div className="p-2 bg-gray-800/50 rounded border border-gray-700 text-xs text-gray-400">
-                                            <span className="text-gray-500">Instance Swap:</span> {String(prop.value).split(':').join('-') || 'None'}
+                                            <span className="text-gray-500">Instance Swap:</span> {getIconName(String(prop.value)) || 'None'}
                                         </div>
                                     )}
                                 </div>

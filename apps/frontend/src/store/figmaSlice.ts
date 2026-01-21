@@ -38,6 +38,13 @@ interface FileComponentDefinition {
     }>;
 }
 
+// Icon registry entry for instance swap
+interface IconRegistryEntry {
+    nodeId: string;
+    name: string;
+    type: string;
+}
+
 interface FigmaState {
     fileTree: TreeNode | null;
     currentFileKey: string | null;
@@ -58,6 +65,8 @@ interface FigmaState {
     figmaComponentProps: Record<string, FigmaComponentProperty>;
     // File-level component property definitions (cached from Figma)
     fileComponentDefinitions: Record<string, FileComponentDefinition>;
+    // Icon registry for instance swap (maps node IDs to icon names)
+    iconRegistry: Record<string, IconRegistryEntry>;
 }
 
 const initialState: FigmaState = {
@@ -78,6 +87,7 @@ const initialState: FigmaState = {
     error: null,
     figmaComponentProps: {},
     fileComponentDefinitions: {},
+    iconRegistry: {},
 };
 
 const figmaSlice = createSlice({
@@ -187,6 +197,12 @@ const figmaSlice = createSlice({
         clearFileComponentDefinitions: (state) => {
             state.fileComponentDefinitions = {};
         },
+        setIconRegistry: (state, action: PayloadAction<Record<string, IconRegistryEntry>>) => {
+            state.iconRegistry = action.payload;
+        },
+        clearIconRegistry: (state) => {
+            state.iconRegistry = {};
+        },
     },
 });
 
@@ -213,6 +229,8 @@ export const {
     clearFigmaComponentProps,
     setFileComponentDefinitions,
     clearFileComponentDefinitions,
+    setIconRegistry,
+    clearIconRegistry,
 } = figmaSlice.actions;
 
 export default figmaSlice.reducer;

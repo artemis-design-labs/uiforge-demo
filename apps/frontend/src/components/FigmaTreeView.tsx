@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
-import { setSelectedFile, setSelectedPage, setSelectedComponent, setError, clearError, setLoading, setFileTree, setCurrentFileKey, setCurrentFileUrl, setInstanceData, toggleNodeExpansion, setExpandedNodes, addRecentFile, setFileComponentDefinitions } from '@/store/figmaSlice';
+import { setSelectedFile, setSelectedPage, setSelectedComponent, setError, clearError, setLoading, setFileTree, setCurrentFileKey, setCurrentFileUrl, setInstanceData, toggleNodeExpansion, setExpandedNodes, addRecentFile, setFileComponentDefinitions, setIconRegistry } from '@/store/figmaSlice';
 import { figmaService } from '@/services/figma';
 import { activityLogger } from '@/services/activityLogger';
 import { RecentFilesPanel } from './RecentFilesPanel';
@@ -329,6 +329,10 @@ export default function FigmaTreeView() {
                         console.log('📦 Cached component properties for', propsData.componentCount, 'components');
                         dispatch(setFileComponentDefinitions(propsData.components));
                     }
+                    if (propsData.iconRegistry) {
+                        console.log('🎨 Cached icon registry for', propsData.iconCount, 'icons');
+                        dispatch(setIconRegistry(propsData.iconRegistry));
+                    }
                 })
                 .catch((err) => {
                     console.warn('⚠️ Could not fetch component properties:', err.message);
@@ -386,6 +390,10 @@ export default function FigmaTreeView() {
                 if (propsData?.components) {
                     console.log('📦 Refreshed component properties for', propsData.componentCount, 'components');
                     dispatch(setFileComponentDefinitions(propsData.components));
+                }
+                if (propsData?.iconRegistry) {
+                    console.log('🎨 Refreshed icon registry for', propsData.iconCount, 'icons');
+                    dispatch(setIconRegistry(propsData.iconRegistry));
                 }
             })
             .catch((err) => {
