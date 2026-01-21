@@ -238,9 +238,9 @@ export async function GET(
         console.log(`[Figma File Components API] Fetching component properties for file ${fileKey} using PAT`);
 
         // Fetch the file with depth to get component sets and their definitions
-        // Using depth=5 to ensure we capture components in deeply nested structures
+        // Using depth=10 to ensure we capture components in deeply nested structures
         const response = await fetch(
-            `https://api.figma.com/v1/files/${fileKey}?depth=5`,
+            `https://api.figma.com/v1/files/${fileKey}?depth=10`,
             {
                 headers: {
                     'Authorization': `Bearer ${figmaToken}`,

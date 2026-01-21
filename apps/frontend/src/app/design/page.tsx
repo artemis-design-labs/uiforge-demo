@@ -1,7 +1,7 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
-import { setFigmaComponentProps, clearFigmaComponentProps } from '@/store/figmaSlice';
+import { setFigmaComponentProps, clearFigmaComponentProps, setFileComponentDefinitions } from '@/store/figmaSlice';
 import { figmaService } from '@/services/figma';
 import { ComponentRenderer, isComponentSupported, getFigmaProperties } from '@/components/figma-components';
 
@@ -21,6 +21,9 @@ export default function DesignPage() {
     const [error, setError] = useState<string | null>(null);
     const [useFallback, setUseFallback] = useState(false);
     const [propsLoading, setPropsLoading] = useState(false);
+
+    // Track if we've already tried refreshing definitions for this file
+    const refreshAttemptedRef = useRef<string | null>(null);
 
     // Fetch component properties from cached definitions or Figma API
     useEffect(() => {
@@ -129,6 +132,70 @@ export default function DesignPage() {
             if (selectedComponentName) {
                 console.log('🔍 No cached definition found for:', selectedComponentName);
                 console.log('📋 Available definitions:', definitionKeys.slice(0, 30));
+            }
+
+            // AUTO-REFRESH: If component not found in cache, try refreshing definitions
+            // Only attempt once per file to avoid infinite loops
+            if (currentFileKey && refreshAttemptedRef.current !== currentFileKey) {
+                console.log('🔄 Component not in cache, refreshing file component definitions...');
+                refreshAttemptedRef.current = currentFileKey;
+
+                try {
+                    const propsData = await figmaService.getFileComponentProperties(currentFileKey);
+                    if (propsData.components) {
+                        console.log('📦 Refreshed component properties, found', propsData.componentCount, 'components');
+                        dispatch(setFileComponentDefinitions(propsData.components));
+
+                        // Check if the component is now in the refreshed definitions
+                        const refreshedKeys = Object.keys(propsData.components);
+                        for (const nameToTry of namesToTry) {
+                            if (nameToTry && propsData.components[nameToTry]) {
+                                const cached = propsData.components[nameToTry];
+                                console.log('✅ Found component after refresh:', nameToTry);
+
+                                const propsRecord: Record<string, any> = {};
+                                for (const [key, prop] of Object.entries(cached.properties)) {
+                                    propsRecord[key] = {
+                                        name: prop.name,
+                                        type: prop.type,
+                                        value: prop.defaultValue,
+                                        options: prop.options,
+                                    };
+                                }
+                                dispatch(setFigmaComponentProps(propsRecord));
+                                setPropsLoading(false);
+                                return;
+                            }
+                        }
+
+                        // Try partial matching on refreshed data
+                        if (baseName) {
+                            const partialMatch = refreshedKeys.find(key =>
+                                key.toLowerCase().startsWith(baseName.toLowerCase()) ||
+                                baseName.toLowerCase().startsWith(key.toLowerCase())
+                            );
+                            if (partialMatch) {
+                                const cached = propsData.components[partialMatch];
+                                console.log('✅ Found component after refresh (partial match):', partialMatch);
+
+                                const propsRecord: Record<string, any> = {};
+                                for (const [key, prop] of Object.entries(cached.properties)) {
+                                    propsRecord[key] = {
+                                        name: prop.name,
+                                        type: prop.type,
+                                        value: prop.defaultValue,
+                                        options: prop.options,
+                                    };
+                                }
+                                dispatch(setFigmaComponentProps(propsRecord));
+                                setPropsLoading(false);
+                                return;
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.warn('⚠️ Failed to refresh component definitions:', err);
+                }
             }
 
             // PRIORITY 2: Try Figma API for node-specific properties

@@ -497,8 +497,8 @@ router.get('/file-components/:fileKey', authenticateUser, async (req, res) => {
 
         console.log(`Fetching component properties for file ${fileKey}`);
 
-        // Fetch file with depth=5 to get component sets in deeply nested structures
-        const response = await axios.get(`https://api.figma.com/v1/files/${fileKey}?depth=5`, {
+        // Fetch file with depth=10 to get component sets in deeply nested structures
+        const response = await axios.get(`https://api.figma.com/v1/files/${fileKey}?depth=10`, {
             headers: { 'Authorization': `Bearer ${req.user.figmaToken}` },
             timeout: 120000
         });
