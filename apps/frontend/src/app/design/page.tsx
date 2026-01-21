@@ -75,10 +75,15 @@ export default function DesignPage() {
             // Also try case-insensitive matching
             const definitionKeys = Object.keys(fileComponentDefinitions);
 
-            // First try exact matches
+            // First try exact matches (skip entries with empty properties)
             for (const nameToTry of namesToTry) {
                 if (nameToTry && fileComponentDefinitions[nameToTry]) {
                     const cached = fileComponentDefinitions[nameToTry];
+                    // Skip if properties are empty - try to find a better match
+                    if (Object.keys(cached.properties).length === 0) {
+                        console.log('⚠️ Found component but properties empty, trying other matches:', nameToTry);
+                        continue;
+                    }
                     console.log('📦 Using cached component properties for:', nameToTry, '(selected:', selectedComponentName, ')', cached.properties);
 
                     const propsRecord: Record<string, any> = {};
@@ -96,13 +101,18 @@ export default function DesignPage() {
                 }
             }
 
-            // Try case-insensitive matching
+            // Try case-insensitive matching (skip entries with empty properties)
             for (const nameToTry of namesToTry) {
                 if (!nameToTry) continue;
                 const lowerName = nameToTry.toLowerCase();
                 const matchedKey = definitionKeys.find(key => key.toLowerCase() === lowerName);
                 if (matchedKey) {
                     const cached = fileComponentDefinitions[matchedKey];
+                    // Skip if properties are empty
+                    if (Object.keys(cached.properties).length === 0) {
+                        console.log('⚠️ Found component (case-insensitive) but properties empty:', matchedKey);
+                        continue;
+                    }
                     console.log('📦 Using cached component properties (case-insensitive match):', matchedKey, '(selected:', selectedComponentName, ')', cached.properties);
 
                     const propsRecord: Record<string, any> = {};
@@ -121,28 +131,40 @@ export default function DesignPage() {
             }
 
             // Try partial matching - find any definition that starts with the base component name
+            // Prefer matches with non-empty properties
             const baseName = selectedComponentName?.split('/')[0];
             if (baseName) {
-                const partialMatch = definitionKeys.find(key =>
+                // Find all partial matches
+                const partialMatches = definitionKeys.filter(key =>
                     key.toLowerCase().startsWith(baseName.toLowerCase()) ||
                     baseName.toLowerCase().startsWith(key.toLowerCase())
                 );
+                // Prefer matches with non-empty properties
+                const matchWithProps = partialMatches.find(key =>
+                    Object.keys(fileComponentDefinitions[key].properties).length > 0
+                );
+                const partialMatch = matchWithProps || partialMatches[0];
+
                 if (partialMatch) {
                     const cached = fileComponentDefinitions[partialMatch];
-                    console.log('📦 Using cached component properties (partial match):', partialMatch, '(selected:', selectedComponentName, ')', cached.properties);
+                    if (Object.keys(cached.properties).length === 0) {
+                        console.log('⚠️ Found partial match but properties empty:', partialMatch);
+                    } else {
+                        console.log('📦 Using cached component properties (partial match):', partialMatch, '(selected:', selectedComponentName, ')', cached.properties);
 
-                    const propsRecord: Record<string, any> = {};
-                    for (const [key, prop] of Object.entries(cached.properties) as [string, ComponentPropertyDef][]) {
-                        propsRecord[key] = {
-                            name: prop.name,
-                            type: prop.type,
-                            value: prop.defaultValue,
-                            options: prop.options,
-                        };
+                        const propsRecord: Record<string, any> = {};
+                        for (const [key, prop] of Object.entries(cached.properties) as [string, ComponentPropertyDef][]) {
+                            propsRecord[key] = {
+                                name: prop.name,
+                                type: prop.type,
+                                value: prop.defaultValue,
+                                options: prop.options,
+                            };
+                        }
+                        dispatch(setFigmaComponentProps(propsRecord));
+                        setPropsLoading(false);
+                        return;
                     }
-                    dispatch(setFigmaComponentProps(propsRecord));
-                    setPropsLoading(false);
-                    return;
                 }
             }
 
@@ -164,11 +186,15 @@ export default function DesignPage() {
                         console.log('📦 Refreshed component properties, found', propsData.componentCount, 'components');
                         dispatch(setFileComponentDefinitions(propsData.components));
 
-                        // Check if the component is now in the refreshed definitions
+                        // Check if the component is now in the refreshed definitions (skip empty properties)
                         const refreshedKeys = Object.keys(propsData.components);
                         for (const nameToTry of namesToTry) {
                             if (nameToTry && propsData.components[nameToTry]) {
                                 const cached = propsData.components[nameToTry];
+                                if (Object.keys(cached.properties).length === 0) {
+                                    console.log('⚠️ Found component after refresh but properties empty:', nameToTry);
+                                    continue;
+                                }
                                 console.log('✅ Found component after refresh:', nameToTry);
 
                                 const propsRecord: Record<string, any> = {};
@@ -186,13 +212,18 @@ export default function DesignPage() {
                             }
                         }
 
-                        // Try partial matching on refreshed data
+                        // Try partial matching on refreshed data (prefer non-empty properties)
                         if (baseName) {
-                            const partialMatch = refreshedKeys.find(key =>
+                            const partialMatches = refreshedKeys.filter(key =>
                                 key.toLowerCase().startsWith(baseName.toLowerCase()) ||
                                 baseName.toLowerCase().startsWith(key.toLowerCase())
                             );
-                            if (partialMatch) {
+                            const matchWithProps = partialMatches.find(key =>
+                                Object.keys(propsData.components[key].properties).length > 0
+                            );
+                            const partialMatch = matchWithProps || partialMatches[0];
+
+                            if (partialMatch && Object.keys(propsData.components[partialMatch].properties).length > 0) {
                                 const cached = propsData.components[partialMatch];
                                 console.log('✅ Found component after refresh (partial match):', partialMatch);
 
