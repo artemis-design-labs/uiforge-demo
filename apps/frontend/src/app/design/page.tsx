@@ -392,6 +392,22 @@ export default function DesignPage() {
         return props;
     };
 
+    // Determine if component is LightMode or DarkMode based on name
+    const isDarkMode = selectedComponentName?.toLowerCase().includes('darkmode') ||
+                       selectedComponentName?.toLowerCase().includes('dark mode');
+    const isLightMode = selectedComponentName?.toLowerCase().includes('lightmode') ||
+                        selectedComponentName?.toLowerCase().includes('light mode');
+
+    // Container background: white for LightMode, black for DarkMode, transparent otherwise
+    const getContainerStyle = () => {
+        if (isLightMode) {
+            return 'bg-white';
+        } else if (isDarkMode) {
+            return 'bg-black';
+        }
+        return 'bg-transparent';
+    };
+
     const renderContent = () => {
         // No component selected
         if (!selectedComponent || !selectedComponentName) {
@@ -527,18 +543,21 @@ export default function DesignPage() {
         );
     };
 
+    // Show grid only when no component is selected
+    const showGrid = !selectedComponent || !selectedComponentName;
+
     return (
         <div className="h-full w-full bg-[#1a1a1a] flex items-center justify-center">
-            {/* Main rendering area with subtle grid background */}
+            {/* Main rendering area */}
             <div
-                className="w-full h-full"
-                style={{
+                className={`w-full h-full flex items-center justify-center ${!showGrid ? getContainerStyle() : ''}`}
+                style={showGrid ? {
                     backgroundImage: `
                         linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
                         linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px)
                     `,
                     backgroundSize: '20px 20px',
-                }}
+                } : undefined}
             >
                 {renderContent()}
             </div>
