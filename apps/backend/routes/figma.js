@@ -52,9 +52,11 @@ function getObjectSize(obj) {
 const MAX_DOCUMENT_SIZE = 15 * 1024 * 1024; // 15MB to be safe
 
 // Get file structure
+// Use depth parameter to limit tree depth for large files (default: 3)
 router.get('/file/:fileKey', authenticateUser, async (req, res) => {
     try {
         const { fileKey } = req.params;
+        const { depth = 3 } = req.query; // Default depth of 3 for performance
 
         // First, check if data exists in MongoDB cache
         const cachedFile = await FigmaFile.findOne({ fileKey });
@@ -81,10 +83,12 @@ router.get('/file/:fileKey', authenticateUser, async (req, res) => {
         }
 
         // If not cached, fetch from Figma API
-        console.log(`Fetching file data from Figma API for ${fileKey}`);
+        console.log(`Fetching file data from Figma API for ${fileKey} with depth=${depth}`);
         let response;
         try {
-            response = await axios.get(`https://api.figma.com/v1/files/${fileKey}`, {
+            // Use depth parameter to limit tree depth for large files
+            const depthValue = Math.min(Math.max(parseInt(depth), 1), 10); // Clamp between 1 and 10
+            response = await axios.get(`https://api.figma.com/v1/files/${fileKey}?depth=${depthValue}`, {
                 headers: { 'Authorization': `Bearer ${req.user.figmaToken}` },
                 timeout: 120000 // 2 minute timeout
             });

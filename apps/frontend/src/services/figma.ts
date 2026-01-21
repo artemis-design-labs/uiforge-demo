@@ -11,11 +11,16 @@ interface ExtendedError extends Error {
 
 export const figmaService = {
     // Load file structure from URL
-    loadFile: async (figmaUrl: string, options?: { partial?: boolean }) => {
+    // Uses depth parameter to limit tree depth for large files (default: 3)
+    loadFile: async (figmaUrl: string, options?: { partial?: boolean; depth?: number }) => {
         const fileKey = extractFileKey(figmaUrl);
         if (!fileKey) throw new Error('Invalid Figma URL');
 
-        const params = options?.partial ? { partial: true } : {};
+        const params: Record<string, any> = {};
+        if (options?.partial) params.partial = true;
+        // Default depth of 3 is sufficient for showing pages and components
+        params.depth = options?.depth ?? 3;
+
         const response = await axios.get(`/figma/file/${fileKey}`, { params });
         return response.data;
     },
@@ -148,8 +153,8 @@ export const figmaService = {
         // Clear the cache
         await axios.delete(`/figma/cache/file/${fileKey}`);
 
-        // Reload the file fresh
-        const response = await axios.get(`/figma/file/${fileKey}`);
+        // Reload the file fresh with depth=3 for performance
+        const response = await axios.get(`/figma/file/${fileKey}`, { params: { depth: 3 } });
         return response.data;
     },
 };
