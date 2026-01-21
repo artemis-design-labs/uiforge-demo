@@ -21,6 +21,7 @@ interface FigmaComponentProperty {
     value: boolean | string;
     options?: string[]; // For VARIANT type
     defaultValue?: boolean | string;
+    preferredValues?: Array<{ type: string; key: string }>; // For INSTANCE_SWAP type
 }
 
 // File-level component property definitions (cached from Figma API)
@@ -33,6 +34,7 @@ interface FileComponentDefinition {
         type: 'BOOLEAN' | 'VARIANT' | 'TEXT' | 'INSTANCE_SWAP';
         defaultValue: boolean | string;
         options?: string[];
+        preferredValues?: Array<{ type: string; key: string }>; // For INSTANCE_SWAP type
     }>;
 }
 

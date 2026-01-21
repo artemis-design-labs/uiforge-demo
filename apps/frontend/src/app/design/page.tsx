@@ -97,6 +97,7 @@ export default function DesignPage() {
                             type: prop.type,
                             value: prop.defaultValue,
                             options: prop.options,
+                            preferredValues: (prop as any).preferredValues,
                         };
                     }
                     dispatch(setFigmaComponentProps(propsRecord));
@@ -126,6 +127,7 @@ export default function DesignPage() {
                             type: prop.type,
                             value: prop.defaultValue,
                             options: prop.options,
+                            preferredValues: (prop as any).preferredValues,
                         };
                     }
                     dispatch(setFigmaComponentProps(propsRecord));

@@ -24,27 +24,46 @@ interface ComponentInfo {
         type: 'BOOLEAN' | 'VARIANT' | 'TEXT' | 'INSTANCE_SWAP';
         defaultValue: boolean | string;
         options?: string[];
+        preferredValues?: Array<{ type: string; key: string }>;
     }>;
 }
 
-// Recursively find all COMPONENT_SET and COMPONENT nodes and their properties
-function findComponentSetsWithProperties(node: FigmaNode, results: Map<string, ComponentInfo> = new Map()): Map<string, ComponentInfo> {
-    // Check if this node is a COMPONENT_SET with property definitions
+// PASS 1: Collect all COMPONENT_SETs first (they have the properties)
+function collectComponentSets(
+    node: FigmaNode,
+    results: Map<string, ComponentInfo>,
+    standaloneComponents: FigmaNode[]
+): void {
     if (node.type === 'COMPONENT_SET') {
         const properties: ComponentInfo['properties'] = {};
 
-        // Extract properties from componentPropertyDefinitions if available
+        // Extract ALL property types from componentPropertyDefinitions
+        // This includes VARIANT, BOOLEAN, TEXT, and INSTANCE_SWAP
         if (node.componentPropertyDefinitions) {
+            console.log(`[Frontend][${node.name}] componentPropertyDefinitions keys:`, Object.keys(node.componentPropertyDefinitions));
+
             for (const [key, prop] of Object.entries(node.componentPropertyDefinitions)) {
                 // Clean the property name (remove Figma ID suffix like #123:456)
                 const cleanKey = key.replace(/#\d+:\d+$/, '');
 
-                properties[cleanKey] = {
+                // Build property object based on type
+                const propData: ComponentInfo['properties'][string] = {
                     name: cleanKey,
                     type: prop.type === 'INSTANCE_SWAP' ? 'INSTANCE_SWAP' : prop.type,
                     defaultValue: prop.defaultValue,
-                    options: prop.variantOptions,
                 };
+
+                // Add type-specific fields
+                if (prop.type === 'VARIANT' && prop.variantOptions) {
+                    propData.options = prop.variantOptions;
+                }
+                if (prop.type === 'INSTANCE_SWAP' && prop.preferredValues) {
+                    // Store preferred values for instance swap (will need UI support)
+                    (propData as any).preferredValues = prop.preferredValues;
+                }
+
+                properties[cleanKey] = propData;
+                console.log(`[Frontend]  - ${cleanKey}: ${prop.type}`);
             }
         }
 
@@ -71,59 +90,99 @@ function findComponentSetsWithProperties(node: FigmaNode, results: Map<string, C
             }
         }
     }
-    // Also handle standalone COMPONENT nodes (not in a COMPONENT_SET)
+    // Collect standalone COMPONENT nodes for second pass
     else if (node.type === 'COMPONENT') {
-        // Check if this component is already mapped (as child of a COMPONENT_SET)
-        if (!results.has(node.name)) {
-            let properties: ComponentInfo['properties'] = {};
-
-            // Extract properties from componentPropertyDefinitions if available
-            if (node.componentPropertyDefinitions) {
-                for (const [key, prop] of Object.entries(node.componentPropertyDefinitions)) {
-                    const cleanKey = key.replace(/#\d+:\d+$/, '');
-                    properties[cleanKey] = {
-                        name: cleanKey,
-                        type: prop.type === 'INSTANCE_SWAP' ? 'INSTANCE_SWAP' : prop.type,
-                        defaultValue: prop.defaultValue,
-                        options: prop.variantOptions,
-                    };
-                }
-            }
-
-            // If no properties found, try to find a related COMPONENT_SET
-            // E.g., "Button/LightMode" might have properties from "ButtonVariant" COMPONENT_SET
-            if (Object.keys(properties).length === 0) {
-                const baseName = node.name.split('/')[0];
-                // Look for existing component sets that might contain related properties
-                for (const [existingName, existingComp] of results.entries()) {
-                    if (existingComp.type === 'COMPONENT_SET' &&
-                        Object.keys(existingComp.properties).length > 0) {
-                        // Check if names are related (e.g., "Button" ~ "ButtonVariant")
-                        const existingBase = existingName.split('/')[0];
-                        if (existingBase.toLowerCase().includes(baseName.toLowerCase()) ||
-                            baseName.toLowerCase().includes(existingBase.toLowerCase().replace('variant', ''))) {
-                            properties = { ...existingComp.properties };
-                            break;
-                        }
-                    }
-                }
-            }
-
-            results.set(node.name, {
-                nodeId: node.id,
-                name: node.name,
-                type: node.type,
-                properties,
-            });
-        }
+        standaloneComponents.push(node);
     }
 
     // Recurse into children
     if (node.children) {
         for (const child of node.children) {
-            findComponentSetsWithProperties(child, results);
+            collectComponentSets(child, results, standaloneComponents);
         }
     }
+}
+
+// PASS 2: Process standalone components with full inheritance lookup
+function processStandaloneComponents(
+    standaloneComponents: FigmaNode[],
+    results: Map<string, ComponentInfo>
+): void {
+    for (const node of standaloneComponents) {
+        // Skip if already mapped (as child of COMPONENT_SET)
+        if (results.has(node.name)) {
+            continue;
+        }
+
+        let properties: ComponentInfo['properties'] = {};
+
+        // Extract properties from componentPropertyDefinitions if available
+        if (node.componentPropertyDefinitions) {
+            for (const [key, prop] of Object.entries(node.componentPropertyDefinitions)) {
+                const cleanKey = key.replace(/#\d+:\d+$/, '');
+                properties[cleanKey] = {
+                    name: cleanKey,
+                    type: prop.type === 'INSTANCE_SWAP' ? 'INSTANCE_SWAP' : prop.type,
+                    defaultValue: prop.defaultValue,
+                    options: prop.variantOptions,
+                };
+            }
+        }
+
+        // If no properties found, try to find a related COMPONENT_SET
+        // Now we have ALL component sets collected, so inheritance will work
+        if (Object.keys(properties).length === 0) {
+            const baseName = node.name.split('/')[0];
+            const baseNameLower = baseName.toLowerCase();
+
+            // Try multiple matching strategies
+            for (const [existingName, existingComp] of results.entries()) {
+                if (existingComp.type === 'COMPONENT_SET' &&
+                    Object.keys(existingComp.properties).length > 0) {
+                    const existingBase = existingName.split('/')[0];
+                    const existingBaseLower = existingBase.toLowerCase();
+                    const existingBaseNoVariant = existingBaseLower.replace('variant', '');
+
+                    // Match strategies:
+                    // 1. "ButtonVariant" contains "Button"
+                    // 2. "Button" contains "Button" (after removing "Variant")
+                    // 3. Base names match exactly (case-insensitive)
+                    // 4. One is a prefix of the other (e.g., "Checkbox" ~ "CheckboxItem")
+                    if (existingBaseLower.includes(baseNameLower) ||
+                        baseNameLower.includes(existingBaseNoVariant) ||
+                        existingBaseLower === baseNameLower ||
+                        baseNameLower.startsWith(existingBaseNoVariant) ||
+                        existingBaseNoVariant.startsWith(baseNameLower)) {
+                        console.log(`[Frontend] Inheritance match: "${node.name}" -> "${existingName}"`);
+                        properties = { ...existingComp.properties };
+                        break;
+                    }
+                }
+            }
+        }
+
+        results.set(node.name, {
+            nodeId: node.id,
+            name: node.name,
+            type: node.type,
+            properties,
+        });
+    }
+}
+
+// Two-pass component discovery
+function findComponentSetsWithProperties(node: FigmaNode): Map<string, ComponentInfo> {
+    const results = new Map<string, ComponentInfo>();
+    const standaloneComponents: FigmaNode[] = [];
+
+    // Pass 1: Collect all COMPONENT_SETs
+    collectComponentSets(node, results, standaloneComponents);
+
+    console.log(`[Frontend] Pass 1: Found ${results.size} COMPONENT_SET entries`);
+    console.log(`[Frontend] Pass 1: Found ${standaloneComponents.length} standalone COMPONENTs to process`);
+
+    // Pass 2: Process standalone components with full inheritance
+    processStandaloneComponents(standaloneComponents, results);
 
     return results;
 }
@@ -142,13 +201,17 @@ function parseVariantName(name: string): Record<string, string> {
 
 // Build a comprehensive component map including variant options discovered from component names
 function buildComponentMap(node: FigmaNode): Map<string, ComponentInfo> {
+    // Use the two-pass approach that collects all COMPONENT_SETs first
     const componentSets = findComponentSetsWithProperties(node);
 
-    // For component sets without explicit componentPropertyDefinitions,
+    // Additional pass: For component sets without explicit componentPropertyDefinitions,
     // try to discover properties from child component names
     const discoverFromChildren = (csNode: FigmaNode) => {
         if (csNode.type !== 'COMPONENT_SET' || !csNode.children) return;
-        if (componentSets.has(csNode.name)) return; // Already processed
+
+        // Check if this COMPONENT_SET already has properties
+        const existing = componentSets.get(csNode.name);
+        if (existing && Object.keys(existing.properties).length > 0) return;
 
         const discoveredProps: Record<string, Set<string>> = {};
 
@@ -197,7 +260,7 @@ function buildComponentMap(node: FigmaNode): Map<string, ComponentInfo> {
         }
     };
 
-    // Second pass: discover from children
+    // Third pass: discover from children for COMPONENT_SETs without explicit properties
     const traverse = (n: FigmaNode) => {
         discoverFromChildren(n);
         if (n.children) {

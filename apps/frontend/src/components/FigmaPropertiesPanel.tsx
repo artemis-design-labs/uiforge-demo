@@ -137,24 +137,32 @@ export function FigmaPropertiesPanel() {
                                     )}
 
                                     {/* INSTANCE_SWAP property - Dropdown for swappable instances */}
-                                    {prop.type === 'INSTANCE_SWAP' && prop.options && (
+                                    {prop.type === 'INSTANCE_SWAP' && (prop.options || prop.preferredValues) && (
                                         <select
                                             className="w-full h-9 px-3 text-sm border border-gray-700 rounded-md bg-gray-800 text-gray-200 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer"
                                             value={prop.value as string}
                                             onChange={(e) => handlePropertyChange(key, e.target.value)}
                                         >
-                                            {prop.options.map((option: string) => (
-                                                <option key={option} value={option}>
-                                                    {option}
-                                                </option>
-                                            ))}
+                                            {prop.options ? (
+                                                prop.options.map((option: string) => (
+                                                    <option key={option} value={option}>
+                                                        {option}
+                                                    </option>
+                                                ))
+                                            ) : (
+                                                prop.preferredValues?.map((pv: { type: string; key: string }) => (
+                                                    <option key={pv.key} value={pv.key}>
+                                                        {pv.key.split(':').join('-')} ({pv.type})
+                                                    </option>
+                                                ))
+                                            )}
                                         </select>
                                     )}
 
-                                    {/* INSTANCE_SWAP without options - show as text */}
-                                    {prop.type === 'INSTANCE_SWAP' && !prop.options && (
+                                    {/* INSTANCE_SWAP without options - show as info with current value */}
+                                    {prop.type === 'INSTANCE_SWAP' && !prop.options && !prop.preferredValues && (
                                         <div className="p-2 bg-gray-800/50 rounded border border-gray-700 text-xs text-gray-400">
-                                            Instance: {prop.value as string}
+                                            <span className="text-gray-500">Instance Swap:</span> {String(prop.value).split(':').join('-') || 'None'}
                                         </div>
                                     )}
                                 </div>

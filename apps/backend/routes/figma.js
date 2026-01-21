@@ -504,27 +504,48 @@ router.get('/file-components/:fileKey', authenticateUser, async (req, res) => {
         });
 
         const components = {};
+        const standaloneComponents = []; // Store standalone components for second pass
 
-        // Recursively find component sets and standalone components with their properties
-        function findComponents(node) {
+        // PASS 1: Collect all COMPONENT_SETs first (they have the properties)
+        function collectComponentSets(node) {
             if (node.type === 'COMPONENT_SET') {
                 const properties = {};
 
                 // Get properties from componentPropertyDefinitions
+                // This should include VARIANT, BOOLEAN, TEXT, and INSTANCE_SWAP properties
                 if (node.componentPropertyDefinitions) {
+                    console.log(`[${node.name}] componentPropertyDefinitions keys:`, Object.keys(node.componentPropertyDefinitions));
+
                     for (const [key, prop] of Object.entries(node.componentPropertyDefinitions)) {
+                        // Clean the property name (remove Figma ID suffix like #123:456)
                         const cleanKey = key.replace(/#\d+:\d+$/, '');
-                        properties[cleanKey] = {
+
+                        // Build property object based on type
+                        const propData = {
                             name: cleanKey,
                             type: prop.type,
                             defaultValue: prop.defaultValue,
-                            options: prop.variantOptions,
                         };
+
+                        // Add type-specific fields
+                        if (prop.type === 'VARIANT' && prop.variantOptions) {
+                            propData.options = prop.variantOptions;
+                        }
+                        if (prop.type === 'INSTANCE_SWAP' && prop.preferredValues) {
+                            // Include preferred values for instance swap dropdowns
+                            propData.preferredValues = prop.preferredValues;
+                        }
+
+                        properties[cleanKey] = propData;
+                        console.log(`  - ${cleanKey}: ${prop.type}`, prop.type === 'VARIANT' ? `options: ${prop.variantOptions?.join(', ')}` : '');
                     }
                 }
 
-                // If no explicit definitions, discover from child names
-                if (Object.keys(properties).length === 0 && node.children) {
+                // If no VARIANT properties found in componentPropertyDefinitions,
+                // discover them from child component names (e.g., "Size=Large, Color=Primary")
+                const hasVariantProps = Object.values(properties).some(p => p.type === 'VARIANT');
+                if (!hasVariantProps && node.children) {
+                    console.log(`[${node.name}] No VARIANT props in definitions, discovering from child names...`);
                     const discovered = {};
                     for (const child of node.children) {
                         if (child.type === 'COMPONENT' && child.name) {
@@ -550,6 +571,7 @@ router.get('/file-components/:fileKey', authenticateUser, async (req, res) => {
                             defaultValue: options[0],
                             options,
                         };
+                        console.log(`  - Discovered ${propName}: VARIANT options: ${options.join(', ')}`);
                     }
                 }
 
@@ -561,7 +583,7 @@ router.get('/file-components/:fileKey', authenticateUser, async (req, res) => {
                     properties,
                 };
 
-                // Also map children
+                // Also map children (variant components inside COMPONENT_SET)
                 if (node.children) {
                     for (const child of node.children) {
                         if (child.type === 'COMPONENT') {
@@ -575,59 +597,86 @@ router.get('/file-components/:fileKey', authenticateUser, async (req, res) => {
                     }
                 }
             }
-            // Handle standalone COMPONENT nodes (not in a COMPONENT_SET)
-            else if (node.type === 'COMPONENT' && !components[node.name]) {
-                let properties = {};
-
-                // Get properties from componentPropertyDefinitions if available
-                if (node.componentPropertyDefinitions) {
-                    for (const [key, prop] of Object.entries(node.componentPropertyDefinitions)) {
-                        const cleanKey = key.replace(/#\d+:\d+$/, '');
-                        properties[cleanKey] = {
-                            name: cleanKey,
-                            type: prop.type,
-                            defaultValue: prop.defaultValue,
-                            options: prop.variantOptions,
-                        };
-                    }
-                }
-
-                // If no properties found, try to find a related COMPONENT_SET
-                // E.g., "Button/LightMode" might have properties from "ButtonVariant" COMPONENT_SET
-                if (Object.keys(properties).length === 0) {
-                    const baseName = node.name.split('/')[0];
-                    // Look for existing component sets that might contain related properties
-                    for (const [existingName, existingComp] of Object.entries(components)) {
-                        if (existingComp.type === 'COMPONENT_SET' &&
-                            Object.keys(existingComp.properties).length > 0) {
-                            // Check if names are related (e.g., "Button" ~ "ButtonVariant")
-                            const existingBase = existingName.split('/')[0];
-                            if (existingBase.toLowerCase().includes(baseName.toLowerCase()) ||
-                                baseName.toLowerCase().includes(existingBase.toLowerCase().replace('variant', ''))) {
-                                properties = { ...existingComp.properties };
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                components[node.name] = {
-                    nodeId: node.id,
-                    name: node.name,
-                    type: node.type,
-                    properties,
-                };
+            // Collect standalone COMPONENT nodes for second pass
+            else if (node.type === 'COMPONENT') {
+                standaloneComponents.push(node);
             }
 
             // Recurse
             if (node.children) {
                 for (const child of node.children) {
-                    findComponents(child);
+                    collectComponentSets(child);
                 }
             }
         }
 
-        findComponents(response.data.document);
+        // First pass: collect all COMPONENT_SETs
+        collectComponentSets(response.data.document);
+
+        console.log(`Pass 1: Found ${Object.keys(components).length} COMPONENT_SET entries`);
+        console.log(`Pass 1: Found ${standaloneComponents.length} standalone COMPONENTs to process`);
+
+        // PASS 2: Process standalone components with full inheritance lookup
+        for (const node of standaloneComponents) {
+            // Skip if already mapped (as child of COMPONENT_SET)
+            if (components[node.name]) {
+                continue;
+            }
+
+            let properties = {};
+
+            // Get properties from componentPropertyDefinitions if available
+            if (node.componentPropertyDefinitions) {
+                for (const [key, prop] of Object.entries(node.componentPropertyDefinitions)) {
+                    const cleanKey = key.replace(/#\d+:\d+$/, '');
+                    properties[cleanKey] = {
+                        name: cleanKey,
+                        type: prop.type,
+                        defaultValue: prop.defaultValue,
+                        options: prop.variantOptions,
+                    };
+                }
+            }
+
+            // If no properties found, try to find a related COMPONENT_SET
+            // Now we have ALL component sets collected, so inheritance will work
+            if (Object.keys(properties).length === 0) {
+                const baseName = node.name.split('/')[0];
+                const baseNameLower = baseName.toLowerCase();
+
+                // Try multiple matching strategies
+                for (const [existingName, existingComp] of Object.entries(components)) {
+                    if (existingComp.type === 'COMPONENT_SET' &&
+                        Object.keys(existingComp.properties).length > 0) {
+                        const existingBase = existingName.split('/')[0];
+                        const existingBaseLower = existingBase.toLowerCase();
+                        const existingBaseNoVariant = existingBaseLower.replace('variant', '');
+
+                        // Match strategies:
+                        // 1. "ButtonVariant" contains "Button"
+                        // 2. "Button" contains "Button" (after removing "Variant")
+                        // 3. Base names match exactly (case-insensitive)
+                        // 4. One is a prefix of the other (e.g., "Checkbox" ~ "CheckboxItem")
+                        if (existingBaseLower.includes(baseNameLower) ||
+                            baseNameLower.includes(existingBaseNoVariant) ||
+                            existingBaseLower === baseNameLower ||
+                            baseNameLower.startsWith(existingBaseNoVariant) ||
+                            existingBaseNoVariant.startsWith(baseNameLower)) {
+                            console.log(`Inheritance match: "${node.name}" -> "${existingName}"`);
+                            properties = { ...existingComp.properties };
+                            break;
+                        }
+                    }
+                }
+            }
+
+            components[node.name] = {
+                nodeId: node.id,
+                name: node.name,
+                type: node.type,
+                properties,
+            };
+        }
 
         console.log(`Found ${Object.keys(components).length} components with properties`);
 
