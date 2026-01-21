@@ -5,6 +5,22 @@ import { setFigmaComponentProps, clearFigmaComponentProps, setFileComponentDefin
 import { figmaService } from '@/services/figma';
 import { ComponentRenderer, isComponentSupported, getFigmaProperties } from '@/components/figma-components';
 
+// Type for component property definitions from Figma
+type ComponentPropertyDef = {
+    name: string;
+    type: 'BOOLEAN' | 'VARIANT' | 'TEXT' | 'INSTANCE_SWAP';
+    defaultValue: boolean | string;
+    options?: string[];
+};
+
+// Type for active component properties in state
+type FigmaComponentProp = {
+    name: string;
+    type: 'BOOLEAN' | 'VARIANT' | 'TEXT' | 'INSTANCE_SWAP';
+    value: boolean | string;
+    options?: string[];
+};
+
 export default function DesignPage() {
     const dispatch = useAppDispatch();
     const {
@@ -64,7 +80,7 @@ export default function DesignPage() {
                     console.log('📦 Using cached component properties for:', nameToTry, '(selected:', selectedComponentName, ')', cached.properties);
 
                     const propsRecord: Record<string, any> = {};
-                    for (const [key, prop] of Object.entries(cached.properties)) {
+                    for (const [key, prop] of Object.entries(cached.properties) as [string, ComponentPropertyDef][]) {
                         propsRecord[key] = {
                             name: prop.name,
                             type: prop.type,
@@ -88,7 +104,7 @@ export default function DesignPage() {
                     console.log('📦 Using cached component properties (case-insensitive match):', matchedKey, '(selected:', selectedComponentName, ')', cached.properties);
 
                     const propsRecord: Record<string, any> = {};
-                    for (const [key, prop] of Object.entries(cached.properties)) {
+                    for (const [key, prop] of Object.entries(cached.properties) as [string, ComponentPropertyDef][]) {
                         propsRecord[key] = {
                             name: prop.name,
                             type: prop.type,
@@ -114,7 +130,7 @@ export default function DesignPage() {
                     console.log('📦 Using cached component properties (partial match):', partialMatch, '(selected:', selectedComponentName, ')', cached.properties);
 
                     const propsRecord: Record<string, any> = {};
-                    for (const [key, prop] of Object.entries(cached.properties)) {
+                    for (const [key, prop] of Object.entries(cached.properties) as [string, ComponentPropertyDef][]) {
                         propsRecord[key] = {
                             name: prop.name,
                             type: prop.type,
@@ -154,7 +170,7 @@ export default function DesignPage() {
                                 console.log('✅ Found component after refresh:', nameToTry);
 
                                 const propsRecord: Record<string, any> = {};
-                                for (const [key, prop] of Object.entries(cached.properties)) {
+                                for (const [key, prop] of Object.entries(cached.properties) as [string, ComponentPropertyDef][]) {
                                     propsRecord[key] = {
                                         name: prop.name,
                                         type: prop.type,
@@ -179,7 +195,7 @@ export default function DesignPage() {
                                 console.log('✅ Found component after refresh (partial match):', partialMatch);
 
                                 const propsRecord: Record<string, any> = {};
-                                for (const [key, prop] of Object.entries(cached.properties)) {
+                                for (const [key, prop] of Object.entries(cached.properties) as [string, ComponentPropertyDef][]) {
                                     propsRecord[key] = {
                                         name: prop.name,
                                         type: prop.type,
@@ -302,7 +318,7 @@ export default function DesignPage() {
     // Convert figmaComponentProps to props object for ComponentRenderer
     const getComponentProps = () => {
         const props: Record<string, any> = {};
-        for (const [key, prop] of Object.entries(figmaComponentProps)) {
+        for (const [key, prop] of Object.entries(figmaComponentProps) as [string, FigmaComponentProp][]) {
             props[key] = prop.value;
         }
         return props;
