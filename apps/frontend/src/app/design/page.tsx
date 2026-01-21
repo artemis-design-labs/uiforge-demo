@@ -22,6 +22,8 @@ type FigmaComponentProp = {
 };
 
 export default function DesignPage() {
+    console.log('🚀 DesignPage component mounted');
+
     const dispatch = useAppDispatch();
     const {
         selectedComponent,
