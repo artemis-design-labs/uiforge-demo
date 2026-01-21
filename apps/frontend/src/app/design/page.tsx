@@ -352,8 +352,11 @@ export default function DesignPage() {
     const getComponentProps = () => {
         const props: Record<string, any> = {};
         for (const [key, prop] of Object.entries(figmaComponentProps) as [string, FigmaComponentProp][]) {
-            props[key] = prop.value;
+            // Convert property names to lowercase to match React component props
+            const propKey = key.charAt(0).toLowerCase() + key.slice(1);
+            props[propKey] = prop.value;
         }
+        console.log('🎨 getComponentProps:', { original: figmaComponentProps, converted: props });
         return props;
     };
 
