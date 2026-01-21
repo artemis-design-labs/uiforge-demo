@@ -468,10 +468,22 @@ export default function FigmaTreeView() {
                         </div>
                     </div>
                 </div>
+            </div>
 
-                {/* Search input */}
+            {/* Vertical Resize Handle */}
+            <div
+                className="h-2 cursor-row-resize bg-border hover:bg-primary/50 active:bg-primary transition-colors flex items-center justify-center shrink-0"
+                onMouseDown={startVerticalResize}
+                title="Drag to resize"
+            >
+                <div className="w-8 h-1 bg-muted-foreground/30 rounded-full" />
+            </div>
+
+            {/* Tree View Section - Search is always visible here */}
+            <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+                {/* Search input - always visible in tree panel */}
                 {fileTree && Object.keys(fileTree).length > 0 && (
-                    <div className="p-4 border-b border-border">
+                    <div className="p-4 border-b border-border shrink-0">
                         <div className="relative">
                             <input
                                 value={searchQuery}
@@ -503,19 +515,9 @@ export default function FigmaTreeView() {
                         </div>
                     </div>
                 )}
-            </div>
 
-            {/* Vertical Resize Handle */}
-            <div
-                className="h-2 cursor-row-resize bg-border hover:bg-primary/50 active:bg-primary transition-colors flex items-center justify-center shrink-0"
-                onMouseDown={startVerticalResize}
-                title="Drag to resize"
-            >
-                <div className="w-8 h-1 bg-muted-foreground/30 rounded-full" />
-            </div>
-
-            {/* Pages accordion with components */}
-            <div className="flex-1 overflow-auto min-h-0">
+                {/* Pages accordion with components */}
+                <div className="flex-1 overflow-auto min-h-0">
                 {filteredPages.length > 0 ? (
                     filteredPages.map((page) => (
                         <PageAccordion
@@ -536,6 +538,7 @@ export default function FigmaTreeView() {
                         No file loaded
                     </div>
                 )}
+                </div>
             </div>
 
             {/* Selection display */}
