@@ -372,6 +372,22 @@ export default function DesignPage() {
         fetchImage();
     }, [selectedComponent, currentFileKey, selectedComponentName]);
 
+    // Helper to convert Figma node ID to icon name using the icon registry
+    const getIconNameFromNodeId = (nodeId: string): string => {
+        // Check if it's a Figma node ID (contains ':' or looks like "123:456" or "123-456")
+        if (nodeId && (nodeId.includes(':') || /^\d+-\d+$/.test(nodeId))) {
+            const iconEntry = iconRegistry[nodeId] || iconRegistry[nodeId.replace('-', ':')];
+            if (iconEntry) {
+                const name = iconEntry.name;
+                // Extract clean icon name (e.g., "Icons/Arrow Left" -> "ArrowLeft")
+                const cleanName = name.includes('/') ? name.split('/').pop() || name : name;
+                return cleanName.replace(/\s+/g, ''); // Remove spaces
+            }
+        }
+        // Already an icon name or couldn't convert
+        return nodeId;
+    };
+
     // Convert figmaComponentProps to props object for ComponentRenderer
     const getComponentProps = () => {
         const props: Record<string, any> = {};
@@ -381,7 +397,13 @@ export default function DesignPage() {
                 .split(/\s+/)
                 .map((word, i) => i === 0 ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
                 .join('');
-            props[propKey] = prop.value;
+
+            // For INSTANCE_SWAP properties, convert node IDs to icon names
+            if (prop.type === 'INSTANCE_SWAP' && typeof prop.value === 'string') {
+                props[propKey] = getIconNameFromNodeId(prop.value);
+            } else {
+                props[propKey] = prop.value;
+            }
         }
         console.log('🎨 getComponentProps:', { original: Object.keys(figmaComponentProps), converted: props });
         return props;

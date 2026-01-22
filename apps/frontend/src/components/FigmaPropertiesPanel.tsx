@@ -27,14 +27,23 @@ export function FigmaPropertiesPanel() {
 
     // Helper to get icon name from node ID using the icon registry
     const getIconName = (nodeId: string): string => {
-        const iconEntry = iconRegistry[nodeId];
-        if (iconEntry) {
-            // Extract clean name (e.g., "Icons/Arrow Left" -> "Arrow Left")
-            const name = iconEntry.name;
-            return name.includes('/') ? name.split('/').pop() || name : name;
+        // Check if it looks like a Figma node ID
+        if (nodeId && (nodeId.includes(':') || /^\d+-\d+$/.test(nodeId))) {
+            const iconEntry = iconRegistry[nodeId] || iconRegistry[nodeId.replace('-', ':')];
+            if (iconEntry) {
+                // Extract clean name (e.g., "Icons/Arrow Left" -> "ArrowLeft")
+                const name = iconEntry.name;
+                const cleanName = name.includes('/') ? name.split('/').pop() || name : name;
+                return cleanName.replace(/\s+/g, ''); // Remove spaces for component prop
+            }
         }
-        // Fallback: format the node ID for display
-        return nodeId.split(':').join('-');
+        // Already an icon name or couldn't convert - return as-is
+        return nodeId;
+    };
+
+    // Convert node ID to icon name for storage (ensures React components get proper icon names)
+    const convertToIconName = (value: string): string => {
+        return getIconName(value);
     };
 
     // Debug logging
@@ -147,21 +156,26 @@ export function FigmaPropertiesPanel() {
                                     {prop.type === 'INSTANCE_SWAP' && (prop.options || prop.preferredValues) && (
                                         <select
                                             className="flex-1 h-8 px-3 text-sm border border-gray-400 rounded-md bg-white text-gray-800 hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer"
-                                            value={prop.value as string}
-                                            onChange={(e) => handlePropertyChange(key, e.target.value)}
+                                            value={convertToIconName(prop.value as string)}
+                                            onChange={(e) => handlePropertyChange(key, convertToIconName(e.target.value))}
                                         >
                                             {prop.options ? (
+                                                // Options from COMPONENT_REGISTRY - already icon names
                                                 prop.options.map((option: string) => (
                                                     <option key={option} value={option}>
-                                                        {getIconName(option)}
+                                                        {option}
                                                     </option>
                                                 ))
                                             ) : (
-                                                prop.preferredValues?.map((pv: { type: string; key: string }) => (
-                                                    <option key={pv.key} value={pv.key}>
-                                                        {getIconName(pv.key)}
-                                                    </option>
-                                                ))
+                                                // preferredValues from Figma API - need to convert node IDs to icon names
+                                                prop.preferredValues?.map((pv: { type: string; key: string }) => {
+                                                    const iconName = convertToIconName(pv.key);
+                                                    return (
+                                                        <option key={pv.key} value={iconName}>
+                                                            {iconName}
+                                                        </option>
+                                                    );
+                                                })
                                             )}
                                         </select>
                                     )}
