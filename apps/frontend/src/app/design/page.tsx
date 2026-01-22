@@ -61,7 +61,28 @@ export default function DesignPage() {
         const fetchComponentProperties = async () => {
             setPropsLoading(true);
 
-            // PRIORITY 1: Check cached file component definitions (fastest)
+            // PRIORITY 1: Check local COMPONENT_REGISTRY first for supported components
+            // This ensures we use exact Figma property definitions for components we've explicitly defined
+            if (selectedComponentName) {
+                const figmaProps = getFigmaProperties(selectedComponentName);
+                if (figmaProps && figmaProps.length > 0) {
+                    console.log('✅ Using COMPONENT_REGISTRY properties for:', selectedComponentName, figmaProps);
+                    const propsRecord: Record<string, any> = {};
+                    for (const prop of figmaProps) {
+                        propsRecord[prop.name] = {
+                            name: prop.name,
+                            type: prop.type,
+                            value: prop.defaultValue,
+                            options: prop.options,
+                        };
+                    }
+                    dispatch(setFigmaComponentProps(propsRecord));
+                    setPropsLoading(false);
+                    return;
+                }
+            }
+
+            // PRIORITY 2: Check cached file component definitions (from Figma API)
             // Try multiple name formats for matching
             const namesToTry = selectedComponentName ? [
                 selectedComponentName,                           // Exact: "Chip/Light Mode"
@@ -276,7 +297,7 @@ export default function DesignPage() {
                 }
             }
 
-            // PRIORITY 2: Try Figma API for node-specific properties
+            // PRIORITY 3: Try Figma API for node-specific properties
             try {
                 console.log('📋 Fetching properties from Figma API...');
                 const response = await figmaService.getComponentProperties(currentFileKey, selectedComponent);
@@ -291,35 +312,9 @@ export default function DesignPage() {
                 console.warn('⚠️ Could not fetch from Figma API, trying local registry...', err);
             }
 
-            // PRIORITY 3: Fallback to local registry
-            if (selectedComponentName) {
-                const figmaProps = getFigmaProperties(selectedComponentName);
-                console.log('🔍 getFigmaProperties from registry:', {
-                    componentName: selectedComponentName,
-                    figmaProps,
-                    hasProps: !!figmaProps
-                });
-
-                if (figmaProps) {
-                    const propsRecord: Record<string, any> = {};
-                    for (const prop of figmaProps) {
-                        propsRecord[prop.name] = {
-                            name: prop.name,
-                            type: prop.type,
-                            value: prop.defaultValue,
-                            options: prop.options,
-                        };
-                    }
-                    dispatch(setFigmaComponentProps(propsRecord));
-                    console.log('📊 Dispatched Figma props from registry for', selectedComponentName, propsRecord);
-                } else {
-                    console.log('⚠️ No Figma properties found for:', selectedComponentName);
-                    dispatch(clearFigmaComponentProps());
-                }
-            } else {
-                dispatch(clearFigmaComponentProps());
-            }
-
+            // No properties found from any source
+            console.log('⚠️ No Figma properties found for:', selectedComponentName);
+            dispatch(clearFigmaComponentProps());
             setPropsLoading(false);
         };
 

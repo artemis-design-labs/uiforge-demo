@@ -525,6 +525,17 @@ All components registered in `COMPONENT_REGISTRY` with both LightMode and DarkMo
 - Added "alert" to `ALLOWED_COMPONENT_PREFIXES` in file-components API
 - File: `apps/frontend/src/app/api/figma/file-components/[fileKey]/route.ts`
 
+#### Property Loading Priority Fix
+- **Problem**: Figma API was returning nested component properties instead of the component's own `componentPropertyDefinitions`
+- **Solution**: Changed priority order so `COMPONENT_REGISTRY` is checked FIRST for supported components
+- This ensures components we've explicitly defined show the correct Figma properties
+- File: `apps/frontend/src/app/design/page.tsx`
+
+#### Comprehensive Name Aliases
+- Added extensive `NAME_ALIASES` mapping to handle various Figma naming conventions
+- Supports patterns like: `Component/LightMode`, `Component/Light Mode`, `ComponentVariant/LightMode`
+- File: `apps/frontend/src/components/figma-components/index.tsx`
+
 ---
 
 ### Session: January 2026 (Previous)

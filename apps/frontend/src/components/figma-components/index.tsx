@@ -1004,10 +1004,72 @@ export const COMPONENT_REGISTRY: Record<string, {
 
 // Name aliases to handle Figma naming variations (e.g., "ButtonVariant/LightMode" -> "Button/LightMode")
 const NAME_ALIASES: Record<string, string> = {
+    // Button aliases
     'ButtonVariant/LightMode': 'Button/LightMode',
     'ButtonVariant/DarkMode': 'Button/DarkMode',
     'ButtonVariant/Light Mode': 'Button/LightMode',
     'ButtonVariant/Dark Mode': 'Button/DarkMode',
+    'Button/Light Mode': 'Button/LightMode',
+    'Button/Dark Mode': 'Button/DarkMode',
+    // Accordion aliases
+    'Accordion/Light Mode': 'Accordion/LightMode',
+    'Accordion/Dark Mode': 'Accordion/DarkMode',
+    'AccordionVariant/LightMode': 'Accordion/LightMode',
+    'AccordionVariant/DarkMode': 'Accordion/DarkMode',
+    'AccordionVariant/Light Mode': 'Accordion/LightMode',
+    'AccordionVariant/Dark Mode': 'Accordion/DarkMode',
+    // Alert aliases
+    'Alert/Light Mode': 'Alert/LightMode',
+    'Alert/Dark Mode': 'Alert/DarkMode',
+    'AlertVariant/LightMode': 'Alert/LightMode',
+    'AlertVariant/DarkMode': 'Alert/DarkMode',
+    'AlertVariant/Light Mode': 'Alert/LightMode',
+    'AlertVariant/Dark Mode': 'Alert/DarkMode',
+    // Avatar aliases
+    'Avatar/Light Mode': 'Avatar/LightMode',
+    'Avatar/Dark Mode': 'Avatar/DarkMode',
+    'AvatarVariant/LightMode': 'Avatar/LightMode',
+    'AvatarVariant/DarkMode': 'Avatar/DarkMode',
+    'AvatarVariant/Light Mode': 'Avatar/LightMode',
+    'AvatarVariant/Dark Mode': 'Avatar/DarkMode',
+    // Badge aliases
+    'Badge/Light Mode': 'Badge/LightMode',
+    'Badge/Dark Mode': 'Badge/DarkMode',
+    'BadgeVariant/LightMode': 'Badge/LightMode',
+    'BadgeVariant/DarkMode': 'Badge/DarkMode',
+    'BadgeVariant/Light Mode': 'Badge/LightMode',
+    'BadgeVariant/Dark Mode': 'Badge/DarkMode',
+    'Badge Variant/Light Mode': 'Badge/LightMode',
+    'Badge Variant/Dark Mode': 'Badge/DarkMode',
+    'Badge Standard/Light Mode': 'Badge/LightMode',
+    'Badge Standard/Dark Mode': 'Badge/DarkMode',
+    // Checkbox aliases
+    'Checkbox/Light Mode': 'Checkbox/LightMode',
+    'Checkbox/Dark Mode': 'Checkbox/DarkMode',
+    'CheckboxVariant/LightMode': 'Checkbox/LightMode',
+    'CheckboxVariant/DarkMode': 'Checkbox/DarkMode',
+    'CheckboxVariant/Light Mode': 'Checkbox/LightMode',
+    'CheckboxVariant/Dark Mode': 'Checkbox/DarkMode',
+    // Chip aliases
+    'Chip/Light Mode': 'Chip/LightMode',
+    'Chip/Dark Mode': 'Chip/DarkMode',
+    'ChipVariant/LightMode': 'Chip/LightMode',
+    'ChipVariant/DarkMode': 'Chip/DarkMode',
+    'ChipVariant/Light Mode': 'Chip/LightMode',
+    'ChipVariant/Dark Mode': 'Chip/DarkMode',
+    // Dropdown aliases
+    'Dropdown/Light Mode': 'Dropdown/LightMode',
+    'Dropdown/Dark Mode': 'Dropdown/LightMode',
+    'DropdownVariant/LightMode': 'Dropdown/LightMode',
+    'DropdownVariant/Light Mode': 'Dropdown/LightMode',
+    // Progress aliases
+    'ProgressLinear/Light Mode': 'ProgressLinear/LightMode',
+    'ProgressLinear/Dark Mode': 'ProgressLinear/LightMode',
+    'Progress/LightMode': 'ProgressLinear/LightMode',
+    'Progress/Light Mode': 'ProgressLinear/LightMode',
+    // Breadcrumb aliases
+    'Breadcrumb/LightMode': 'Breadcrumb/Light Mode',
+    'Breadcrumb/DarkMode': 'Breadcrumb/Dark Mode',
 };
 
 // Resolve name to canonical form (handles aliases)
