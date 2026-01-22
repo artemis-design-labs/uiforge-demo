@@ -555,13 +555,35 @@ All components registered in `COMPONENT_REGISTRY` with both LightMode and DarkMo
 - **Problem**: Component properties were manually defined in COMPONENT_REGISTRY, which could drift from actual Figma file
 - **Solution**: Implemented auto-discovery system that fetches properties directly from Figma API
 - **Changes**:
-  1. **Removed ALLOWED_COMPONENT_PREFIXES filter** - All components from Figma file are now processed
+  1. **Removed ALLOWED_COMPONENT_PREFIXES filter** - All components from Figma file are now processed (both frontend and backend)
   2. **Reversed property priority** - Figma API (`fileComponentDefinitions`) is now the PRIMARY source
   3. **Added `convertPropsToState` helper** - Automatically converts INSTANCE_SWAP node IDs to icon names and extracts options from `preferredValues`
-  4. **COMPONENT_REGISTRY role changed** - Now only used for React component rendering, not property definitions
+  4. **COMPONENT_REGISTRY role changed** - Now used as FALLBACK for React rendering when API fails
 - Files modified:
   - `apps/frontend/src/app/api/figma/file-components/[fileKey]/route.ts` - Removed filter, processes ALL components
-  - `apps/frontend/src/app/design/page.tsx` - Changed priority order, added conversion helper
+  - `apps/backend/routes/figma.js` - Removed filter from backend as well
+  - `apps/frontend/src/app/design/page.tsx` - Changed priority order, added conversion helper, added COMPONENT_REGISTRY fallback
+
+#### Detailed Error Logging for Authentication Issues
+- **Problem**: 403 errors from Figma API were difficult to diagnose (token expiration, file access, etc.)
+- **Solution**: Added comprehensive error logging with suggestions
+- **Changes**:
+  1. **Frontend API route** - Logs token presence, returns detailed error with `suggestion` and `debugInfo`
+  2. **Backend auth middleware** - Logs token source (cookie vs header), user email, Figma token presence
+  3. **Backend file-components** - Returns specific error messages with suggestions for 401/403 errors
+  4. **Frontend figma service** - Logs detailed error info and shows `💡 Suggestion:` in console
+- **Error response format**:
+  ```json
+  {
+    "error": "Access denied to this Figma file",
+    "suggestion": "Your Figma account may not have access...",
+    "debugInfo": { "userEmail": "...", "tokenPresent": true }
+  }
+  ```
+- Files modified:
+  - `apps/frontend/src/app/api/figma/file-components/[fileKey]/route.ts`
+  - `apps/backend/routes/figma.js`
+  - `apps/frontend/src/services/figma.ts`
 
 ### Known Architecture Issues (Resolved January 2026)
 
