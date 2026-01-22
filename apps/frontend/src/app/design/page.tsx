@@ -61,28 +61,42 @@ export default function DesignPage() {
         const fetchComponentProperties = async () => {
             setPropsLoading(true);
 
-            // PRIORITY 1: Check local COMPONENT_REGISTRY first for supported components
-            // This ensures we use exact Figma property definitions for components we've explicitly defined
-            if (selectedComponentName) {
-                const figmaProps = getFigmaProperties(selectedComponentName);
-                if (figmaProps && figmaProps.length > 0) {
-                    console.log('✅ Using COMPONENT_REGISTRY properties for:', selectedComponentName, figmaProps);
-                    const propsRecord: Record<string, any> = {};
-                    for (const prop of figmaProps) {
-                        propsRecord[prop.name] = {
-                            name: prop.name,
-                            type: prop.type,
-                            value: prop.defaultValue,
-                            options: prop.options,
-                        };
-                    }
-                    dispatch(setFigmaComponentProps(propsRecord));
-                    setPropsLoading(false);
-                    return;
-                }
-            }
+            // Helper function to convert Figma property definitions to our state format
+            // Handles INSTANCE_SWAP node ID to icon name conversion
+            const convertPropsToState = (properties: Record<string, ComponentPropertyDef>): Record<string, any> => {
+                const propsRecord: Record<string, any> = {};
+                for (const [key, prop] of Object.entries(properties) as [string, ComponentPropertyDef][]) {
+                    const propData: any = {
+                        name: prop.name,
+                        type: prop.type,
+                        value: prop.defaultValue,
+                        options: prop.options,
+                    };
 
-            // PRIORITY 2: Check cached file component definitions (from Figma API)
+                    // For INSTANCE_SWAP, convert node IDs to icon names
+                    if (prop.type === 'INSTANCE_SWAP') {
+                        // Convert defaultValue node ID to icon name
+                        if (typeof prop.defaultValue === 'string') {
+                            propData.value = getIconNameFromNodeId(prop.defaultValue);
+                        }
+
+                        // Convert preferredValues node IDs to icon name options
+                        const prefValues = (prop as any).preferredValues;
+                        if (prefValues && Array.isArray(prefValues)) {
+                            propData.options = prefValues.map((pv: { type: string; key: string }) =>
+                                getIconNameFromNodeId(pv.key)
+                            ).filter((name: string) => name && name !== 'undefined');
+                            propData.preferredValues = prefValues; // Keep original for reference
+                        }
+                    }
+
+                    propsRecord[key] = propData;
+                }
+                return propsRecord;
+            };
+
+            // PRIORITY 1: Use Figma API data (fileComponentDefinitions) as the single source of truth
+            // This ensures properties ALWAYS match the Figma file exactly
             // Try multiple name formats for matching
             const namesToTry = selectedComponentName ? [
                 selectedComponentName,                           // Exact: "Chip/Light Mode"
@@ -110,19 +124,8 @@ export default function DesignPage() {
                         console.log('⚠️ Found component but properties empty, trying other matches:', nameToTry);
                         continue;
                     }
-                    console.log('📦 Using cached component properties for:', nameToTry, '(selected:', selectedComponentName, ')', cached.properties);
-
-                    const propsRecord: Record<string, any> = {};
-                    for (const [key, prop] of Object.entries(cached.properties) as [string, ComponentPropertyDef][]) {
-                        propsRecord[key] = {
-                            name: prop.name,
-                            type: prop.type,
-                            value: prop.defaultValue,
-                            options: prop.options,
-                            preferredValues: (prop as any).preferredValues,
-                        };
-                    }
-                    dispatch(setFigmaComponentProps(propsRecord));
+                    console.log('📦 Using Figma API properties for:', nameToTry, '(selected:', selectedComponentName, ')', cached.properties);
+                    dispatch(setFigmaComponentProps(convertPropsToState(cached.properties)));
                     setPropsLoading(false);
                     return;
                 }
@@ -140,19 +143,8 @@ export default function DesignPage() {
                         console.log('⚠️ Found component (case-insensitive) but properties empty:', matchedKey);
                         continue;
                     }
-                    console.log('📦 Using cached component properties (case-insensitive match):', matchedKey, '(selected:', selectedComponentName, ')', cached.properties);
-
-                    const propsRecord: Record<string, any> = {};
-                    for (const [key, prop] of Object.entries(cached.properties) as [string, ComponentPropertyDef][]) {
-                        propsRecord[key] = {
-                            name: prop.name,
-                            type: prop.type,
-                            value: prop.defaultValue,
-                            options: prop.options,
-                            preferredValues: (prop as any).preferredValues,
-                        };
-                    }
-                    dispatch(setFigmaComponentProps(propsRecord));
+                    console.log('📦 Using Figma API properties (case-insensitive match):', matchedKey, '(selected:', selectedComponentName, ')', cached.properties);
+                    dispatch(setFigmaComponentProps(convertPropsToState(cached.properties)));
                     setPropsLoading(false);
                     return;
                 }
@@ -186,18 +178,8 @@ export default function DesignPage() {
                     if (Object.keys(cached.properties).length === 0) {
                         console.log('⚠️ Found partial match but properties empty:', partialMatch);
                     } else {
-                        console.log('📦 Using cached component properties (partial match):', partialMatch, '(selected:', selectedComponentName, ')', cached.properties);
-
-                        const propsRecord: Record<string, any> = {};
-                        for (const [key, prop] of Object.entries(cached.properties) as [string, ComponentPropertyDef][]) {
-                            propsRecord[key] = {
-                                name: prop.name,
-                                type: prop.type,
-                                value: prop.defaultValue,
-                                options: prop.options,
-                            };
-                        }
-                        dispatch(setFigmaComponentProps(propsRecord));
+                        console.log('📦 Using Figma API properties (partial match):', partialMatch, '(selected:', selectedComponentName, ')', cached.properties);
+                        dispatch(setFigmaComponentProps(convertPropsToState(cached.properties)));
                         setPropsLoading(false);
                         return;
                     }
@@ -236,17 +218,7 @@ export default function DesignPage() {
                                     continue;
                                 }
                                 console.log('✅ Found component after refresh:', nameToTry);
-
-                                const propsRecord: Record<string, any> = {};
-                                for (const [key, prop] of Object.entries(cached.properties) as [string, ComponentPropertyDef][]) {
-                                    propsRecord[key] = {
-                                        name: prop.name,
-                                        type: prop.type,
-                                        value: prop.defaultValue,
-                                        options: prop.options,
-                                    };
-                                }
-                                dispatch(setFigmaComponentProps(propsRecord));
+                                dispatch(setFigmaComponentProps(convertPropsToState(cached.properties)));
                                 setPropsLoading(false);
                                 return;
                             }
@@ -276,17 +248,7 @@ export default function DesignPage() {
                             if (partialMatch && Object.keys(propsData.components[partialMatch].properties).length > 0) {
                                 const cached = propsData.components[partialMatch];
                                 console.log('✅ Found component after refresh (partial match):', partialMatch);
-
-                                const propsRecord: Record<string, any> = {};
-                                for (const [key, prop] of Object.entries(cached.properties) as [string, ComponentPropertyDef][]) {
-                                    propsRecord[key] = {
-                                        name: prop.name,
-                                        type: prop.type,
-                                        value: prop.defaultValue,
-                                        options: prop.options,
-                                    };
-                                }
-                                dispatch(setFigmaComponentProps(propsRecord));
+                                dispatch(setFigmaComponentProps(convertPropsToState(cached.properties)));
                                 setPropsLoading(false);
                                 return;
                             }

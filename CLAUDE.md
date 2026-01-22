@@ -266,10 +266,17 @@ Clear cached data for a file.
 
 ## Component Registry System
 
-The app uses a fallback system for component properties:
+The app uses an **auto-discovery** system for component properties:
 
-1. **Primary**: Fetch from Figma API `componentPropertyDefinitions`
-2. **Fallback**: Use `COMPONENT_REGISTRY` in `/apps/frontend/src/components/figma-components/index.tsx`
+1. **Primary Source**: Figma API `componentPropertyDefinitions` - Properties are automatically extracted from the Figma file
+2. **Fallback**: `COMPONENT_REGISTRY` in `/apps/frontend/src/components/figma-components/index.tsx` for React rendering
+
+### Auto-Discovery Feature (January 2026)
+Properties are now automatically discovered from the Figma API rather than manually defined in `COMPONENT_REGISTRY`. This ensures:
+- Properties ALWAYS match the Figma file exactly
+- No manual property definitions needed when adding new components
+- INSTANCE_SWAP options are automatically populated from `preferredValues`
+- Node IDs are automatically converted to icon names using the icon registry
 
 ### Registry Structure
 ```typescript
@@ -544,30 +551,36 @@ All components registered in `COMPONENT_REGISTRY` with both LightMode and DarkMo
   - `apps/frontend/src/app/design/page.tsx`
   - `apps/frontend/src/components/FigmaPropertiesPanel.tsx`
 
-### Known Architecture Issues (For Future Work)
+#### Auto-Discovery from Figma API (Major Feature)
+- **Problem**: Component properties were manually defined in COMPONENT_REGISTRY, which could drift from actual Figma file
+- **Solution**: Implemented auto-discovery system that fetches properties directly from Figma API
+- **Changes**:
+  1. **Removed ALLOWED_COMPONENT_PREFIXES filter** - All components from Figma file are now processed
+  2. **Reversed property priority** - Figma API (`fileComponentDefinitions`) is now the PRIMARY source
+  3. **Added `convertPropsToState` helper** - Automatically converts INSTANCE_SWAP node IDs to icon names and extracts options from `preferredValues`
+  4. **COMPONENT_REGISTRY role changed** - Now only used for React component rendering, not property definitions
+- Files modified:
+  - `apps/frontend/src/app/api/figma/file-components/[fileKey]/route.ts` - Removed filter, processes ALL components
+  - `apps/frontend/src/app/design/page.tsx` - Changed priority order, added conversion helper
 
-#### Ensuring Exact Figma Property Replication
-Current approach has limitations:
+### Known Architecture Issues (Resolved January 2026)
 
-1. **Manual COMPONENT_REGISTRY**: Properties are manually defined, may drift from actual Figma file
-   - Ideal: Automatically discover and use `componentPropertyDefinitions` from Figma API
+#### ✅ RESOLVED: Ensuring Exact Figma Property Replication
 
-2. **Component Name Matching**: Figma uses various naming patterns that don't always match registry keys
-   - Current fix: Extensive NAME_ALIASES and partial matching
-   - Ideal: Use Figma node IDs as primary keys instead of names
+1. **~~Manual COMPONENT_REGISTRY~~** ✅ RESOLVED
+   - Now using auto-discovery from Figma API `componentPropertyDefinitions`
+   - `COMPONENT_REGISTRY` only used for React component rendering, not property definitions
 
-3. **INSTANCE_SWAP Options**: Need to populate from actual Figma file's component library
-   - Current: Using manual `AVAILABLE_ICONS` list
-   - Ideal: Fetch available icons from `preferredValues` in Figma API
+2. **Component Name Matching** (Improved)
+   - Fixed with extensive NAME_ALIASES and multi-strategy partial matching
+   - Future improvement: Use Figma node IDs as primary keys
 
-4. **Property Name Consistency**: Figma property names must exactly match what's displayed in Figma's properties panel
-   - Example: "Show Badge" not "showBadge" or "Show_Badge"
+3. **~~INSTANCE_SWAP Options~~** ✅ RESOLVED
+   - Now automatically populated from `preferredValues` in Figma API
+   - Node IDs automatically converted to icon names using icon registry
 
-#### Recommended Improvements
-1. Create a "sync from Figma" feature that updates COMPONENT_REGISTRY from the loaded file
-2. Use component node IDs for matching instead of names
-3. Build icon registry dynamically from file's Icon components
-4. Add validation that compares registry properties with Figma API response
+4. **Property Name Consistency** ✅ RESOLVED
+   - Properties now come directly from Figma API, ensuring exact match
 
 ---
 
@@ -648,9 +661,9 @@ a07653c Add depth limit to file fetch endpoint for large files
 
 ## Known Limitations
 
-1. **Component Registry is Manual**: New Figma components must be manually added to `COMPONENT_REGISTRY`
-2. **Icon Library is Manual**: New icons must be added to `FigmaIcons.tsx` and `ICON_REGISTRY`
-3. **Large Files**: Files with >100 components may timeout; use `depth` parameter
+1. **React Components Manual**: New Figma components need React implementations added to `COMPONENT_REGISTRY` for interactive preview (properties auto-discovered from API)
+2. **Icon Library is Manual**: New icons must be added to `FigmaIcons.tsx` and `ICON_REGISTRY` for rendering
+3. **Large Files**: Files with >100 components may timeout; uses `depth=10` by default
 4. **No Real-time Sync**: Changes in Figma require manual refresh in UI Forge
 5. **Single File at a Time**: Cannot load multiple Figma files simultaneously
 
