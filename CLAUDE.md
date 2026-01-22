@@ -536,6 +536,39 @@ All components registered in `COMPONENT_REGISTRY` with both LightMode and DarkMo
 - Supports patterns like: `Component/LightMode`, `Component/Light Mode`, `ComponentVariant/LightMode`
 - File: `apps/frontend/src/components/figma-components/index.tsx`
 
+#### INSTANCE_SWAP Node ID to Icon Name Conversion
+- **Problem**: Figma API returns node IDs (like "16959:24567") for INSTANCE_SWAP values, but React components expect icon names (like "Star")
+- **Solution**: Added `getIconNameFromNodeId` helper that converts Figma node IDs to icon names using the icon registry
+- Conversion happens in both `getComponentProps()` (design page) and `FigmaPropertiesPanel`
+- Files modified:
+  - `apps/frontend/src/app/design/page.tsx`
+  - `apps/frontend/src/components/FigmaPropertiesPanel.tsx`
+
+### Known Architecture Issues (For Future Work)
+
+#### Ensuring Exact Figma Property Replication
+Current approach has limitations:
+
+1. **Manual COMPONENT_REGISTRY**: Properties are manually defined, may drift from actual Figma file
+   - Ideal: Automatically discover and use `componentPropertyDefinitions` from Figma API
+
+2. **Component Name Matching**: Figma uses various naming patterns that don't always match registry keys
+   - Current fix: Extensive NAME_ALIASES and partial matching
+   - Ideal: Use Figma node IDs as primary keys instead of names
+
+3. **INSTANCE_SWAP Options**: Need to populate from actual Figma file's component library
+   - Current: Using manual `AVAILABLE_ICONS` list
+   - Ideal: Fetch available icons from `preferredValues` in Figma API
+
+4. **Property Name Consistency**: Figma property names must exactly match what's displayed in Figma's properties panel
+   - Example: "Show Badge" not "showBadge" or "Show_Badge"
+
+#### Recommended Improvements
+1. Create a "sync from Figma" feature that updates COMPONENT_REGISTRY from the loaded file
+2. Use component node IDs for matching instead of names
+3. Build icon registry dynamically from file's Icon components
+4. Add validation that compares registry properties with Figma API response
+
 ---
 
 ### Session: January 2026 (Previous)
