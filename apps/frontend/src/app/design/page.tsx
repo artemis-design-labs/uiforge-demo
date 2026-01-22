@@ -274,6 +274,27 @@ export default function DesignPage() {
                 console.warn('⚠️ Could not fetch from Figma API, trying local registry...', err);
             }
 
+            // FALLBACK: Check local COMPONENT_REGISTRY for supported components
+            // This ensures we have properties even when API fails (403, network issues, etc.)
+            if (selectedComponentName) {
+                const figmaProps = getFigmaProperties(selectedComponentName);
+                if (figmaProps && figmaProps.length > 0) {
+                    console.log('✅ Using COMPONENT_REGISTRY fallback for:', selectedComponentName, figmaProps);
+                    const propsRecord: Record<string, any> = {};
+                    for (const prop of figmaProps) {
+                        propsRecord[prop.name] = {
+                            name: prop.name,
+                            type: prop.type,
+                            value: prop.defaultValue,
+                            options: prop.options,
+                        };
+                    }
+                    dispatch(setFigmaComponentProps(propsRecord));
+                    setPropsLoading(false);
+                    return;
+                }
+            }
+
             // No properties found from any source
             console.log('⚠️ No Figma properties found for:', selectedComponentName);
             dispatch(clearFigmaComponentProps());
