@@ -15,24 +15,55 @@ const authenticateUser = async (req, res, next) => {
     try {
         // Try cookie first, then Authorization header
         let token = req.cookies.token;
+        let tokenSource = 'cookie';
 
         if (!token) {
             const authHeader = req.headers.authorization;
             if (authHeader && authHeader.startsWith('Bearer ')) {
                 token = authHeader.split(' ')[1];
+                tokenSource = 'header';
             }
         }
 
-        if (!token) return res.status(401).json({ error: 'Not authenticated' });
+        if (!token) {
+            console.log('[Auth] ❌ No token found in cookie or Authorization header');
+            return res.status(401).json({
+                error: 'Not authenticated',
+                suggestion: 'Please log in with your Figma account.'
+            });
+        }
+
+        console.log(`[Auth] Token found via ${tokenSource}`);
 
         const decoded = jwt.verify(token, process.env.BAI_JWT_SECRET);
         const user = await User.findById(decoded.userId);
-        if (!user) return res.status(401).json({ error: 'User not found' });
 
+        if (!user) {
+            console.log('[Auth] ❌ User not found in database:', decoded.userId);
+            return res.status(401).json({
+                error: 'User not found',
+                suggestion: 'Your account may have been deleted. Please log in again.'
+            });
+        }
+
+        if (!user.figmaToken) {
+            console.log('[Auth] ❌ User has no Figma token:', user.email);
+            return res.status(401).json({
+                error: 'No Figma token stored',
+                suggestion: 'Please log out and log back in to refresh your Figma access.'
+            });
+        }
+
+        console.log(`[Auth] ✅ Authenticated user: ${user.email}`);
         req.user = user;
         next();
     } catch (err) {
-        res.status(401).json({ error: 'Invalid token' });
+        console.error('[Auth] ❌ Token verification failed:', err.message);
+        res.status(401).json({
+            error: 'Invalid or expired token',
+            details: err.message,
+            suggestion: 'Your session may have expired. Please log out and log back in.'
+        });
     }
 };
 
@@ -499,7 +530,9 @@ router.get('/file-components/:fileKey', authenticateUser, async (req, res) => {
     try {
         const { fileKey } = req.params;
 
-        console.log(`Fetching component properties for file ${fileKey}`);
+        console.log(`[file-components] Fetching component properties for file ${fileKey}`);
+        console.log(`[file-components] User: ${req.user?.email || req.user?._id}`);
+        console.log(`[file-components] Has Figma token: ${!!req.user?.figmaToken}`);
 
         // Helper to check if a node is an icon (for icon registry)
         const isIconComponent = (name) => {
@@ -716,12 +749,41 @@ router.get('/file-components/:fileKey', authenticateUser, async (req, res) => {
             iconCount: Object.keys(iconRegistry).length,
         });
     } catch (err) {
-        console.error('Error fetching file components:', err.response?.data || err.message);
+        console.error('[file-components] ❌ Error fetching file components:', {
+            status: err.response?.status,
+            message: err.message,
+            data: err.response?.data,
+            user: req.user?.email || req.user?._id
+        });
+
         if (err.response?.status === 403) {
-            return res.status(403).json({ error: 'Access denied' });
+            return res.status(403).json({
+                error: 'Access denied to this Figma file',
+                details: err.response?.data,
+                suggestion: 'Your Figma account may not have access to this file, or your OAuth token may have expired. Try logging out and back in.',
+                debugInfo: {
+                    fileKey: req.params.fileKey,
+                    userEmail: req.user?.email,
+                    tokenPresent: !!req.user?.figmaToken
+                }
+            });
         }
+
+        if (err.response?.status === 401) {
+            return res.status(401).json({
+                error: 'Figma authentication failed',
+                details: err.response?.data,
+                suggestion: 'Your Figma OAuth token may have expired. Please log out and log back in.',
+                debugInfo: {
+                    fileKey: req.params.fileKey,
+                    userEmail: req.user?.email
+                }
+            });
+        }
+
         res.status(err.response?.status || 500).json({
-            error: err.response?.data?.message || 'Failed to fetch file components'
+            error: err.response?.data?.message || 'Failed to fetch file components',
+            details: err.response?.data
         });
     }
 });

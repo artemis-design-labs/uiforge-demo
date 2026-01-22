@@ -328,10 +328,15 @@ export async function GET(
         const userToken = request.cookies.get('token')?.value;
         let figmaToken = process.env.FIGMA_ACCESS_TOKEN;
 
+        console.log(`[Figma File Components API] Request for file ${fileKey}`);
+        console.log(`[Figma File Components API] Has user token: ${!!userToken}`);
+        console.log(`[Figma File Components API] Has PAT configured: ${!!figmaToken}`);
+
         // If user is logged in, proxy through Railway which has user's OAuth token
         if (userToken) {
             try {
                 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://uiforge-demo-production.up.railway.app';
+                console.log(`[Figma File Components API] Proxying to Railway: ${BACKEND_URL}`);
 
                 const fileResponse = await fetch(`${BACKEND_URL}/api/v1/figma/file-components/${fileKey}`, {
                     headers: {
@@ -342,20 +347,60 @@ export async function GET(
 
                 if (fileResponse.ok) {
                     const data = await fileResponse.json();
-                    console.log(`[Figma File Components API] Found ${data.componentCount} components via Railway`);
+                    console.log(`[Figma File Components API] ✅ Found ${data.componentCount} components via Railway`);
                     return NextResponse.json(data);
                 } else {
-                    console.log(`[Figma File Components API] Railway returned ${fileResponse.status}, falling back to PAT`);
+                    // Get detailed error from Railway
+                    const errorText = await fileResponse.text();
+                    let errorJson;
+                    try {
+                        errorJson = JSON.parse(errorText);
+                    } catch {
+                        errorJson = { rawError: errorText };
+                    }
+
+                    console.error(`[Figma File Components API] ❌ Railway returned ${fileResponse.status}:`, errorJson);
+
+                    // Return detailed error to client for debugging
+                    if (fileResponse.status === 401) {
+                        return NextResponse.json(
+                            {
+                                error: 'Authentication failed - your session may have expired. Please log out and log back in.',
+                                details: errorJson,
+                                suggestion: 'Try logging out and logging back in to refresh your Figma token.'
+                            },
+                            { status: 401 }
+                        );
+                    }
+                    if (fileResponse.status === 403) {
+                        return NextResponse.json(
+                            {
+                                error: 'Access denied to this Figma file.',
+                                details: errorJson,
+                                suggestion: 'Make sure you have access to this file in Figma, or try logging out and back in to refresh your token.'
+                            },
+                            { status: 403 }
+                        );
+                    }
+
+                    // For other errors, fall through to PAT
+                    console.log(`[Figma File Components API] Falling back to PAT due to Railway error`);
                 }
             } catch (err) {
-                console.log('[Figma File Components API] Railway proxy failed, falling back to PAT:', err);
+                console.error('[Figma File Components API] Railway proxy failed:', err);
+                // Fall through to PAT
             }
+        } else {
+            console.log(`[Figma File Components API] No user token, will use PAT directly`);
         }
 
         if (!figmaToken) {
             return NextResponse.json(
-                { error: 'Figma access token not configured' },
-                { status: 500 }
+                {
+                    error: 'Not authenticated and no fallback token configured',
+                    suggestion: 'Please log in with your Figma account to access file components.'
+                },
+                { status: 401 }
             );
         }
 
@@ -375,9 +420,24 @@ export async function GET(
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            console.error('[Figma File Components API] Error:', response.status, errorData);
+            console.error('[Figma File Components API] ❌ Figma API Error:', response.status, errorData);
+
+            if (response.status === 403) {
+                return NextResponse.json(
+                    {
+                        error: 'Access denied to this Figma file via PAT.',
+                        details: errorData,
+                        suggestion: 'The fallback token does not have access to this file. Please log in with your Figma account.'
+                    },
+                    { status: 403 }
+                );
+            }
+
             return NextResponse.json(
-                { error: errorData.message || 'Failed to fetch file data' },
+                {
+                    error: errorData.message || 'Failed to fetch file data',
+                    details: errorData
+                },
                 { status: response.status }
             );
         }

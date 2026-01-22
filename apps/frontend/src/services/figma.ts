@@ -103,7 +103,22 @@ export const figmaService = {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-                const error = new Error(errorData.error || 'Failed to fetch file component properties') as ExtendedError;
+
+                // Log detailed error info for debugging
+                console.error('❌ FigmaService: Failed to fetch file component properties', {
+                    status: response.status,
+                    error: errorData.error,
+                    suggestion: errorData.suggestion,
+                    details: errorData.details,
+                    debugInfo: errorData.debugInfo
+                });
+
+                // Show user-friendly message in console
+                if (errorData.suggestion) {
+                    console.warn('💡 Suggestion:', errorData.suggestion);
+                }
+
+                const error = new Error(errorData.error || 'Failed to fetch file data') as ExtendedError;
                 error.response = { status: response.status, data: errorData };
                 throw error;
             }
@@ -111,7 +126,8 @@ export const figmaService = {
             const data = await response.json();
             console.log('✅ FigmaService: File component properties received', {
                 fileKey,
-                componentCount: data.componentCount
+                componentCount: data.componentCount,
+                iconCount: data.iconCount
             });
             return data;
         } catch (error) {
