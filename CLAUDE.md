@@ -742,3 +742,316 @@ npm run dev
 - **Figma Test File**: `https://www.figma.com/design/lpJzZ5zV6ZAX9qTCMiASHZ/ADL-Modular-Test`
 - **GitHub Repo**: `https://github.com/artemis-design-labs/uiforge-demo`
 - **Figma API Docs**: `https://www.figma.com/developers/api`
+
+---
+
+# Vision: AI Designer Intelligence Layer
+
+## Ultimate Goal
+
+Build an AI that understands everything from a Figma file like a seasoned designer. The goal is to build an AI designer that takes over the designer's role after the handoff to a developer.
+
+## Why Not Train a Custom Neural Net?
+
+Training a custom neural net would require:
+- **Thousands of labeled examples** - One Figma file isn't enough data
+- **Significant compute resources** - Training costs $$$
+- **Labeled "design decisions"** - Someone has to annotate what makes designs "good"
+
+**LLMs already know design principles.** Claude and GPT-4 are trained on:
+- Design principles (typography, color theory, spacing, hierarchy)
+- Figma's JSON structure
+- Component-based design systems
+- Accessibility guidelines
+
+**The bottleneck isn't AI understanding - it's data extraction.**
+
+## Figma API Access (Pro Plan)
+
+| Can Access | Cannot Access (Enterprise Only) |
+|------------|--------------------------------|
+| Component structure & properties | Variables API |
+| Node hierarchy & layout | Dev Mode APIs |
+| Colors, typography, effects | Some advanced features |
+| Export images (PNG/SVG) | |
+| Auto-layout settings | |
+| Component variants | |
+
+## Architecture: Design Intelligence Layer
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                 DESIGN INTELLIGENCE LAYER                │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│  1. EXTRACTION        2. KNOWLEDGE BASE    3. AI LAYER   │
+│  ─────────────        ─────────────────    ──────────    │
+│  Figma API ──────►    Components           Claude/GPT    │
+│  • Components         Tokens               with context  │
+│  • Styles             Patterns             about YOUR    │
+│  • Layout rules       Relationships        design system │
+│  • Token values       Usage examples                     │
+│                                                          │
+│  Result: LLM that "knows" your design system deeply      │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
+```
+
+## What This AI Could Do
+
+1. **Answer design questions** - "What button variant should I use for destructive actions?"
+2. **Generate components** - Create new components following your patterns
+3. **Review code** - "This doesn't match our design system because..."
+4. **Suggest improvements** - "Based on your spacing tokens, this should be 16px not 14px"
+5. **Handle edge cases** - "Here's how to handle this scenario based on similar patterns"
+
+## Implementation Approach
+
+### 1. Deep Figma Extractor
+Pull everything possible from the file:
+- Component tree with all properties
+- All style values (even without Variables API, extract colors from nodes)
+- Layout patterns (how components are composed)
+- Naming conventions
+
+### 2. Design Knowledge Base
+Store as structured data + vector embeddings:
+- Components and their variants
+- Design tokens (colors, spacing, typography)
+- Component relationships and composition patterns
+- Usage examples
+
+### 3. Context-Aware LLM Interface
+When developers ask questions, inject relevant design context into the prompt:
+- "Here's our design system, here's the component structure, here's how Button works..."
+- The LLM can then answer questions like a designer would
+
+### 4. RAG (Retrieval-Augmented Generation)
+Store design knowledge in a vector database, retrieve relevant parts when answering questions.
+
+## Constraints with Pro Plan
+
+1. **No Variables API** - Must manually export tokens as JSON
+2. **Rate limits** - Can't poll Figma constantly
+3. **No real-time sync** - Need to re-extract when designs change
+
+---
+
+# Design Token Management (New Feature - January 2026)
+
+## Token Import Flow
+
+1. Export Variables from Figma as JSON (Light.tokens.json, Dark.tokens.json)
+2. Import via TokenImportModal - auto-detects Figma Variables format
+3. Tokens stored in Redux state, validated automatically
+4. Export to code-ready formats or include in generated npm packages
+
+## Token Formats Supported
+
+### Import:
+- **Figma Variables** (manual JSON export) - Auto-detected, handles complex `$value` objects
+- **Style Dictionary** - Standard JSON format
+- **Token Studio** - Figma Token Studio exports
+- **W3C DTCG** - Design Token Community Group format
+- **CSV** - Simple name,value,type format
+
+### Export:
+- **CSS Custom Properties** - `:root { --color-primary: #3B82F6; }`
+- **Tailwind Config** - Theme extension for tailwind.config.js
+- **TypeScript theme** - Typed theme object with full IntelliSense
+- **Style Dictionary JSON** - For build pipelines
+- **W3C DTCG format** - Standards-compliant output
+
+## Key Token Service Files
+
+- `/apps/frontend/src/services/tokenService.ts` - Import parsers (Figma Variables, Style Dictionary, Token Studio, W3C DTCG, CSV)
+- `/apps/frontend/src/services/tokenExporter.ts` - Export generators for all formats
+- `/apps/frontend/src/services/tokenValidator.ts` - Naming conventions and WCAG contrast validation
+- `/apps/frontend/src/types/tokens.ts` - TypeScript interfaces
+- `/apps/frontend/src/components/TokenImportModal.tsx` - Import UI
+- `/apps/frontend/src/components/TokenExportModal.tsx` - Export UI
+- `/apps/frontend/src/components/TokensSection.tsx` - Token display panel
+
+---
+
+# Product Strategy & Roadmap
+
+## Design Systems Pain Points (AI Opportunities)
+
+Based on analysis of Design Systems podcast transcripts, these are the recurring pain points that AI could solve:
+
+### 1. Design-to-Code Translation & Handoff Friction
+
+- Figma files remain "disposable artifacts" that don't make it to production intact
+- Multiple translation layers (design → specs → code) lose fidelity and slow feedback cycles
+- Figma Dev Mode provides pseudo-code that's never production-ready—requires extensive customization
+- Teams spend enormous time reconciling Figma ↔ React drift
+- States (loading, error, empty, permission-denied) are often missing from design specs and have to be invented by engineers
+
+**AI Opportunity:** Generate production-ready code directly from design intent, with full state coverage built in
+
+### 2. Token Data Format Fragmentation & Naming Chaos
+
+- Token data comes in highly organization-specific formats that are difficult to share or reuse
+- Figma variables, Style Dictionary, Token Studio, and the W3C spec don't work seamlessly together
+- Token naming is inconsistent—designers across teams name tokens differently with no enforcement mechanism
+- Metadata and semantic context get buried in fragile string-based naming conventions
+- Tens of thousands of tokens become impossible for humans to comprehend or audit
+
+**AI Opportunity:** Automatic mapping/translation between token formats, naming validation, and intelligent documentation that makes token libraries queryable
+
+### 3. Documentation That Doesn't Serve Its Audience
+
+- Docs become marketing artifacts ("a button is a clickable element") rather than practical guidance
+- Engineers need guidance on how to use things (e.g., "when do I use flexbox vs. CSS Grid?"), not definitions
+- Usage guidelines are disconnected from the structured data they describe
+- Documentation now needs to serve AI consumers (LLMs, agents), not just humans—requiring different formats
+- 75% of design system work is communication, but changes go unnoticed because awareness is manual
+
+**AI Opportunity:** Context-aware, queryable documentation that understands how things should be used; AI help bots that can answer questions at scale; machine-readable guidelines that enforce best practices automatically
+
+### 4. Scaling Accessibility Remains Painful
+
+- Teams say "we don't have time" to implement accessibility properly
+- Designers and engineers don't understand how screen readers actually work
+- Auditing and remediating accessibility across hundreds of applications is overwhelming
+- Evolving standards (WCAG 2.1 → 2.2) require manual effort to propagate changes
+- Even with accessible components, implementation still requires care to make it through to production
+
+**AI Opportunity:** Automated accessibility auditing at scale, proactive enforcement of WCAG standards through LLM-driven code review, and intelligent propagation of standards updates across products
+
+### 5. Contribution Never Scaled
+
+- The dream of "mini open-source communities" inside organizations never materialized
+- Patterns emerge in products but aren't codified back into the system
+- Non-coders (designers, PMs) can't contribute design patterns without writing code
+- Token requests become bureaucratic bottlenecks—teams just want to try a color, but they have to file a request and wait for review
+
+**AI Opportunity:** Natural-language contribution to design systems; AI that observes what teams are building and suggests pattern candidates; low-friction exploration through patterns rather than formal token requests
+
+### 6. Legacy Product Drift & Migration
+
+- Existing products fall out of sync when design systems or brands evolve
+- Teams lack resources to audit and update legacy interfaces
+- Acquired products need integration but don't match accessibility or design standards
+- No systematic way to identify where products diverge from current guidelines
+- Breaking changes ripple unpredictably—changing a color can introduce accessibility problems downstream
+
+**AI Opportunity:** Automated auditing that identifies inconsistencies, migration assistants that help legacy products adopt current patterns, and impact analysis for breaking changes
+
+### 7. Business Value & Alignment Gaps
+
+- Design system teams become gatekeepers who say "no" too often
+- Misalignment between design, engineering, and product/business priorities
+- Difficulty measuring and communicating value to stakeholders
+- If business doesn't care, design system work struggles to get funded
+- Design is increasingly underfunded, creating power imbalances in organizations
+
+**AI Opportunity:** Analytics that demonstrate usage and adoption; AI that helps quantify productivity gains; pattern exploration that lets teams show value before requesting formal additions
+
+### 8. Process & Workflow Observability
+
+- Workflows and ways of working aren't observable or extractable
+- Context about why decisions were made gets lost
+- Gap between defined processes and what actually happens
+- Office hours and feedback are qualitative and hard to scale
+- No tooling to measure design system efficacy quantitatively
+
+**AI Opportunity:** AI that observes actual workflows and surfaces deviations; decision capture and retrieval; automated synthesis of office hours questions into pattern gaps
+
+### 9. Platform & Tooling Complexity
+
+- Different platforms (web, mobile, in-store kiosks, wearables) have different constraints and lead times
+- Multi-framework support (React, Angular, Vue, iOS, Android) multiplies maintenance burden
+- Component implementations across platforms diverge over time
+- Enterprise data components (tables with 20+ columns, inline editing, virtualization) require specialized handling
+
+**AI Opportunity:** Framework-agnostic component generation; intelligent translation between platform-specific implementations; AI that handles state management and performance optimization
+
+### 10. The Human Skills Gap in an AI-Native Future
+
+- Junior designers aren't getting hired because organizations want senior strategists
+- Mid-career designers are caught between traditional methods and AI-native workflows
+- There's a training cost to upskill existing talent, but no clear path
+- The industry may end up with a "lost generation" of designers who never got foundational experience
+- Humans remain responsible for design thinking, UX, and final decisions—but the definition of those roles is shifting
+
+**AI Opportunity:** AI as a learning partner that helps designers iterate faster with less experience; tools that make strategic thinking more accessible; upskilling assistants that teach AI-native workflows
+
+---
+
+## Pain Point to AI Solution Mapping
+
+| Pain Point | AI Solution Category |
+|------------|---------------------|
+| Design-to-code translation | **Generation** — Produce production code from intent |
+| Token fragmentation | **Translation** — Bridge incompatible formats automatically |
+| Documentation gaps | **Intelligence** — Queryable, context-aware docs for humans and machines |
+| Accessibility at scale | **Auditing** — Automated WCAG compliance checking and remediation |
+| Contribution bottlenecks | **Democratization** — Natural language pattern contributions |
+| Legacy drift | **Detection** — Identify inconsistencies and migration paths |
+| Business value proof | **Analytics** — Quantify adoption, usage, and productivity gains |
+| Process observability | **Synthesis** — Extract patterns from actual behavior |
+| Platform complexity | **Abstraction** — Generate framework-specific implementations from shared definitions |
+| Skills gap | **Augmentation** — Accelerate learning and iteration for all experience levels |
+
+---
+
+## Feature Priority Analysis
+
+### Priority #1: Token Management & Translation (Pain Point #2)
+
+**Why This Is the Top Priority for UI Forge**
+
+#### 1. It's foundational to everything else
+Tokens are the substrate that components are built on. UI Forge already generates `theme.ts` — extending this to proper token management creates a complete design-to-code pipeline, not just component extraction.
+
+#### 2. The pain is universal and acute
+From the transcripts: "Token data comes in highly organization-specific formats... Figma variables, Style Dictionary, Token Studio, and the W3C spec don't work seamlessly together."
+
+Every team has this problem. No one has solved it well.
+
+#### 3. Natural extension of what UI Forge already has
+UI Forge already:
+- Connects to Figma OAuth
+- Extracts component properties
+- Generates a `theme.ts` file
+- Packages everything into npm bundles
+
+Adding token extraction/translation builds on all of this.
+
+#### 4. Creates stickiness
+Once tokens flow through UI Forge, it becomes the source of truth. Components without a token system are just one-off exports.
+
+**Status:** ✅ Implemented (see Design Token Management section above)
+
+---
+
+### Priority #2: AI-Consumable Documentation (Pain Point #3)
+
+This is a close second because of this insight from the transcripts:
+
+> "Documentation now needs to serve AI consumers (LLMs, agents), not just humans—requiring different formats"
+
+UI Forge could generate `.cursor/rules` or `CLAUDE.md` files alongside components — making generated packages immediately useful with AI coding assistants.
+
+**Potential Features:**
+- Generate component specs in machine-readable format
+- Create rules files for AI coding assistants (Cursor, Copilot, Claude Code)
+- Include usage examples and constraints that LLMs can understand
+- Auto-generate Storybook stories for visual documentation
+
+**Status:** 🔜 Planned
+
+---
+
+### Priority #3: Multi-Framework Support (Pain Point #9)
+
+Generate code for multiple frameworks from the same Figma source:
+- React (current)
+- Vue
+- Angular
+- Svelte
+- Web Components
+
+**Status:** 🔜 Future consideration
