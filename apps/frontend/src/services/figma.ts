@@ -159,6 +159,34 @@ export const figmaService = {
         }
     },
 
+    // Get design context (tokens) for a component
+    getDesignContext: async (fileKey: string, nodeId: string) => {
+        console.log('🎨 FigmaService: Fetching design context', { fileKey, nodeId });
+
+        try {
+            const response = await fetch(`/api/figma/design-context/${fileKey}/${nodeId}`);
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                const error = new Error(errorData.error || 'Failed to fetch design context') as ExtendedError;
+                error.response = { status: response.status, data: errorData };
+                throw error;
+            }
+
+            const data = await response.json();
+            console.log('✅ FigmaService: Design context received', {
+                nodeId: data.nodeId,
+                colorsCount: data.colors?.length || 0,
+                typographyCount: data.typography?.length || 0,
+                effectsCount: data.effects?.length || 0
+            });
+            return data;
+        } catch (error) {
+            console.error('❌ FigmaService: Failed to fetch design context', error);
+            throw error;
+        }
+    },
+
     // Clear cache for a file and reload fresh data
     clearCacheAndReload: async (figmaUrl: string) => {
         const fileKey = extractFileKey(figmaUrl);

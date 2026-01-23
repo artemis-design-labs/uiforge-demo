@@ -524,6 +524,163 @@ router.get('/image/:fileKey/:nodeId', authenticateUser, async (req, res) => {
     }
 });
 
+// Get design context (tokens) for a node - colors, typography, spacing, effects
+router.get('/design-context/:fileKey/:nodeId', authenticateUser, async (req, res) => {
+    try {
+        const { fileKey, nodeId } = req.params;
+
+        console.log(`[design-context] Fetching design context for node ${nodeId} in file ${fileKey}`);
+
+        // Fetch node data with geometry=paths to get fills, strokes, etc.
+        const response = await axios.get(
+            `https://api.figma.com/v1/files/${fileKey}/nodes`,
+            {
+                headers: { 'Authorization': `Bearer ${req.user.figmaToken}` },
+                params: {
+                    ids: nodeId,
+                    geometry: 'paths'
+                },
+                timeout: 30000
+            }
+        );
+
+        const nodeData = response.data.nodes?.[nodeId];
+
+        if (!nodeData || !nodeData.document) {
+            return res.status(404).json({ error: 'Node not found' });
+        }
+
+        const node = nodeData.document;
+
+        // Helper functions for color conversion
+        const colorToHex = (color) => {
+            const r = Math.round(color.r * 255);
+            const g = Math.round(color.g * 255);
+            const b = Math.round(color.b * 255);
+            return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`.toUpperCase();
+        };
+
+        const colorToRgba = (color, opacity) => {
+            const r = Math.round(color.r * 255);
+            const g = Math.round(color.g * 255);
+            const b = Math.round(color.b * 255);
+            const a = opacity ?? color.a ?? 1;
+            return `rgba(${r}, ${g}, ${b}, ${a.toFixed(2)})`;
+        };
+
+        // Extract colors
+        const colors = new Map();
+        const extractColors = (n) => {
+            if (n.fills && Array.isArray(n.fills)) {
+                for (const fill of n.fills) {
+                    if (fill.type === 'SOLID' && fill.color) {
+                        const hex = colorToHex(fill.color);
+                        const existing = colors.get(hex) || { hex, usage: [] };
+                        existing.usage.push(`${n.name} (fill)`);
+                        colors.set(hex, existing);
+                    }
+                }
+            }
+            if (n.strokes && Array.isArray(n.strokes)) {
+                for (const stroke of n.strokes) {
+                    if (stroke.type === 'SOLID' && stroke.color) {
+                        const hex = colorToHex(stroke.color);
+                        const existing = colors.get(hex) || { hex, usage: [] };
+                        existing.usage.push(`${n.name} (stroke)`);
+                        colors.set(hex, existing);
+                    }
+                }
+            }
+            if (n.children) {
+                for (const child of n.children) {
+                    extractColors(child);
+                }
+            }
+        };
+        extractColors(node);
+
+        // Extract typography
+        const typography = [];
+        const extractTypography = (n) => {
+            if (n.type === 'TEXT' && n.style) {
+                typography.push({
+                    node: n.name,
+                    style: {
+                        fontFamily: n.style.fontFamily,
+                        fontSize: n.style.fontSize,
+                        fontWeight: n.style.fontWeight,
+                        lineHeight: n.style.lineHeightPx,
+                        letterSpacing: n.style.letterSpacing,
+                        text: n.characters?.substring(0, 50) + (n.characters && n.characters.length > 50 ? '...' : ''),
+                    },
+                });
+            }
+            if (n.children) {
+                for (const child of n.children) {
+                    extractTypography(child);
+                }
+            }
+        };
+        extractTypography(node);
+
+        // Extract dimensions
+        const dimensions = {};
+        if (node.absoluteBoundingBox) {
+            dimensions.width = Math.round(node.absoluteBoundingBox.width);
+            dimensions.height = Math.round(node.absoluteBoundingBox.height);
+        }
+        if (node.cornerRadius !== undefined) {
+            dimensions.borderRadius = node.cornerRadius;
+        } else if (node.rectangleCornerRadii) {
+            dimensions.borderRadius = node.rectangleCornerRadii;
+        }
+        if (node.strokeWeight !== undefined) {
+            dimensions.strokeWeight = node.strokeWeight;
+        }
+
+        // Extract effects
+        const effects = [];
+        if (node.effects) {
+            for (const effect of node.effects) {
+                const effectData = { type: effect.type };
+                if (effect.color) {
+                    effectData.color = colorToHex(effect.color);
+                    effectData.rgba = colorToRgba(effect.color);
+                }
+                if (effect.offset) effectData.offset = effect.offset;
+                if (effect.radius !== undefined) effectData.radius = effect.radius;
+                if (effect.spread !== undefined) effectData.spread = effect.spread;
+                effects.push(effectData);
+            }
+        }
+
+        const colorsList = Array.from(colors.values()).map(c => ({
+            hex: c.hex,
+            usedIn: c.usage.slice(0, 5),
+        }));
+
+        console.log(`[design-context] Found ${colorsList.length} colors, ${typography.length} text styles, ${effects.length} effects`);
+
+        res.status(200).json({
+            nodeId,
+            nodeName: node.name,
+            nodeType: node.type,
+            colors: colorsList,
+            typography: typography.slice(0, 10),
+            dimensions,
+            effects,
+        });
+    } catch (err) {
+        console.error('[design-context] Error:', err.response?.data || err.message);
+        if (err.response?.status === 403) {
+            return res.status(403).json({ error: 'Access denied to this Figma file' });
+        }
+        res.status(err.response?.status || 500).json({
+            error: err.response?.data?.message || 'Failed to fetch design context'
+        });
+    }
+});
+
 // Get all component property definitions from a file
 // Returns component sets with their variant properties
 router.get('/file-components/:fileKey', authenticateUser, async (req, res) => {

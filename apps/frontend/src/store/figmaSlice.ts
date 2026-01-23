@@ -1,4 +1,11 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import type {
+    TokenCollection,
+    ValidationResult,
+    ExportOptions,
+    ExportFormat,
+    TokenType,
+} from '../types/tokens';
 
 interface RecentFile {
     fileKey: string;
@@ -45,6 +52,51 @@ interface IconRegistryEntry {
     type: string;
 }
 
+// Design token types
+export interface ColorToken {
+    hex: string;
+    usedIn: string[];
+}
+
+export interface TypographyToken {
+    node: string;
+    style: {
+        fontFamily: string;
+        fontSize: number;
+        fontWeight: number;
+        lineHeight?: number;
+        letterSpacing?: number;
+        text?: string;
+    };
+}
+
+export interface EffectToken {
+    type: string;
+    color?: string;
+    rgba?: string;
+    offset?: { x: number; y: number };
+    radius?: number;
+    spread?: number;
+}
+
+export interface DimensionsToken {
+    width?: number;
+    height?: number;
+    borderRadius?: number | number[];
+    strokeWeight?: number;
+}
+
+export interface DesignTokens {
+    nodeId: string;
+    nodeName: string;
+    nodeType: string;
+    colors: ColorToken[];
+    typography: TypographyToken[];
+    dimensions: DimensionsToken;
+    effects: EffectToken[];
+    structure?: any;
+}
+
 interface FigmaState {
     fileTree: TreeNode | null;
     currentFileKey: string | null;
@@ -67,6 +119,16 @@ interface FigmaState {
     fileComponentDefinitions: Record<string, FileComponentDefinition>;
     // Icon registry for instance swap (maps node IDs to icon names)
     iconRegistry: Record<string, IconRegistryEntry>;
+    // Design tokens for the currently selected component
+    designTokens: DesignTokens | null;
+    designTokensLoading: boolean;
+    designTokensError: string | null;
+    // Token Management & Translation system
+    tokenCollection: TokenCollection | null;
+    tokenValidation: ValidationResult | null;
+    tokenExportConfig: ExportOptions;
+    tokenCollectionLoading: boolean;
+    tokenCollectionError: string | null;
 }
 
 const initialState: FigmaState = {
@@ -88,6 +150,21 @@ const initialState: FigmaState = {
     figmaComponentProps: {},
     fileComponentDefinitions: {},
     iconRegistry: {},
+    designTokens: null,
+    designTokensLoading: false,
+    designTokensError: null,
+    // Token Management & Translation system
+    tokenCollection: null,
+    tokenValidation: null,
+    tokenExportConfig: {
+        formats: ['typescript'] as ExportFormat[],
+        includeTypes: ['color', 'spacing', 'fontSize', 'fontFamily', 'borderRadius', 'shadow'] as TokenType[],
+        groupByCategory: true,
+        includeTypeDefinitions: true,
+        generateDocs: false,
+    },
+    tokenCollectionLoading: false,
+    tokenCollectionError: null,
 };
 
 const figmaSlice = createSlice({
@@ -203,6 +280,59 @@ const figmaSlice = createSlice({
         clearIconRegistry: (state) => {
             state.iconRegistry = {};
         },
+        // Design tokens actions
+        setDesignTokens: (state, action: PayloadAction<DesignTokens>) => {
+            state.designTokens = action.payload;
+            state.designTokensLoading = false;
+            state.designTokensError = null;
+        },
+        setDesignTokensLoading: (state, action: PayloadAction<boolean>) => {
+            state.designTokensLoading = action.payload;
+        },
+        setDesignTokensError: (state, action: PayloadAction<string | null>) => {
+            state.designTokensError = action.payload;
+            state.designTokensLoading = false;
+        },
+        clearDesignTokens: (state) => {
+            state.designTokens = null;
+            state.designTokensError = null;
+        },
+        // Token Collection actions (Token Management & Translation)
+        setTokenCollection: (state, action: PayloadAction<TokenCollection>) => {
+            state.tokenCollection = action.payload;
+            state.tokenCollectionLoading = false;
+            state.tokenCollectionError = null;
+        },
+        setTokenValidation: (state, action: PayloadAction<ValidationResult>) => {
+            state.tokenValidation = action.payload;
+        },
+        setTokenExportConfig: (state, action: PayloadAction<Partial<ExportOptions>>) => {
+            state.tokenExportConfig = { ...state.tokenExportConfig, ...action.payload };
+        },
+        setTokenCollectionLoading: (state, action: PayloadAction<boolean>) => {
+            state.tokenCollectionLoading = action.payload;
+        },
+        setTokenCollectionError: (state, action: PayloadAction<string | null>) => {
+            state.tokenCollectionError = action.payload;
+            state.tokenCollectionLoading = false;
+        },
+        clearTokenCollection: (state) => {
+            state.tokenCollection = null;
+            state.tokenValidation = null;
+            state.tokenCollectionError = null;
+        },
+        mergeTokenCollection: (state, action: PayloadAction<TokenCollection>) => {
+            if (state.tokenCollection) {
+                // Merge incoming tokens with existing ones
+                const existingNames = new Set(state.tokenCollection.tokens.map(t => t.name));
+                const newTokens = action.payload.tokens.filter(t => !existingNames.has(t.name));
+                state.tokenCollection.tokens = [...state.tokenCollection.tokens, ...newTokens];
+            } else {
+                state.tokenCollection = action.payload;
+            }
+            state.tokenCollectionLoading = false;
+            state.tokenCollectionError = null;
+        },
     },
 });
 
@@ -231,6 +361,18 @@ export const {
     clearFileComponentDefinitions,
     setIconRegistry,
     clearIconRegistry,
+    setDesignTokens,
+    setDesignTokensLoading,
+    setDesignTokensError,
+    clearDesignTokens,
+    // Token Collection exports
+    setTokenCollection,
+    setTokenValidation,
+    setTokenExportConfig,
+    setTokenCollectionLoading,
+    setTokenCollectionError,
+    clearTokenCollection,
+    mergeTokenCollection,
 } = figmaSlice.actions;
 
 export default figmaSlice.reducer;

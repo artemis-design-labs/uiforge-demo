@@ -5,21 +5,34 @@ import { useAppSelector } from '@/store/hooks';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import type { ExportFormat } from '@/types/tokens';
 
 interface PackageGeneratorModalProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
+const TOKEN_FORMAT_OPTIONS: { id: ExportFormat | 'none'; name: string; description: string }[] = [
+    { id: 'typescript', name: 'TypeScript', description: 'Typed theme.ts file (default)' },
+    { id: 'css', name: 'CSS Variables', description: 'CSS custom properties' },
+    { id: 'tailwind', name: 'Tailwind Config', description: 'Tailwind theme extension' },
+    { id: 'style-dictionary', name: 'Style Dictionary', description: 'Standard token format' },
+    { id: 'none', name: 'No Tokens', description: 'Components only' },
+];
+
 export function PackageGeneratorModal({ isOpen, onClose }: PackageGeneratorModalProps) {
-    const { fileComponentDefinitions, currentFileKey } = useAppSelector((state) => state.figma);
+    const { fileComponentDefinitions, currentFileKey, tokenCollection } = useAppSelector((state) => state.figma);
 
     const [packageName, setPackageName] = useState('@myorg/design-system');
     const [version, setVersion] = useState('1.0.0');
     const [description, setDescription] = useState('React component library generated from Figma');
     const [author, setAuthor] = useState('');
+    const [tokenFormat, setTokenFormat] = useState<ExportFormat | 'none'>('typescript');
+    const [includeTokens, setIncludeTokens] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    const hasImportedTokens = tokenCollection && tokenCollection.tokens.length > 0;
 
     const componentCount = Object.keys(fileComponentDefinitions).length;
 
@@ -56,7 +69,10 @@ export function PackageGeneratorModal({ isOpen, onClose }: PackageGeneratorModal
                         description,
                         author,
                         license: 'MIT',
+                        includeTokens: includeTokens && tokenFormat !== 'none',
+                        tokenFormat: tokenFormat !== 'none' ? tokenFormat : undefined,
                     },
+                    tokenCollection: includeTokens && hasImportedTokens ? tokenCollection : undefined,
                 }),
             });
 
@@ -174,6 +190,53 @@ export function PackageGeneratorModal({ isOpen, onClose }: PackageGeneratorModal
                         />
                     </div>
 
+                    {/* Token Options */}
+                    <div className="space-y-3 p-3 bg-purple-900/20 rounded-lg border border-purple-800/30">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <Label className="text-purple-300">Design Tokens</Label>
+                                {hasImportedTokens && (
+                                    <p className="text-xs text-purple-400 mt-0.5">
+                                        {tokenCollection.tokens.length} tokens from "{tokenCollection.name}"
+                                    </p>
+                                )}
+                            </div>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={includeTokens}
+                                    onChange={(e) => setIncludeTokens(e.target.checked)}
+                                    className="w-4 h-4 rounded text-purple-500 bg-gray-800 border-gray-600"
+                                />
+                                <span className="text-sm text-gray-300">Include</span>
+                            </label>
+                        </div>
+
+                        {includeTokens && (
+                            <div className="space-y-2">
+                                <Label className="text-gray-400 text-xs">Token Format</Label>
+                                <select
+                                    value={tokenFormat}
+                                    onChange={(e) => setTokenFormat(e.target.value as ExportFormat | 'none')}
+                                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500"
+                                >
+                                    {TOKEN_FORMAT_OPTIONS.map(opt => (
+                                        <option key={opt.id} value={opt.id}>
+                                            {opt.name} - {opt.description}
+                                        </option>
+                                    ))}
+                                </select>
+                                {!hasImportedTokens && (
+                                    <p className="text-xs text-gray-500">
+                                        No imported tokens - will use default MUI theme values.
+                                        <br />
+                                        <span className="text-purple-400">Tip: Import tokens in the Design Tokens panel for custom values.</span>
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
                     {/* Components Preview */}
                     <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
                         <h4 className="text-sm font-medium text-gray-300 mb-2">
@@ -207,7 +270,7 @@ export function PackageGeneratorModal({ isOpen, onClose }: PackageGeneratorModal
                 {/* Footer */}
                 <div className="flex items-center justify-between px-6 py-4 border-t border-gray-700 bg-gray-800/30">
                     <p className="text-xs text-gray-500">
-                        Package includes: components, types, theme, README
+                        Package includes: components, types{includeTokens && tokenFormat !== 'none' ? `, ${TOKEN_FORMAT_OPTIONS.find(o => o.id === tokenFormat)?.name || 'theme'}` : ''}, README
                     </p>
                     <div className="flex gap-3">
                         <Button

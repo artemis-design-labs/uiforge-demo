@@ -1,8 +1,14 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
-import { updateFigmaComponentProp } from '@/store/figmaSlice';
+import {
+    updateFigmaComponentProp,
+    setDesignTokens,
+    setDesignTokensLoading,
+    setDesignTokensError,
+    clearDesignTokens,
+} from '@/store/figmaSlice';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -12,7 +18,9 @@ import {
     AccordionContent,
 } from '@/components/ui/accordion';
 import { CodeDisplay } from '@/components/CodeDisplay';
+import { TokensSection } from '@/components/TokensSection';
 import { generateComponentCode, type FigmaComponentProp } from '@/services/codeGenerator';
+import { figmaService } from '@/services/figma';
 
 /**
  * FigmaPropertiesPanel - Displays and allows editing of Figma component properties
@@ -23,7 +31,28 @@ import { generateComponentCode, type FigmaComponentProp } from '@/services/codeG
  */
 export function FigmaPropertiesPanel() {
     const dispatch = useAppDispatch();
-    const { figmaComponentProps, selectedComponentName, iconRegistry } = useAppSelector((state) => state.figma);
+    const { figmaComponentProps, selectedComponentName, selectedComponent, currentFileKey, iconRegistry } = useAppSelector((state) => state.figma);
+
+    // Fetch design tokens when a component is selected
+    useEffect(() => {
+        if (!selectedComponent || !currentFileKey) {
+            dispatch(clearDesignTokens());
+            return;
+        }
+
+        const fetchDesignTokens = async () => {
+            dispatch(setDesignTokensLoading(true));
+            try {
+                const tokens = await figmaService.getDesignContext(currentFileKey, selectedComponent);
+                dispatch(setDesignTokens(tokens));
+            } catch (error) {
+                console.error('Failed to fetch design tokens:', error);
+                dispatch(setDesignTokensError(error instanceof Error ? error.message : 'Failed to load tokens'));
+            }
+        };
+
+        fetchDesignTokens();
+    }, [selectedComponent, currentFileKey, dispatch]);
 
     // Helper to get icon name from node ID using the icon registry
     const getIconName = (nodeId: string): string => {
@@ -92,7 +121,7 @@ export function FigmaPropertiesPanel() {
 
     return (
         <div className="space-y-2">
-            <Accordion type="multiple" defaultValue={['properties', 'code']} className="w-full">
+            <Accordion type="multiple" defaultValue={['properties', 'tokens', 'code']} className="w-full">
                 {/* Properties Section */}
                 <AccordionItem value="properties" className="border-gray-700">
                     <AccordionTrigger className="text-gray-300 hover:text-white hover:no-underline">
@@ -191,6 +220,9 @@ export function FigmaPropertiesPanel() {
                         </div>
                     </AccordionContent>
                 </AccordionItem>
+
+                {/* Design Tokens Section */}
+                <TokensSection />
 
                 {/* Generated Code Section */}
                 <AccordionItem value="code" className="border-gray-700">

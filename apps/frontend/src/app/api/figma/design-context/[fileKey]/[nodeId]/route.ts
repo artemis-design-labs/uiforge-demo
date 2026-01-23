@@ -285,15 +285,50 @@ export async function GET(
 
     console.log(`[Design Context API] Request received - fileKey: ${fileKey}, nodeId: ${nodeId}`);
 
-    // For design context, we always use direct Figma API with geometry=paths
-    // This ensures we get fresh data with all visual properties (fills, strokes, etc.)
-    // Railway's cached data might not include these properties
+    // Try user's OAuth token first (from cookies), fall back to PAT
+    const userToken = request.cookies.get('token')?.value;
+    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://uiforge-demo-production.up.railway.app';
+
+    // If user is logged in, proxy through Railway backend to use their OAuth token
+    if (userToken) {
+      try {
+        console.log(`[Design Context API] Fetching via Railway backend for user OAuth`);
+
+        const backendResponse = await fetch(`${BACKEND_URL}/api/v1/figma/design-context/${fileKey}/${nodeId}`, {
+          headers: {
+            'Authorization': `Bearer ${userToken}`,
+          },
+        });
+
+        if (backendResponse.ok) {
+          const data = await backendResponse.json();
+          console.log(`[Design Context API] Got data from Railway: ${data.colors?.length || 0} colors, ${data.typography?.length || 0} typography`);
+          return NextResponse.json(data);
+        } else {
+          const errorData = await backendResponse.json().catch(() => ({}));
+          console.log(`[Design Context API] Railway returned ${backendResponse.status}:`, errorData);
+
+          if (backendResponse.status === 401 || backendResponse.status === 403) {
+            return NextResponse.json(
+              { error: errorData.error || 'Access denied', suggestion: errorData.suggestion },
+              { status: backendResponse.status }
+            );
+          }
+          // Fall through to direct Figma API for other errors
+        }
+      } catch (err) {
+        console.error('[Design Context API] Railway proxy failed:', err);
+        // Fall through to direct Figma API
+      }
+    }
+
+    // Fall back to direct Figma API with PAT
     const figmaToken = process.env.FIGMA_ACCESS_TOKEN;
     if (!figmaToken) {
       console.error('[Design Context API] FIGMA_ACCESS_TOKEN not configured');
       return NextResponse.json(
-        { error: 'Figma access token not configured. Please add FIGMA_ACCESS_TOKEN to environment variables.' },
-        { status: 500 }
+        { error: 'Not authenticated. Please log in with your Figma account.' },
+        { status: 401 }
       );
     }
 
