@@ -382,15 +382,21 @@ const NAME_ALIASES: Record<string, string> = {
 
 ### Currently Supported Components
 - `Accordion/LightMode`, `Accordion/DarkMode`
-- `Alert/LightMode`, `Alert/DarkMode` (NEW)
-- `Avatar/LightMode`, `Avatar/DarkMode` (NEW)
-- `Badge/LightMode`, `Badge/DarkMode` (NEW)
+- `Alert/LightMode`, `Alert/DarkMode`
+- `Avatar/LightMode`, `Avatar/DarkMode`
+- `Badge/LightMode`, `Badge/DarkMode`
 - `Button/LightMode`, `Button/DarkMode`
 - `Breadcrumb/Light Mode`, `Breadcrumb/Dark Mode`
-- `Checkbox/LightMode`, `Checkbox/DarkMode` (NEW)
-- `Chip/LightMode`, `Chip/DarkMode` (NEW)
+- `Checkbox/LightMode`, `Checkbox/DarkMode`
+- `Chip/LightMode`, `Chip/DarkMode`
 - `Dropdown/LightMode`
+- `IconButton/LightMode`, `IconButton/DarkMode` (NEW - January 2026)
+- `NavItem/LightMode`, `NavItem/DarkMode` (NEW - January 2026)
 - `ProgressLinear/LightMode`
+- `SearchInput/LightMode`, `SearchInput/DarkMode` (NEW - January 2026)
+- `Tabs/LightMode`, `Tabs/DarkMode` (NEW - January 2026)
+- `TextArea/LightMode`, `TextArea/DarkMode` (NEW - January 2026)
+- `TextField/LightMode`, `TextField/DarkMode` (NEW - January 2026)
 
 ### New Components Added (January 2026)
 
@@ -563,7 +569,77 @@ In Figma Developer Console:
 
 ## Recent Fixes & Improvements
 
-### Session: January 23, 2026 (Current)
+### Session: January 24, 2026 (Current)
+
+#### Screenshot Analysis Test & Component Gap Analysis
+Performed a test of the screenshot analyzer feature using a Reddit "Create Post" page screenshot to identify which UI components could be matched against the registry.
+
+**Test Results:**
+- Screenshot analyzed: Reddit Create Post page
+- Components identified: Buttons, Avatars, Badges, Dropdowns, Text Fields, Tabs, Navigation Items, Icon Buttons, Search Input
+- Registry coverage before this session: ~40% (6 of 15 component types)
+
+**Identified Component Gaps:**
+| UI Element | Missing Component |
+|------------|-------------------|
+| Text Input (Title field) | `TextField/Input` |
+| Text Area (Body text) | `TextArea` |
+| Search Bar | `SearchInput` |
+| Tabs (Text, Images & Video, Link, Poll) | `Tabs/TabBar` |
+| Navigation List (Home, Popular, etc.) | `NavItem/ListItem` |
+| Rich Text Toolbar buttons | `IconButton` |
+
+#### Added 6 New Figma Components
+Implemented 6 new components to fill the identified gaps:
+
+1. **FigmaTextField** - Text input component
+   - Variants: Outlined, Filled, Standard
+   - Sizes: Small, Medium
+   - States: Enabled, Hovered, Focused, Disabled, Error
+   - Features: Label, helper text, required indicator, full width
+   - File: `apps/frontend/src/components/figma-components/FigmaTextField.tsx`
+
+2. **FigmaTextArea** - Multi-line text input component
+   - Variants: Outlined, Filled
+   - States: Enabled, Hovered, Focused, Disabled, Error
+   - Features: Label, helper text, character count, rows configuration
+   - File: `apps/frontend/src/components/figma-components/FigmaTextArea.tsx`
+
+3. **FigmaTabs** - Tab navigation component
+   - Variants: Standard, Fullwidth
+   - Colors: Primary, Secondary
+   - Orientations: Horizontal, Vertical
+   - Features: Active indicator, disabled tabs, centered option
+   - File: `apps/frontend/src/components/figma-components/FigmaTabs.tsx`
+
+4. **FigmaNavItem** - Navigation list item component
+   - Variants: Default, Compact
+   - States: Default, Hovered, Active, Disabled
+   - Features: Icon support, badge, selected state
+   - File: `apps/frontend/src/components/figma-components/FigmaNavItem.tsx`
+
+5. **FigmaIconButton** - Icon-only button component
+   - Variants: Standard, Contained, Outlined
+   - Sizes: Small, Medium, Large
+   - Colors: Default, Primary, Secondary, Error, Warning, Info, Success
+   - States: Enabled, Hovered, Focused, Disabled
+   - File: `apps/frontend/src/components/figma-components/FigmaIconButton.tsx`
+
+6. **FigmaSearchInput** - Search input with icon component
+   - Variants: Outlined, Filled
+   - Sizes: Small, Medium
+   - States: Enabled, Hovered, Focused, Disabled
+   - Features: Clear button, full width option
+   - File: `apps/frontend/src/components/figma-components/FigmaSearchInput.tsx`
+
+**Files Modified:**
+- `apps/frontend/src/components/figma-components/index.tsx` - Added imports, registry entries, name aliases, and exports for all 6 new components
+
+**Registry Coverage After This Session:** ~73% (11 of 15 component types)
+
+---
+
+### Session: January 23, 2026
 
 #### Screenshot to Components Analyzer (Major Feature)
 Built a complete feature for analyzing UI screenshots and identifying components:
