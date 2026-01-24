@@ -1,0 +1,453 @@
+{
+  "meta": {
+    "fileKey": "qyrtCkpQQ1yq1Nv3h0mbkq",
+    "nodeId": "14:3737",
+    "nodeName": "Button",
+    "nodeType": "COMPONENT_SET",
+    "extractedAt": "2026-01-23T12:00:00.000Z",
+    "description": "This is a sample extraction output showing what the deep-extract API returns for a Button component. Use this to understand the data structure available for AI analysis."
+  },
+
+  "component": {
+    "nodeName": "Button",
+    "nodeId": "14:3737",
+    "nodeType": "COMPONENT_SET",
+    "isComponentSet": true,
+    "properties": {
+      "Size": {
+        "type": "VARIANT",
+        "defaultValue": "Medium",
+        "options": ["Small", "Medium", "Large"]
+      },
+      "Color": {
+        "type": "VARIANT",
+        "defaultValue": "Primary",
+        "options": ["Primary", "Secondary", "Error", "Warning", "Info", "Success"]
+      },
+      "State": {
+        "type": "VARIANT",
+        "defaultValue": "Enabled",
+        "options": ["Enabled", "Hovered", "Pressed", "Focused", "Disabled"]
+      },
+      "Type": {
+        "type": "VARIANT",
+        "defaultValue": "Contained",
+        "options": ["Contained", "Outlined", "Text"]
+      },
+      "Text": {
+        "type": "TEXT",
+        "defaultValue": "Button"
+      },
+      "Icon left": {
+        "type": "BOOLEAN",
+        "defaultValue": false
+      },
+      "Icon right": {
+        "type": "BOOLEAN",
+        "defaultValue": false
+      },
+      "Left Icon": {
+        "type": "INSTANCE_SWAP",
+        "preferredValues": [
+          { "type": "COMPONENT", "key": "16959:24567" },
+          { "type": "COMPONENT", "key": "16959:24568" }
+        ]
+      },
+      "Right icon": {
+        "type": "INSTANCE_SWAP",
+        "preferredValues": [
+          { "type": "COMPONENT", "key": "16959:24567" },
+          { "type": "COMPONENT", "key": "16959:24568" }
+        ]
+      }
+    },
+    "variants": [
+      {
+        "name": "Size=Small, Color=Primary, State=Enabled, Type=Contained",
+        "nodeId": "14:3738",
+        "propertyValues": {
+          "Size": "Small",
+          "Color": "Primary",
+          "State": "Enabled",
+          "Type": "Contained"
+        }
+      },
+      {
+        "name": "Size=Medium, Color=Primary, State=Enabled, Type=Contained",
+        "nodeId": "14:3739",
+        "propertyValues": {
+          "Size": "Medium",
+          "Color": "Primary",
+          "State": "Enabled",
+          "Type": "Contained"
+        }
+      },
+      {
+        "name": "Size=Large, Color=Primary, State=Enabled, Type=Contained",
+        "nodeId": "14:3740",
+        "propertyValues": {
+          "Size": "Large",
+          "Color": "Primary",
+          "State": "Enabled",
+          "Type": "Contained"
+        }
+      }
+    ]
+  },
+
+  "visual": {
+    "colors": {
+      "all": [
+        {
+          "hex": "#3B82F6",
+          "rgba": "rgba(59, 130, 246, 1.00)",
+          "hsl": "hsl(217, 91%, 60%)",
+          "opacity": 1,
+          "usage": "fill",
+          "nodeName": "Button > Background",
+          "nodeType": "RECTANGLE"
+        },
+        {
+          "hex": "#FFFFFF",
+          "rgba": "rgba(255, 255, 255, 1.00)",
+          "hsl": "hsl(0, 0%, 100%)",
+          "opacity": 1,
+          "usage": "fill",
+          "nodeName": "Button > Label",
+          "nodeType": "TEXT"
+        },
+        {
+          "hex": "#2563EB",
+          "rgba": "rgba(37, 99, 235, 1.00)",
+          "hsl": "hsl(217, 83%, 53%)",
+          "opacity": 1,
+          "usage": "fill",
+          "nodeName": "Button > Background (Hovered)",
+          "nodeType": "RECTANGLE"
+        },
+        {
+          "hex": "#1D4ED8",
+          "rgba": "rgba(29, 78, 216, 1.00)",
+          "hsl": "hsl(224, 76%, 48%)",
+          "opacity": 1,
+          "usage": "fill",
+          "nodeName": "Button > Background (Pressed)",
+          "nodeType": "RECTANGLE"
+        },
+        {
+          "hex": "#93C5FD",
+          "rgba": "rgba(147, 197, 253, 1.00)",
+          "hsl": "hsl(212, 96%, 78%)",
+          "opacity": 1,
+          "usage": "stroke",
+          "nodeName": "Button > Focus Ring",
+          "nodeType": "RECTANGLE"
+        }
+      ],
+      "unique": ["#3B82F6", "#FFFFFF", "#2563EB", "#1D4ED8", "#93C5FD"],
+      "byUsage": {
+        "fill": [
+          { "hex": "#3B82F6", "nodeName": "Button > Background" },
+          { "hex": "#FFFFFF", "nodeName": "Button > Label" },
+          { "hex": "#2563EB", "nodeName": "Button > Background (Hovered)" },
+          { "hex": "#1D4ED8", "nodeName": "Button > Background (Pressed)" }
+        ],
+        "stroke": [
+          { "hex": "#93C5FD", "nodeName": "Button > Focus Ring" }
+        ],
+        "effect": []
+      }
+    },
+    "borders": [
+      {
+        "color": { "hex": "#3B82F6", "rgba": "rgba(59, 130, 246, 1.00)" },
+        "weight": 1,
+        "align": "INSIDE",
+        "nodeName": "Button (Outlined)"
+      }
+    ],
+    "corners": [
+      {
+        "type": "uniform",
+        "value": 8,
+        "nodeName": "Button > Background"
+      }
+    ],
+    "effects": [
+      {
+        "type": "DROP_SHADOW",
+        "color": { "hex": "#000000", "rgba": "rgba(0, 0, 0, 0.10)" },
+        "offset": { "x": 0, "y": 2 },
+        "blur": 4,
+        "spread": 0,
+        "nodeName": "Button > Background",
+        "cssValue": "0px 2px 4px 0px rgba(0, 0, 0, 0.10)"
+      }
+    ]
+  },
+
+  "layout": {
+    "autoLayouts": [
+      {
+        "nodeName": "Button",
+        "nodeId": "14:3738",
+        "direction": "HORIZONTAL",
+        "wrap": false,
+        "mainAxisAlignment": "CENTER",
+        "crossAxisAlignment": "CENTER",
+        "padding": { "top": 8, "right": 16, "bottom": 8, "left": 16 },
+        "gap": 8,
+        "sizing": {
+          "width": { "mode": "AUTO", "min": 80 },
+          "height": { "mode": "AUTO", "min": 36 }
+        }
+      }
+    ],
+    "spacing": [
+      {
+        "type": "padding",
+        "value": { "top": 8, "right": 16, "bottom": 8, "left": 16 },
+        "nodeName": "Button (Medium)",
+        "nodeType": "COMPONENT"
+      },
+      {
+        "type": "padding",
+        "value": { "top": 6, "right": 12, "bottom": 6, "left": 12 },
+        "nodeName": "Button (Small)",
+        "nodeType": "COMPONENT"
+      },
+      {
+        "type": "padding",
+        "value": { "top": 12, "right": 24, "bottom": 12, "left": 24 },
+        "nodeName": "Button (Large)",
+        "nodeType": "COMPONENT"
+      },
+      {
+        "type": "gap",
+        "value": 8,
+        "nodeName": "Button",
+        "nodeType": "COMPONENT"
+      }
+    ],
+    "dimensions": {
+      "width": 120,
+      "height": 40
+    }
+  },
+
+  "typography": {
+    "all": [
+      {
+        "nodeName": "Button > Label",
+        "nodeId": "14:3741",
+        "text": "Button",
+        "style": {
+          "fontFamily": "Inter",
+          "fontWeight": 500,
+          "fontSize": 14,
+          "lineHeight": 20,
+          "lineHeightUnit": "PIXELS",
+          "letterSpacing": 0.25,
+          "textCase": "ORIGINAL",
+          "textAlign": "CENTER"
+        }
+      }
+    ],
+    "fontFamilies": ["Inter"],
+    "fontSizes": [12, 14, 16],
+    "fontWeights": [500]
+  },
+
+  "structure": {
+    "id": "14:3737",
+    "name": "Button",
+    "type": "COMPONENT_SET",
+    "visible": true,
+    "size": { "width": 1200, "height": 800 },
+    "children": [
+      {
+        "id": "14:3738",
+        "name": "Size=Small, Color=Primary, State=Enabled, Type=Contained",
+        "type": "COMPONENT",
+        "visible": true,
+        "size": { "width": 80, "height": 32 },
+        "layout": {
+          "mode": "HORIZONTAL",
+          "padding": { "top": 6, "right": 12, "bottom": 6, "left": 12 },
+          "gap": 6,
+          "mainAxis": "CENTER",
+          "crossAxis": "CENTER"
+        },
+        "fills": [{ "type": "SOLID", "color": "#3B82F6", "opacity": 1 }],
+        "cornerRadius": 6,
+        "children": [
+          {
+            "id": "14:3742",
+            "name": "Icon",
+            "type": "INSTANCE",
+            "visible": false,
+            "size": { "width": 16, "height": 16 },
+            "componentReference": {
+              "componentId": "16959:24567"
+            }
+          },
+          {
+            "id": "14:3743",
+            "name": "Label",
+            "type": "TEXT",
+            "visible": true,
+            "size": { "width": 40, "height": 16 },
+            "text": {
+              "content": "Button",
+              "font": { "family": "Inter", "size": 12, "weight": 500 }
+            },
+            "fills": [{ "type": "SOLID", "color": "#FFFFFF", "opacity": 1 }]
+          },
+          {
+            "id": "14:3744",
+            "name": "Icon",
+            "type": "INSTANCE",
+            "visible": false,
+            "size": { "width": 16, "height": 16 },
+            "componentReference": {
+              "componentId": "16959:24568"
+            }
+          }
+        ]
+      },
+      {
+        "id": "14:3739",
+        "name": "Size=Medium, Color=Primary, State=Enabled, Type=Contained",
+        "type": "COMPONENT",
+        "visible": true,
+        "size": { "width": 100, "height": 40 },
+        "layout": {
+          "mode": "HORIZONTAL",
+          "padding": { "top": 8, "right": 16, "bottom": 8, "left": 16 },
+          "gap": 8,
+          "mainAxis": "CENTER",
+          "crossAxis": "CENTER"
+        },
+        "fills": [{ "type": "SOLID", "color": "#3B82F6", "opacity": 1 }],
+        "cornerRadius": 8,
+        "children": [
+          {
+            "id": "14:3745",
+            "name": "Label",
+            "type": "TEXT",
+            "visible": true,
+            "text": {
+              "content": "Button",
+              "font": { "family": "Inter", "size": 14, "weight": 500 }
+            }
+          }
+        ]
+      }
+    ]
+  },
+
+  "inferredTokens": {
+    "colors": {
+      "#3B82F6": {
+        "value": "#3B82F6",
+        "usageCount": 4,
+        "suggestedName": "blue"
+      },
+      "#FFFFFF": {
+        "value": "#FFFFFF",
+        "usageCount": 3,
+        "suggestedName": "white"
+      },
+      "#2563EB": {
+        "value": "#2563EB",
+        "usageCount": 2,
+        "suggestedName": "blue"
+      },
+      "#1D4ED8": {
+        "value": "#1D4ED8",
+        "usageCount": 1,
+        "suggestedName": "blue"
+      }
+    },
+    "spacing": {
+      "spacing-1": { "value": 6, "usageCount": 2, "suggestedName": "spacing-xs" },
+      "spacing-2": { "value": 8, "usageCount": 4, "suggestedName": "spacing-sm" },
+      "spacing-3": { "value": 12, "usageCount": 2, "suggestedName": "spacing-md" },
+      "spacing-4": { "value": 16, "usageCount": 2, "suggestedName": "spacing-md" },
+      "spacing-5": { "value": 24, "usageCount": 2, "suggestedName": "spacing-lg" }
+    },
+    "typography": {
+      "text-1": {
+        "value": { "fontSize": 12, "fontFamily": "Inter", "fontWeight": 500, "lineHeight": 16 },
+        "usageCount": 1,
+        "suggestedName": "text-xs"
+      },
+      "text-2": {
+        "value": { "fontSize": 14, "fontFamily": "Inter", "fontWeight": 500, "lineHeight": 20 },
+        "usageCount": 2,
+        "suggestedName": "text-sm"
+      },
+      "text-3": {
+        "value": { "fontSize": 16, "fontFamily": "Inter", "fontWeight": 500, "lineHeight": 24 },
+        "usageCount": 1,
+        "suggestedName": "text-base"
+      }
+    },
+    "borderRadius": {
+      "radius-1": { "value": 6, "usageCount": 1, "suggestedName": "radius-md" },
+      "radius-2": { "value": 8, "usageCount": 2, "suggestedName": "radius-lg" }
+    },
+    "shadows": {
+      "shadow-1": {
+        "value": "0px 2px 4px 0px rgba(0, 0, 0, 0.10)",
+        "usageCount": 3,
+        "suggestedName": "shadow-sm"
+      }
+    }
+  },
+
+  "stats": {
+    "totalColors": 5,
+    "uniqueColors": 5,
+    "totalTextNodes": 3,
+    "totalAutoLayouts": 3,
+    "totalEffects": 1,
+    "childrenCount": 2,
+    "maxDepth": 3
+  },
+
+  "aiContext": {
+    "summary": "This is a Button component with 9 configurable properties. It follows Material Design-like patterns with contained, outlined, and text variants. The component uses a horizontal auto-layout with centered content, consistent padding scales, and Inter font family.",
+    "designPatterns": [
+      "Uses auto-layout for flexible sizing",
+      "Follows 4px spacing grid (6, 8, 12, 16, 24)",
+      "Consistent border radius (6px small, 8px medium/large)",
+      "Drop shadow on contained variant for elevation",
+      "Focus ring for accessibility (3px outline)"
+    ],
+    "colorSemantics": {
+      "Primary": "#3B82F6 - Blue 500 (main action)",
+      "Primary Hover": "#2563EB - Blue 600 (darker on hover)",
+      "Primary Pressed": "#1D4ED8 - Blue 700 (darkest on press)",
+      "Text on Primary": "#FFFFFF - White (high contrast)",
+      "Focus Ring": "#93C5FD - Blue 300 (visible but subtle)"
+    },
+    "spacingScale": {
+      "xsmall": "6px - Used in small button padding",
+      "small": "8px - Used in medium button padding and icon gap",
+      "medium": "12-16px - Used in large button padding",
+      "large": "24px - Used in large button horizontal padding"
+    },
+    "sizingGuide": {
+      "Small": "32px height, 12px font, 6px vertical padding, 12px horizontal padding",
+      "Medium": "40px height, 14px font, 8px vertical padding, 16px horizontal padding",
+      "Large": "48px height, 16px font, 12px vertical padding, 24px horizontal padding"
+    },
+    "accessibilityNotes": [
+      "Focus ring visible on :focus-visible",
+      "Minimum touch target of 32px height",
+      "4.5:1 contrast ratio for text",
+      "Disabled state at 40% opacity"
+    ]
+  }
+}

@@ -38,20 +38,35 @@ uiforge-demo/
 │   │   │   │   │   ├── FigmaIcons.tsx # Icon library with 50+ icons
 │   │   │   │   │   ├── FigmaButton.tsx # Button component
 │   │   │   │   │   └── index.tsx      # Component registry
+│   │   │   │   ├── screenshot/        # Screenshot analyzer components
+│   │   │   │   │   ├── ScreenshotAnalyzerModal.tsx
+│   │   │   │   │   ├── ImageUploadZone.tsx
+│   │   │   │   │   ├── ComponentTree.tsx
+│   │   │   │   │   ├── ScreenshotPreview.tsx
+│   │   │   │   │   ├── ComponentPreview.tsx
+│   │   │   │   │   └── IdentifiedComponentDetail.tsx
+│   │   │   │   ├── codebase/          # Codebase analyzer components
 │   │   │   │   ├── ui/                # shadcn/ui components
 │   │   │   │   └── FigmaPropertiesPanel.tsx  # Right sidebar
 │   │   │   ├── services/
 │   │   │   │   ├── figma.ts           # Figma API service
 │   │   │   │   ├── codeGenerator.ts   # React code generation
-│   │   │   │   └── packageGenerator.ts # NPM package generation
+│   │   │   │   ├── packageGenerator.ts # NPM package generation
+│   │   │   │   ├── screenshotAnalyzer.ts # Screenshot analysis orchestration
+│   │   │   │   ├── componentMatcher.ts # Fuzzy component matching
+│   │   │   │   ├── codebaseAnalyzer.ts # Codebase analysis service
+│   │   │   │   └── githubFetcher.ts   # GitHub repo fetching
 │   │   │   └── store/
 │   │   │       ├── figmaSlice.ts      # Figma state (Redux)
-│   │   │       └── layoutSlice.ts     # Layout state (Redux)
+│   │   │       ├── layoutSlice.ts     # Layout state (Redux)
+│   │   │       ├── codebaseSlice.ts   # Codebase analyzer state
+│   │   │       └── screenshotSlice.ts # Screenshot analyzer state
 │   │   └── .env.local     # Frontend environment variables
 │   │
 │   └── backend/           # Express API (Railway)
 │       ├── routes/
-│       │   └── figma.js   # Figma API proxy routes
+│       │   ├── figma.js   # Figma API proxy routes
+│       │   └── github.js  # GitHub repo proxy (CORS bypass)
 │       ├── middleware/
 │       │   └── auth.js    # JWT authentication middleware
 │       └── server.js      # Express server entry
@@ -205,6 +220,31 @@ JSZip bundles files → Download as .zip
 - Grid pattern shown when no component selected
 - Resizable sidebars (left: file tree, right: properties)
 
+### 5. Codebase Analyzer
+- Analyze existing React codebases to extract component information
+- **Two input methods:**
+  - Upload ZIP file (drag-drop)
+  - Enter GitHub URL (automatically fetched via backend proxy)
+- Extracts: Component names, props, file paths, dependencies
+- Results stored in Redux for cross-referencing with other features
+- Modal accessible via purple "Analyze Codebase" button in header
+
+### 6. Screenshot Analyzer (NEW - January 2026)
+- Upload PNG/JPG screenshots of any web UI
+- AI (Claude Vision) identifies all UI components with bounding boxes
+- Cross-references against BOTH codebase AND Figma components
+- **Three-panel layout:**
+  - Left: Screenshot preview with bounding box overlays + hierarchical component tree
+  - Center: Live component preview
+  - Right: Properties panel + generated React code
+- Features:
+  - Click-to-select components (highlights in screenshot)
+  - Confidence scores for each identified component
+  - Fuzzy matching using Fuse.js
+  - Editable component props
+  - Copyable generated React code
+- Modal accessible via orange "Screenshot Analyzer" button in header
+
 ---
 
 ## Key Files Reference
@@ -226,6 +266,14 @@ JSZip bundles files → Download as .zip
 | `/api/figma/component/[fileKey]/[nodeId]` | Get component properties |
 | `/api/figma/file-components/[fileKey]` | Get all component definitions |
 | `/api/package/generate` | Generate and download npm package |
+| `/api/screenshot/analyze` | Analyze screenshot with Claude Vision API |
+
+### API Routes (Backend - Express)
+| Route | Purpose |
+|-------|---------|
+| `/api/v1/figma/file/:fileKey` | Load Figma file structure |
+| `/api/v1/figma/instance/:fileKey/:nodeId` | Load specific component data |
+| `/api/v1/github/fetch-repo` | Proxy for fetching GitHub repos (CORS bypass) |
 
 ### Components
 | File | Purpose |
@@ -240,6 +288,30 @@ JSZip bundles files → Download as .zip
 |------|-------|
 | `/apps/frontend/src/store/figmaSlice.ts` | `fileKey`, `fileData`, `selectedComponentId`, `selectedComponentName`, `figmaComponentProps`, `iconRegistry`, `componentImageUrl` |
 | `/apps/frontend/src/store/layoutSlice.ts` | `leftSidebarWidth`, `rightSidebarWidth` |
+| `/apps/frontend/src/store/codebaseSlice.ts` | `isModalOpen`, `isAnalyzing`, `currentAnalysis`, `uploadedFiles`, `error` |
+| `/apps/frontend/src/store/screenshotSlice.ts` | `isModalOpen`, `uploadedImage`, `isAnalyzing`, `currentAnalysis`, `selectedComponentId`, `expandedNodeIds`, `previewProps` |
+
+### Screenshot Analyzer Files
+| File | Purpose |
+|------|---------|
+| `/apps/frontend/src/types/screenshotAnalyzer.ts` | TypeScript interfaces for screenshot analysis |
+| `/apps/frontend/src/app/api/screenshot/analyze/route.ts` | Claude Vision API endpoint for screenshot analysis |
+| `/apps/frontend/src/services/screenshotAnalyzer.ts` | Analysis orchestration, code generation |
+| `/apps/frontend/src/services/componentMatcher.ts` | Fuzzy matching with Fuse.js |
+| `/apps/frontend/src/components/screenshot/ScreenshotAnalyzerModal.tsx` | Main modal container |
+| `/apps/frontend/src/components/screenshot/ImageUploadZone.tsx` | Drag-drop image upload |
+| `/apps/frontend/src/components/screenshot/ComponentTree.tsx` | Hierarchical tree view |
+| `/apps/frontend/src/components/screenshot/ScreenshotPreview.tsx` | Screenshot with bounding box overlays |
+| `/apps/frontend/src/components/screenshot/ComponentPreview.tsx` | Live component preview (Sandpack) |
+| `/apps/frontend/src/components/screenshot/IdentifiedComponentDetail.tsx` | Props and code panel |
+
+### Codebase Analyzer Files
+| File | Purpose |
+|------|---------|
+| `/apps/frontend/src/components/CodebaseAnalyzerModal.tsx` | Main modal for codebase analysis |
+| `/apps/frontend/src/services/codebaseAnalyzer.ts` | Codebase analysis service |
+| `/apps/frontend/src/services/githubFetcher.ts` | GitHub repo fetching (via backend proxy) |
+| `/apps/backend/routes/github.js` | Backend proxy for GitHub ZIP downloads (CORS bypass) |
 
 ---
 
@@ -491,7 +563,51 @@ In Figma Developer Console:
 
 ## Recent Fixes & Improvements
 
-### Session: January 21, 2026 (Current)
+### Session: January 23, 2026 (Current)
+
+#### Screenshot to Components Analyzer (Major Feature)
+Built a complete feature for analyzing UI screenshots and identifying components:
+
+**New Files Created:**
+- `src/types/screenshotAnalyzer.ts` - TypeScript interfaces (BoundingBox, IdentifiedComponent, ComponentMatch, ScreenshotAnalysis)
+- `src/store/screenshotSlice.ts` - Redux state management for screenshot analyzer
+- `src/app/api/screenshot/analyze/route.ts` - Claude Vision API endpoint
+- `src/services/screenshotAnalyzer.ts` - Analysis orchestration and code generation
+- `src/services/componentMatcher.ts` - Fuzzy matching using Fuse.js
+- `src/components/screenshot/ScreenshotAnalyzerModal.tsx` - Main modal (three-panel layout)
+- `src/components/screenshot/ImageUploadZone.tsx` - Drag-drop image upload
+- `src/components/screenshot/ComponentTree.tsx` - Hierarchical tree view with confidence badges
+- `src/components/screenshot/ScreenshotPreview.tsx` - Screenshot with SVG bounding box overlays
+- `src/components/screenshot/ComponentPreview.tsx` - Sandpack live preview
+- `src/components/screenshot/IdentifiedComponentDetail.tsx` - Props editor and code panel
+
+**Files Modified:**
+- `src/store/index.ts` - Added screenshotSlice
+- `src/components/layout/AppHeader.tsx` - Added orange "Screenshot Analyzer" button
+
+**Dependencies Added:**
+- `@codesandbox/sandpack-react` - Live React component preview
+- `fuse.js` - Fuzzy string matching
+
+**How It Works:**
+1. User uploads a PNG/JPG screenshot
+2. Claude Vision API analyzes the image and identifies UI components with bounding boxes
+3. Components are cross-referenced against codebase AND Figma components using fuzzy matching
+4. Results displayed in three-panel layout with tree view, preview, and code generation
+
+#### GitHub Repo Fetching via Backend Proxy
+- **Problem:** CORS restrictions prevented fetching GitHub repos directly from the browser
+- **Solution:** Created backend proxy endpoint `/api/v1/github/fetch-repo`
+- **File:** `apps/backend/routes/github.js` - Downloads repo ZIP and streams to frontend
+
+#### Duplicate React Key Fix
+- **Problem:** Components in same file had duplicate keys (using only `filePath`)
+- **Solution:** Changed key to `${component.filePath}:${component.name}`
+- **Files:** `ComponentList.tsx`, `AnalysisResults.tsx`
+
+---
+
+### Session: January 21, 2026
 
 #### Added 5 New Figma Components
 Implemented 5 new components following the same pattern as the Button component:
@@ -871,6 +987,98 @@ Store design knowledge in a vector database, retrieve relevant parts when answer
 - `/apps/frontend/src/components/TokenImportModal.tsx` - Import UI
 - `/apps/frontend/src/components/TokenExportModal.tsx` - Export UI
 - `/apps/frontend/src/components/TokensSection.tsx` - Token display panel
+
+---
+
+# Deep Component Extraction (AI Training Data)
+
+## Overview
+
+The deep extraction API extracts comprehensive design data from a Figma component for AI training and analysis. This is the foundation of the AI Designer Vision - extracting everything possible so an LLM can understand components like a seasoned designer.
+
+## API Endpoint
+
+```
+GET /api/figma/deep-extract/{fileKey}/{nodeId}
+```
+
+**Requires**: OAuth authentication (user must be logged in via Figma)
+
+## What Gets Extracted
+
+### 1. Component Information
+- **Properties**: All VARIANT, BOOLEAN, TEXT, and INSTANCE_SWAP properties with their options
+- **Variants**: All variant combinations in a COMPONENT_SET
+- **Node IDs**: For referencing specific variants
+
+### 2. Visual Properties
+- **Colors**: All fills, strokes, and effect colors with hex, rgba, and hsl values
+- **Borders**: Stroke colors, weights, and alignment
+- **Corners**: Border radius (uniform or per-corner)
+- **Effects**: Drop shadows, inner shadows, blurs with CSS values
+
+### 3. Layout Properties
+- **Auto-Layout**: Direction, alignment, padding, gap
+- **Spacing**: Extracted padding and gap values across all variants
+- **Sizing**: Width/height modes (fixed, auto, hug), min/max constraints
+
+### 4. Typography
+- **Font Styles**: Family, weight, size, line height, letter spacing
+- **Text Content**: Sample text from text nodes
+- **All variations**: Across different component sizes/states
+
+### 5. Structure Tree
+- **Complete hierarchy**: All children with their properties
+- **Component references**: Instance swap connections
+- **Visibility states**: Which elements are shown/hidden per variant
+
+### 6. Inferred Tokens
+- **Colors**: Grouped by usage count with suggested names
+- **Spacing**: Identified spacing scale with token suggestions
+- **Typography**: Font size scale with token suggestions
+- **Border Radius**: Radius scale with token suggestions
+- **Shadows**: Shadow values with CSS strings
+
+## Sample Output
+
+See `/docs/sample-button-extraction.json` for a complete example of what the API returns.
+
+## Usage in Frontend
+
+```typescript
+import { figmaService } from '@/services/figma';
+
+// Deep extract a component
+const extraction = await figmaService.deepExtract(fileKey, nodeId);
+
+// Access extracted data
+console.log(extraction.component.properties); // All component properties
+console.log(extraction.visual.colors.unique);  // Unique colors used
+console.log(extraction.inferredTokens);        // Suggested tokens
+console.log(extraction.structure);             // Full node tree
+```
+
+## AI Profile Generation
+
+The extracted data enables generating comprehensive AI profiles:
+
+```json
+{
+  "aiContext": {
+    "summary": "Button component with 9 properties following Material Design patterns...",
+    "designPatterns": ["Uses auto-layout", "Follows 4px spacing grid", ...],
+    "colorSemantics": { "Primary": "#3B82F6 - Blue 500 (main action)", ... },
+    "spacingScale": { "small": "8px", "medium": "16px", ... },
+    "accessibilityNotes": ["Focus ring visible", "4.5:1 contrast ratio", ...]
+  }
+}
+```
+
+## Key Files
+
+- `/apps/frontend/src/app/api/figma/deep-extract/[fileKey]/[nodeId]/route.ts` - API endpoint
+- `/apps/frontend/src/services/figma.ts` - `figmaService.deepExtract()` method
+- `/docs/sample-button-extraction.json` - Sample output
 
 ---
 

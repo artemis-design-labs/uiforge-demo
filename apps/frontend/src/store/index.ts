@@ -4,6 +4,8 @@ import authSlice from './authSlice';
 import figmaSlice from './figmaSlice';
 import layoutSlice from './layoutSlice';
 import chatSlice from './chatSlice';
+import codebaseSlice from './codebaseSlice';
+import screenshotSlice from './screenshotSlice';
 import { persistenceMiddleware } from './persistence';
 
 // Create store first without preloadedState to establish types
@@ -14,6 +16,8 @@ export const store = configureStore({
         figma: figmaSlice,
         layout: layoutSlice,
         chat: chatSlice,
+        codebase: codebaseSlice,
+        screenshot: screenshotSlice,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware().concat(persistenceMiddleware),

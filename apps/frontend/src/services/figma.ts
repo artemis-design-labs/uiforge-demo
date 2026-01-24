@@ -187,6 +187,34 @@ export const figmaService = {
         }
     },
 
+    // Deep extract comprehensive component data for AI analysis
+    // Extracts: visual properties, layout, typography, structure, and infers tokens
+    deepExtract: async (fileKey: string, nodeId: string) => {
+        console.log('🔬 FigmaService: Deep extracting component', { fileKey, nodeId });
+
+        try {
+            const response = await fetch(`/api/figma/deep-extract/${fileKey}/${nodeId}`);
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                const error = new Error(errorData.error || 'Failed to deep extract component') as ExtendedError;
+                error.response = { status: response.status, data: errorData };
+                throw error;
+            }
+
+            const data = await response.json();
+            console.log('✅ FigmaService: Deep extraction complete', {
+                nodeName: data.meta?.nodeName,
+                stats: data.stats,
+                inferredTokens: Object.keys(data.inferredTokens || {}).length
+            });
+            return data;
+        } catch (error) {
+            console.error('❌ FigmaService: Failed to deep extract', error);
+            throw error;
+        }
+    },
+
     // Clear cache for a file and reload fresh data
     clearCacheAndReload: async (figmaUrl: string) => {
         const fileKey = extractFileKey(figmaUrl);

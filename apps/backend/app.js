@@ -15,6 +15,7 @@ import errorLogsRoutes from './routes/errorLogs.js';
 import activityRoutes from './routes/activity.js';
 import userRoutes from './routes/user.js';
 import codegenRoutes from './routes/codegen.js';
+import githubRoutes from './routes/github.js';
 import { errorLoggingMiddleware } from './routes/utils/errorLogger.js';
 
 // Initialize Express App
@@ -122,6 +123,7 @@ app.use(`${apiBase}/errors`, errorLogsRoutes);
 app.use(`${apiBase}/activity`, activityRoutes);
 app.use(`${apiBase}/user`, userRoutes);
 app.use(`${apiBase}/codegen`, codegenRoutes);
+app.use(`${apiBase}/github`, githubRoutes);
 
 // MongoDB routes (added after connection)
 let dbInitialized = false;

@@ -24,6 +24,7 @@ export function ChatWidget() {
     currentFileKey,
     figmaComponentProps,
     fileComponentDefinitions,
+    tokenCollection,
   } = useAppSelector((state) => state.figma);
 
   const handleToggle = useCallback(() => {
@@ -59,7 +60,7 @@ export function ChatWidget() {
       dispatch(setLoading(true));
       dispatch(setError(null));
 
-      // Build Figma context
+      // Build Figma context with design system knowledge
       const figmaContext: FigmaContext = {
         selectedComponentName,
         selectedComponentType,
@@ -67,6 +68,11 @@ export function ChatWidget() {
         nodeId: selectedComponent,
         componentProperties: figmaComponentProps,
         fileComponentDefinitions,
+        // Include imported design tokens if available (limit to avoid token overflow)
+        tokenCollection: tokenCollection ? {
+          ...tokenCollection,
+          tokens: tokenCollection.tokens.slice(0, 100), // Limit tokens sent to API
+        } : null,
       };
 
       // Debug logging
@@ -97,7 +103,7 @@ export function ChatWidget() {
         }
       );
     },
-    [dispatch, selectedComponentName, selectedComponentType, currentFileKey, selectedComponent, figmaComponentProps, fileComponentDefinitions, messages]
+    [dispatch, selectedComponentName, selectedComponentType, currentFileKey, selectedComponent, figmaComponentProps, fileComponentDefinitions, tokenCollection, messages]
   );
 
   return (

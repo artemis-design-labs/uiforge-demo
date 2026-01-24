@@ -1,3 +1,22 @@
+// Design token from imported token collection
+export interface DesignToken {
+  name: string;
+  value: string | number;
+  type: string;
+  category?: string;
+  description?: string;
+}
+
+export interface TokenCollection {
+  name: string;
+  version: string;
+  tokens: DesignToken[];
+  metadata?: {
+    source: string;
+    importedAt: string;
+  };
+}
+
 export interface FigmaContext {
   selectedComponentName: string | null;
   selectedComponentType: string | null;
@@ -16,6 +35,8 @@ export interface FigmaContext {
     properties: Record<string, unknown>;
   }>;
   generatedCode?: string;
+  // Design tokens from imported collection (if available)
+  tokenCollection?: TokenCollection | null;
 }
 
 export interface ChatRequest {
