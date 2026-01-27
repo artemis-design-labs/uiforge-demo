@@ -1913,3 +1913,409 @@ After analyzing Creative Hire's needs vs UI Forge's registry:
 | Select | 🔜 Needed | Dropdowns |
 
 This case study validates that UI Forge's component coverage (~73%) can support real-world application migrations with minimal gaps.
+
+---
+
+# Accessibility Knowledge Base (New Feature - January 2026)
+
+## Overview
+
+UI Forge now includes a comprehensive accessibility knowledge base that enables AI to act as a seasoned accessibility expert. The system is built on encyclopedic knowledge from WCAG 2.0, 2.1, and 2.2 guidelines, ADA compliance requirements, and ARIA Authoring Practices Guide (APG).
+
+**Key Capability:** The AI can identify potential accessibility violations in components by cross-checking generated code against WCAG success criteria, providing actionable remediation guidance.
+
+## ADA Compliance Timeline
+
+| Deadline | Requirement |
+|----------|-------------|
+| **April 24, 2026** | State/local government websites must meet WCAG 2.1 Level AA |
+| **April 24, 2027** | Smaller entities (under 50,000 population) must comply |
+
+**UI Forge's accessibility validation ensures generated components meet these requirements out of the box.**
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│              ACCESSIBILITY KNOWLEDGE BASE                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  │
+│  │ WCAG Knowledge  │  │ Component Rules │  │   Validator     │  │
+│  │     Base        │  │   Database      │  │    Service      │  │
+│  ├─────────────────┤  ├─────────────────┤  ├─────────────────┤  │
+│  │ • 40+ criteria  │  │ • 16 component  │  │ • Code analysis │  │
+│  │ • 4 principles  │  │   types         │  │ • Color contrast│  │
+│  │ • 3 levels      │  │ • ARIA patterns │  │ • Score (0-100) │  │
+│  │ • Techniques    │  │ • Violations    │  │ • Reports       │  │
+│  │ • Failures      │  │ • Code examples │  │ • Keyboard test │  │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘  │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `/apps/frontend/src/services/accessibility/wcagKnowledgeBase.ts` | Complete WCAG 2.0/2.1/2.2 criteria database |
+| `/apps/frontend/src/services/accessibility/componentAccessibilityRules.ts` | Component-specific accessibility rules for 16 components |
+| `/apps/frontend/src/services/accessibility/accessibilityValidator.ts` | Validation service with code analysis and color contrast |
+| `/apps/frontend/src/services/accessibility/index.ts` | Module exports and convenience functions |
+
+## WCAG Criteria Coverage
+
+### Principles Covered (POUR)
+
+| Principle | Criteria Count | Key Success Criteria |
+|-----------|----------------|----------------------|
+| **Perceivable** | 12 | 1.1.1 Non-text Content, 1.4.3 Contrast, 1.4.11 Non-text Contrast |
+| **Operable** | 15 | 2.1.1 Keyboard, 2.4.7 Focus Visible, 2.5.8 Target Size |
+| **Understandable** | 8 | 3.2.1 On Focus, 3.3.1 Error Identification |
+| **Robust** | 5 | 4.1.2 Name Role Value, 4.1.3 Status Messages |
+
+### WCAG Version Coverage
+
+| Version | New Criteria | Status |
+|---------|-------------|--------|
+| WCAG 2.0 | Core criteria | ✅ Complete |
+| WCAG 2.1 | Mobile + cognitive | ✅ Complete |
+| WCAG 2.2 | 9 new criteria (focus, authentication, dragging) | ✅ Complete |
+
+### WCAG 2.2 New Criteria Included
+
+- **2.4.11** Focus Not Obscured (Minimum) - AA
+- **2.4.12** Focus Not Obscured (Enhanced) - AAA
+- **2.4.13** Focus Appearance - AAA
+- **2.5.7** Dragging Movements - AA
+- **2.5.8** Target Size (Minimum) - AA
+- **3.2.6** Consistent Help - A
+- **3.3.7** Redundant Entry - A
+- **3.3.8** Accessible Authentication (Minimum) - AA
+- **3.3.9** Accessible Authentication (Enhanced) - AAA
+
+## Component Accessibility Rules
+
+The knowledge base includes detailed accessibility rules for 16 component types:
+
+| Component | WCAG Criteria | ARIA Pattern | Keyboard Keys |
+|-----------|---------------|--------------|---------------|
+| **Button** | 1.1.1, 1.4.1, 1.4.3, 1.4.11, 2.1.1, 2.4.7, 2.5.3, 2.5.8, 4.1.2 | button | Enter, Space |
+| **IconButton** | 1.1.1, 2.1.1, 2.4.7, 2.5.8, 4.1.2 | button | Enter, Space |
+| **TextField** | 1.3.1, 1.3.5, 1.4.3, 2.1.1, 2.4.7, 3.3.1, 3.3.2, 4.1.2 | textbox | Standard text input |
+| **TextArea** | 1.3.1, 1.4.3, 2.1.1, 2.4.7, 3.3.1, 3.3.2, 4.1.2 | textbox (multiline) | Standard + Enter |
+| **Checkbox** | 1.3.1, 1.4.1, 1.4.11, 2.1.1, 2.4.7, 4.1.2 | checkbox | Space |
+| **Tabs** | 1.3.1, 2.1.1, 2.4.7, 4.1.2 | tablist/tab/tabpanel | Arrow keys, Home, End |
+| **Alert** | 1.3.1, 1.4.1, 1.4.3, 4.1.3 | alert/status | - |
+| **Accordion** | 1.3.1, 2.1.1, 2.4.7, 4.1.2 | accordion | Enter, Space, Arrows |
+| **NavItem** | 1.3.1, 2.1.1, 2.4.4, 2.4.7, 4.1.2 | link/menuitem | Enter, Space |
+| **SearchInput** | 1.3.1, 1.3.5, 2.1.1, 2.4.7, 3.3.1, 4.1.2 | searchbox | Esc to clear |
+| **Dropdown** | 1.3.1, 2.1.1, 2.4.7, 4.1.2 | listbox | Arrows, Enter, Esc |
+| **Badge** | 1.3.1, 1.4.1, 1.4.3 | status | - |
+| **Chip** | 1.4.1, 1.4.11, 2.1.1, 2.4.7, 4.1.2 | button | Enter, Space, Delete |
+| **Avatar** | 1.1.1, 1.4.3, 1.4.11 | img | - |
+| **Breadcrumb** | 1.3.1, 2.4.4, 2.4.8, 4.1.2 | navigation | Enter |
+| **ProgressLinear** | 1.3.1, 4.1.2 | progressbar | - |
+
+### Rule Structure
+
+Each component rule includes:
+
+```typescript
+{
+  component: 'Button',
+  wcagCriteria: ['1.1.1', '1.4.3', '2.1.1', ...],
+  ariaPattern: 'https://www.w3.org/WAI/ARIA/apg/patterns/button/',
+  requirements: [
+    {
+      criterion: '1.1.1',
+      requirement: 'Icon-only buttons must have accessible name',
+      implementation: 'Use aria-label or visually hidden text'
+    }
+  ],
+  keyboardInteraction: [
+    { key: 'Enter', action: 'Activates the button', required: true },
+    { key: 'Space', action: 'Activates the button', required: true }
+  ],
+  screenReaderBehavior: {
+    role: 'button',
+    states: ['aria-pressed', 'aria-expanded', 'aria-disabled'],
+    announcements: 'Button label followed by "button"'
+  },
+  commonViolations: [
+    {
+      id: 'missing-accessible-name',
+      title: 'Missing accessible name',
+      severity: 'critical',
+      description: '...',
+      howToFix: '...',
+      wcagCriteria: ['1.1.1', '4.1.2']
+    }
+  ],
+  codeExample: {
+    correct: '<button aria-label="Close dialog">...</button>',
+    incorrect: '<div onClick={...}>X</div>'
+  }
+}
+```
+
+## Accessibility Validator
+
+### Features
+
+| Feature | Description |
+|---------|-------------|
+| **Code Analysis** | Detects accessible names, roles, keyboard handlers, focus indicators, ARIA states |
+| **Color Contrast** | WCAG AA/AAA checks for normal text (4.5:1), large text (3:1), UI components (3:1) |
+| **Scoring** | 0-100 accessibility score based on issues found |
+| **Reports** | Detailed reports with issues, warnings, recommendations |
+| **Keyboard Checklist** | Validates required keyboard interactions per component |
+
+### Color Contrast Functions
+
+```typescript
+import { checkColorContrast, getContrastRatio, meetsAAContrast } from '@/services/accessibility';
+
+// Full contrast check
+const result = checkColorContrast('#FFFFFF', '#3B82F6');
+console.log(result.ratio);              // 3.42
+console.log(result.passes.normalTextAA); // false (needs 4.5:1)
+console.log(result.passes.largeTextAA);  // true (needs 3:1)
+console.log(result.passes.uiComponentAA); // true (needs 3:1)
+
+// Quick AA check
+const meetsAA = meetsAAContrast('#000000', '#FFFFFF'); // true
+const meetsAALarge = meetsAAContrast('#666666', '#FFFFFF', true); // true (large text)
+```
+
+### Validation Functions
+
+```typescript
+import {
+  validateComponent,
+  quickA11yCheck,
+  getA11yScore,
+  getCriticalIssues,
+  formatReportAsMarkdown
+} from '@/services/accessibility';
+
+// Full validation
+const report = validateComponent('Button', buttonCode, 'AA');
+console.log(report.passed);        // boolean
+console.log(report.score);         // 0-100
+console.log(report.issues);        // Critical issues
+console.log(report.warnings);      // Non-critical issues
+console.log(report.recommendations); // Best practices
+console.log(report.keyboardChecklist); // Keyboard requirements
+
+// Quick checks
+const passes = quickA11yCheck('TextField', code);  // boolean
+const score = getA11yScore('Checkbox', code);      // number
+const critical = getCriticalIssues('Tabs', code);  // string[]
+
+// Generate markdown report
+const markdown = formatReportAsMarkdown(report);
+```
+
+### Report Output Structure
+
+```typescript
+interface AccessibilityReport {
+  component: string;           // Component name
+  wcagLevel: WCAGLevel;        // 'A' | 'AA' | 'AAA'
+  passed: boolean;             // Overall pass/fail
+  score: number;               // 0-100
+  issues: AccessibilityIssue[];      // Must fix
+  warnings: AccessibilityIssue[];    // Should fix
+  recommendations: string[];         // Best practices
+  keyboardChecklist: KeyboardCheckItem[];  // Keyboard requirements
+  screenReaderNotes: string;         // SR behavior notes
+}
+```
+
+## Usage in Code Generation
+
+The accessibility knowledge base is designed to be integrated into UI Forge's code generation pipeline:
+
+### 1. Pre-generation Validation
+
+```typescript
+// Before generating code, check component rules
+const rules = getComponentRules('Button');
+if (rules) {
+  // Ensure generated code includes required ARIA attributes
+  const requiredAria = rules.requirements
+    .filter(r => r.implementation.includes('aria-'))
+    .map(r => r.implementation);
+}
+```
+
+### 2. Post-generation Validation
+
+```typescript
+// After generating code, validate accessibility
+const generatedCode = codeGenerator.generateComponent('Button', props);
+const report = validateComponent('Button', generatedCode, 'AA');
+
+if (!report.passed) {
+  console.warn('Generated code has accessibility issues:');
+  report.issues.forEach(issue => {
+    console.warn(`- ${issue.title}: ${issue.howToFix}`);
+  });
+}
+```
+
+### 3. AI-Assisted Remediation
+
+The knowledge base provides enough context for LLMs to fix accessibility issues:
+
+```typescript
+// Get violation details for AI context
+const violations = getAllViolations();
+const buttonViolations = violations.filter(v =>
+  v.component === 'Button' && v.severity === 'critical'
+);
+
+// Each violation includes:
+// - description: What's wrong
+// - howToFix: How to fix it
+// - wcagCriteria: Which criteria it violates
+// - codeExample: Correct vs incorrect code
+```
+
+## WCAG Knowledge Base Functions
+
+```typescript
+import {
+  WCAG_CRITERIA,
+  getAllCriteria,
+  getCriteriaByLevel,
+  getCriteriaByPrinciple,
+  getCriteriaByComponent,
+  getCriteriaByVersion,
+  getWCAG22NewCriteria,
+  getLevelAACriteria
+} from '@/services/accessibility';
+
+// Get all criteria
+const all = getAllCriteria(); // WCAGCriterion[]
+
+// Filter by level
+const levelA = getCriteriaByLevel('A');
+const levelAA = getCriteriaByLevel('AA');
+const levelAAA = getCriteriaByLevel('AAA');
+
+// Filter by principle
+const perceivable = getCriteriaByPrinciple('Perceivable');
+const operable = getCriteriaByPrinciple('Operable');
+
+// Get criteria for a component
+const buttonCriteria = getCriteriaByComponent('Button');
+
+// Get WCAG 2.2 new criteria
+const wcag22New = getWCAG22NewCriteria();
+
+// Get all Level AA requirements
+const aaRequired = getLevelAACriteria();
+```
+
+## Component Rule Functions
+
+```typescript
+import {
+  COMPONENT_ACCESSIBILITY_RULES,
+  getComponentRules,
+  getComponentsForCriterion,
+  getAllViolations,
+  getViolationsBySeverity,
+  getKeyboardRequirements,
+  getCodeExamples,
+  getAllComponentRules,
+  getComponentNames
+} from '@/services/accessibility';
+
+// Get rules for specific component
+const buttonRules = getComponentRules('Button');
+const textFieldRules = getComponentRules('TextField');
+
+// Find components affected by a criterion
+const components111 = getComponentsForCriterion('1.1.1'); // ['Button', 'IconButton', 'Avatar', ...]
+
+// Get all violations across components
+const allViolations = getAllViolations();
+const criticalOnly = getViolationsBySeverity('critical');
+const seriousIssues = getViolationsBySeverity('serious');
+
+// Get keyboard requirements for a component
+const tabsKeyboard = getKeyboardRequirements('Tabs');
+// [{ key: 'Tab', action: 'Moves focus...', required: true }, ...]
+
+// Get code examples (correct and incorrect)
+const examples = getCodeExamples('Checkbox');
+// { correct: '...', incorrect: '...' }
+
+// List all supported components
+const componentNames = getComponentNames();
+// ['Button', 'IconButton', 'TextField', ...]
+```
+
+## Convenience Functions
+
+```typescript
+import {
+  quickA11yCheck,
+  getA11yScore,
+  getCriticalIssues,
+  meetsAAContrast,
+  getApplicableWCAG,
+  getCorrectExample,
+  getIncorrectExample,
+  getKeyboardInfo,
+  formatReportAsMarkdown
+} from '@/services/accessibility';
+
+// Quick pass/fail check
+const passes = quickA11yCheck('Button', code);
+
+// Get numeric score
+const score = getA11yScore('TextField', code);
+
+// Get critical issues as strings
+const issues = getCriticalIssues('Tabs', code);
+
+// Check color contrast
+const meetsAA = meetsAAContrast('#000', '#FFF');
+
+// Get WCAG criteria for component
+const criteria = getApplicableWCAG('Checkbox');
+
+// Get code examples
+const correct = getCorrectExample('Button');
+const incorrect = getIncorrectExample('Button');
+
+// Get keyboard info
+const keyboard = getKeyboardInfo('Accordion');
+// { keys: ['Enter', 'Space'], required: [...], optional: [...] }
+
+// Generate markdown report
+const markdown = formatReportAsMarkdown(report);
+```
+
+## Integration with Screenshot Analyzer
+
+The accessibility knowledge base enhances the Screenshot Analyzer:
+
+1. **Component Identification** → Accessibility rules loaded for each identified component
+2. **Validation** → Generated code checked against WCAG criteria
+3. **Recommendations** → AI provides accessibility-specific guidance
+4. **Reports** → Accessibility score included in analysis results
+
+## Future Enhancements
+
+| Enhancement | Description | Priority |
+|-------------|-------------|----------|
+| **Automated Fixes** | AI generates fixed code for violations | High |
+| **Visual Testing** | Integrate with axe-core for runtime checks | Medium |
+| **PDF Reports** | Export accessibility audits as PDFs | Medium |
+| **CI Integration** | GitHub Action for accessibility checks | Medium |
+| **Screen Reader Preview** | Simulate SR announcements | Low |
