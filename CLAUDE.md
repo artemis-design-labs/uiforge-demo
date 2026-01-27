@@ -1339,3 +1339,577 @@ Generate code for multiple frameworks from the same Figma source:
 - Web Components
 
 **Status:** 🔜 Future consideration
+
+---
+
+### Priority #4: UI Forge MCP Server + Storybook + Zeroheight Integration
+
+**Status:** 🔜 Planned (January 2026)
+
+Build UI Forge as an MCP (Model Context Protocol) hub that connects to Storybook and Zeroheight, enabling AI agents to interact with the entire design-to-code pipeline.
+
+---
+
+# UI Forge MCP Server Architecture
+
+## Overview
+
+UI Forge can expose its functionality as an MCP server, allowing AI coding assistants (Claude Code, Cursor, Copilot) to programmatically generate components, sync documentation, and manage design systems.
+
+## Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        UI FORGE AS MCP HUB                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│                           ┌──────────────┐                                   │
+│                           │   UI Forge   │                                   │
+│                           │  MCP Server  │                                   │
+│                           └──────┬───────┘                                   │
+│                                  │                                           │
+│         ┌────────────────────────┼────────────────────────┐                  │
+│         │                        │                        │                  │
+│         ▼                        ▼                        ▼                  │
+│  ┌─────────────┐          ┌─────────────┐          ┌─────────────┐          │
+│  │   Figma     │          │  Storybook  │          │  Zeroheight │          │
+│  │   (OAuth)   │          │   (API)     │          │    (API)    │          │
+│  └─────────────┘          └─────────────┘          └─────────────┘          │
+│                                                                              │
+│  AI Clients (Claude Code, Cursor, Copilot) can call UI Forge MCP tools      │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+## MCP Tools to Expose
+
+```typescript
+// UI Forge MCP Server - Tool Definitions
+{
+  "tools": [
+    {
+      "name": "uiforge_generate_component",
+      "description": "Generate React code from a Figma component",
+      "parameters": {
+        "figmaUrl": "string - Figma component URL with node-id",
+        "framework": "react | vue | svelte - Target framework",
+        "includeStories": "boolean - Generate Storybook stories"
+      }
+    },
+    {
+      "name": "uiforge_get_design_tokens",
+      "description": "Extract design tokens from Figma file",
+      "parameters": {
+        "figmaUrl": "string - Figma file URL",
+        "format": "css | tailwind | typescript | style-dictionary"
+      }
+    },
+    {
+      "name": "uiforge_push_to_storybook",
+      "description": "Generate and push Storybook stories for a component",
+      "parameters": {
+        "componentName": "string - Name of the component",
+        "storybookPath": "string - Path to Storybook directory"
+      }
+    },
+    {
+      "name": "uiforge_sync_zeroheight",
+      "description": "Sync component documentation to Zeroheight",
+      "parameters": {
+        "componentName": "string - Name of the component",
+        "zeroheightPageId": "string - Zeroheight page ID",
+        "includeCode": "boolean - Include code examples"
+      }
+    },
+    {
+      "name": "uiforge_analyze_screenshot",
+      "description": "Analyze a UI screenshot and identify components",
+      "parameters": {
+        "imagePath": "string - Path to screenshot image",
+        "matchAgainst": "figma | codebase | both"
+      }
+    },
+    {
+      "name": "uiforge_get_component_registry",
+      "description": "Get list of all available components in the design system",
+      "parameters": {
+        "figmaFileKey": "string - Figma file key"
+      }
+    }
+  ]
+}
+```
+
+## Usage Example
+
+With UI Forge MCP configured, developers can use natural language in AI assistants:
+
+```
+Developer: "Generate a Button component from my Figma design system,
+            create Storybook stories, and push docs to Zeroheight"
+
+AI Agent calls:
+1. uiforge_generate_component({ figmaUrl: "...", includeStories: true })
+2. uiforge_push_to_storybook({ componentName: "Button", storybookPath: "./stories" })
+3. uiforge_sync_zeroheight({ componentName: "Button", zeroheightPageId: "..." })
+```
+
+---
+
+# Storybook Integration
+
+## Overview
+
+UI Forge can automatically generate Storybook stories alongside React components, providing instant visual documentation and testing capabilities.
+
+## Generated Story Format
+
+```typescript
+// Auto-generated: Button.stories.tsx
+import type { Meta, StoryObj } from '@storybook/react';
+import { FigmaButton } from './FigmaButton';
+
+const meta: Meta<typeof FigmaButton> = {
+  title: 'Components/Button',
+  component: FigmaButton,
+  tags: ['autodocs'],
+  parameters: {
+    design: {
+      type: 'figma',
+      url: 'https://figma.com/design/xxx?node-id=14-3737',
+    },
+    docs: {
+      description: {
+        component: 'Button component from Artemis Design System. Supports multiple sizes, colors, and states.',
+      },
+    },
+  },
+  argTypes: {
+    size: {
+      control: 'select',
+      options: ['Small', 'Medium', 'Large'],
+      description: 'Button size variant',
+      table: { defaultValue: { summary: 'Medium' } },
+    },
+    color: {
+      control: 'select',
+      options: ['Primary', 'Secondary', 'Error', 'Warning', 'Info', 'Success'],
+      description: 'Button color variant',
+      table: { defaultValue: { summary: 'Primary' } },
+    },
+    type: {
+      control: 'select',
+      options: ['Filled', 'Outlined', 'Text', 'Elevated', 'Tonal'],
+      description: 'Button type variant',
+      table: { defaultValue: { summary: 'Filled' } },
+    },
+    label: {
+      control: 'text',
+      description: 'Button label text',
+    },
+    disabled: {
+      control: 'boolean',
+      description: 'Disabled state',
+    },
+    iconLeft: {
+      control: 'boolean',
+      description: 'Show left icon',
+    },
+    iconRight: {
+      control: 'boolean',
+      description: 'Show right icon',
+    },
+  },
+};
+
+export default meta;
+type Story = StoryObj<typeof FigmaButton>;
+
+// Primary variants
+export const Primary: Story = {
+  args: {
+    label: 'Button',
+    color: 'Primary',
+    size: 'Medium',
+    type: 'Filled',
+  },
+};
+
+export const PrimaryOutlined: Story = {
+  args: {
+    label: 'Button',
+    color: 'Primary',
+    size: 'Medium',
+    type: 'Outlined',
+  },
+};
+
+// Size variants
+export const Small: Story = {
+  args: { label: 'Small Button', size: 'Small', color: 'Primary' },
+};
+
+export const Large: Story = {
+  args: { label: 'Large Button', size: 'Large', color: 'Primary' },
+};
+
+// State variants
+export const Disabled: Story = {
+  args: { label: 'Disabled', color: 'Primary', disabled: true },
+};
+
+// With icons
+export const WithLeftIcon: Story = {
+  args: { label: 'With Icon', color: 'Primary', iconLeft: true, leftIcon: 'Add' },
+};
+
+// All color variants
+export const AllColors: Story = {
+  render: () => (
+    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+      {['Primary', 'Secondary', 'Error', 'Warning', 'Info', 'Success'].map((color) => (
+        <FigmaButton key={color} label={color} color={color as any} />
+      ))}
+    </div>
+  ),
+};
+```
+
+## Storybook Integration Features
+
+| Feature | Description |
+|---------|-------------|
+| **Auto-generated stories** | Stories created from Figma property definitions |
+| **Figma embed** | Link to original Figma component in Storybook |
+| **Controls** | Interactive controls for all VARIANT/BOOLEAN/TEXT props |
+| **Docs** | Auto-generated documentation with prop tables |
+| **Visual variants** | All color/size/state combinations as separate stories |
+
+## Implementation Files
+
+| File | Purpose |
+|------|---------|
+| `/apps/frontend/src/services/storybookGenerator.ts` | Generate .stories.tsx files |
+| `/apps/frontend/src/templates/storybook/` | Story templates |
+
+## Storybook Addons to Include
+
+```json
+// Generated package.json devDependencies
+{
+  "@storybook/addon-essentials": "^7.6.0",
+  "@storybook/addon-designs": "^7.0.0",
+  "@storybook/addon-a11y": "^7.6.0",
+  "@storybook/react": "^7.6.0",
+  "@storybook/react-vite": "^7.6.0"
+}
+```
+
+---
+
+# Zeroheight Integration
+
+## Overview
+
+Zeroheight is a design system documentation platform. UI Forge can push component documentation, code examples, and design tokens to Zeroheight pages automatically.
+
+## Zeroheight API Integration
+
+```typescript
+// Zeroheight API endpoints used by UI Forge
+const ZEROHEIGHT_API = {
+  // Push content to a page
+  pushContent: 'POST /api/v1/pages/{pageId}/content',
+
+  // Get page content
+  getPage: 'GET /api/v1/pages/{pageId}',
+
+  // Sync design tokens
+  syncTokens: 'POST /api/v1/styleguide/{styleguideId}/tokens',
+
+  // Get component list
+  getComponents: 'GET /api/v1/styleguide/{styleguideId}/components',
+
+  // Update component
+  updateComponent: 'PUT /api/v1/components/{componentId}',
+};
+```
+
+## What UI Forge Pushes to Zeroheight
+
+### Component Documentation
+
+```markdown
+## Button
+
+A versatile button component supporting multiple variants, sizes, and states.
+
+### Figma Source
+[View in Figma](https://figma.com/design/qyrtCkpQQ1yq1Nv3h0mbkq?node-id=14-3737)
+
+### Installation
+\`\`\`bash
+npm install @artemis/design-system
+\`\`\`
+
+### Usage
+\`\`\`tsx
+import { Button } from '@artemis/design-system';
+
+<Button
+  label="Click me"
+  color="Primary"
+  size="Medium"
+  type="Filled"
+/>
+\`\`\`
+
+### Properties
+
+| Property | Type | Default | Options |
+|----------|------|---------|---------|
+| label | TEXT | "Button" | - |
+| size | VARIANT | Medium | Small, Medium, Large |
+| color | VARIANT | Primary | Primary, Secondary, Error, Warning, Info, Success |
+| type | VARIANT | Filled | Filled, Outlined, Text, Elevated, Tonal |
+| state | VARIANT | Enabled | Enabled, Hovered, Focused, Pressed, Disabled |
+| iconLeft | BOOLEAN | false | - |
+| iconRight | BOOLEAN | false | - |
+| leftIcon | INSTANCE_SWAP | - | See icon library |
+| rightIcon | INSTANCE_SWAP | - | See icon library |
+
+### Design Tokens Used
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--color-primary-500` | #3B82F6 | Primary button background |
+| `--color-primary-600` | #2563EB | Primary button hover |
+| `--spacing-sm` | 8px | Button padding (small) |
+| `--spacing-md` | 12px | Button padding (medium) |
+| `--radius-md` | 8px | Button border radius |
+
+### Accessibility
+
+- ✅ Minimum touch target: 44x44px (Large), 36x36px (Medium)
+- ✅ Color contrast ratio: 4.5:1 minimum
+- ✅ Focus ring visible on keyboard navigation
+- ✅ Disabled state clearly indicated
+
+### Do's and Don'ts
+
+✅ **Do:**
+- Use Primary for main actions
+- Use one primary button per section
+- Include descriptive label text
+
+❌ **Don't:**
+- Use multiple primary buttons together
+- Use icon-only buttons without aria-label
+- Disable buttons without explanation
+```
+
+### Design Tokens Sync
+
+```json
+// Tokens pushed to Zeroheight
+{
+  "colors": {
+    "primary": {
+      "50": { "value": "#EFF6FF", "description": "Primary lightest" },
+      "500": { "value": "#3B82F6", "description": "Primary base" },
+      "600": { "value": "#2563EB", "description": "Primary hover" },
+      "700": { "value": "#1D4ED8", "description": "Primary pressed" }
+    },
+    "secondary": { ... },
+    "error": { ... }
+  },
+  "spacing": {
+    "xs": { "value": "4px" },
+    "sm": { "value": "8px" },
+    "md": { "value": "12px" },
+    "lg": { "value": "16px" },
+    "xl": { "value": "24px" }
+  },
+  "radius": {
+    "sm": { "value": "4px" },
+    "md": { "value": "8px" },
+    "lg": { "value": "12px" },
+    "full": { "value": "9999px" }
+  }
+}
+```
+
+## Two-Way Sync Capabilities
+
+| Direction | What Syncs |
+|-----------|------------|
+| **Figma → UI Forge → Zeroheight** | Component properties, design tokens, visual specs |
+| **Zeroheight → UI Forge** | Usage guidelines, do's/don'ts, accessibility notes |
+| **Webhook Updates** | Auto-sync when Figma file changes |
+
+## Implementation Files
+
+| File | Purpose |
+|------|---------|
+| `/apps/frontend/src/services/zeroheightService.ts` | Zeroheight API client |
+| `/apps/frontend/src/services/zeroheightSync.ts` | Sync orchestration |
+| `/apps/backend/routes/zeroheight.js` | API proxy for Zeroheight |
+
+## Environment Variables
+
+```bash
+# Add to .env.local
+ZEROHEIGHT_API_KEY=your_zeroheight_api_key
+ZEROHEIGHT_STYLEGUIDE_ID=your_styleguide_id
+```
+
+---
+
+# Implementation Roadmap
+
+## Phase 1: Storybook Story Generation (Week 1)
+
+**Effort:** ~2-3 days
+
+1. Create `storybookGenerator.ts` service
+2. Add story templates for each component type
+3. Include Storybook generation in package export
+4. Add Figma design addon configuration
+
+**Files to create:**
+- `/apps/frontend/src/services/storybookGenerator.ts`
+- `/apps/frontend/src/templates/storybook/story.template.ts`
+
+## Phase 2: UI Forge MCP Server (Week 2)
+
+**Effort:** ~1 week
+
+1. Create MCP server using `@modelcontextprotocol/sdk`
+2. Expose core tools (generate_component, get_tokens, etc.)
+3. Add authentication handling
+4. Publish as npm package: `@uiforge/mcp-server`
+
+**Files to create:**
+- `/packages/mcp-server/src/index.ts`
+- `/packages/mcp-server/src/tools/`
+- `/packages/mcp-server/package.json`
+
+**Installation for users:**
+```json
+// claude_desktop_config.json or .cursor/mcp.json
+{
+  "mcpServers": {
+    "uiforge": {
+      "command": "npx",
+      "args": ["@uiforge/mcp-server"],
+      "env": {
+        "FIGMA_ACCESS_TOKEN": "your_token"
+      }
+    }
+  }
+}
+```
+
+## Phase 3: Zeroheight Integration (Week 3)
+
+**Effort:** ~1 week
+
+1. Integrate Zeroheight API
+2. Create documentation templates
+3. Implement two-way sync
+4. Add webhook support for auto-updates
+
+**Files to create:**
+- `/apps/frontend/src/services/zeroheightService.ts`
+- `/apps/frontend/src/services/zeroheightSync.ts`
+- `/apps/backend/routes/zeroheight.js`
+
+## Phase 4: Full Integration & Testing (Week 4)
+
+**Effort:** ~3-4 days
+
+1. End-to-end testing of MCP → Storybook → Zeroheight flow
+2. Documentation and examples
+3. Error handling and edge cases
+4. Performance optimization
+
+---
+
+# Benefits of MCP Hub Architecture
+
+| Benefit | Description |
+|---------|-------------|
+| **AI-Native Workflow** | Developers can use natural language to generate and document components |
+| **Single Source of Truth** | Figma remains the source, everything else syncs automatically |
+| **Reduced Manual Work** | No more manual Storybook stories or documentation updates |
+| **Consistency** | Generated code, stories, and docs always match Figma |
+| **Scalability** | AI agents can process entire design systems in minutes |
+| **Discoverability** | AI assistants can query the design system for guidance |
+
+---
+
+# External Codebase Analysis: Creative Hire Case Study
+
+## Overview
+
+As part of validating UI Forge's component generation capabilities, we analyzed the [Creative Hire](https://github.com/Electromau5/creative-hire) codebase - a Next.js 14 application for AI-powered resume optimization.
+
+## Tech Stack Analysis
+
+| Aspect | Details |
+|--------|---------|
+| **Framework** | Next.js 14 (App Router) + TypeScript 5.3 |
+| **Styling** | Tailwind CSS (utility-first, no CSS modules) |
+| **UI Library** | None - all 14 components built from scratch |
+| **Icons** | Lucide React |
+| **Charts** | Recharts |
+| **State** | React hooks + props drilling (no Redux/Zustand) |
+| **AI** | Anthropic Claude SDK |
+
+## Component Inventory
+
+| Component | Type | Figma Equivalent |
+|-----------|------|------------------|
+| FileUpload | Input | Button + Card + Input |
+| JobDescriptionInput | Input | TextArea |
+| ThemeSelector | Input | Chip / Button Group |
+| ResumePreview | Display | Card + Typography |
+| OptimizationStats | Display | Card + Badge |
+| Navigation | Layout | NavItem |
+| SkillsChart | Viz | Chart wrapper |
+| CompatibilityScores | Display | ProgressLinear |
+
+## Transition Readiness
+
+Creative Hire is an **ideal candidate** for UI Forge transition because:
+
+- ✅ No existing component library (clean slate)
+- ✅ Tailwind-based (easy token integration)
+- ✅ TypeScript props match Figma properties
+- ✅ Already has theme system to enhance
+- ✅ Functional components with hooks
+
+## Migration Strategy
+
+1. **Generate** → npm package from Figma design system
+2. **Install** → Add to Creative Hire dependencies
+3. **Replace** → Swap Tailwind components with Figma components
+4. **Validate** → Use Screenshot Analyzer to verify visual parity
+
+## Component Gap Analysis
+
+After analyzing Creative Hire's needs vs UI Forge's registry:
+
+| UI Forge Component | Status | Creative Hire Usage |
+|--------------------|--------|---------------------|
+| Button | ✅ Available | Primary actions |
+| TextField | ✅ Available | Form inputs |
+| TextArea | ✅ Available | JobDescriptionInput |
+| Tabs | ✅ Available | Step navigation |
+| NavItem | ✅ Available | Navigation |
+| IconButton | ✅ Available | Toolbar actions |
+| SearchInput | ✅ Available | Search functionality |
+| Card | 🔜 Needed | Glass containers |
+| Select | 🔜 Needed | Dropdowns |
+
+This case study validates that UI Forge's component coverage (~73%) can support real-world application migrations with minimal gaps.
