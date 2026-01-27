@@ -10,6 +10,12 @@ import { FigmaCheckbox } from './FigmaCheckbox';
 import { FigmaChip } from './FigmaChip';
 import { FigmaDropdown } from './FigmaDropdown';
 import { FigmaProgressBar } from './FigmaProgressBar';
+import { FigmaTextField } from './FigmaTextField';
+import { FigmaTextArea } from './FigmaTextArea';
+import { FigmaTabs } from './FigmaTabs';
+import { FigmaNavItem } from './FigmaNavItem';
+import { FigmaIconButton } from './FigmaIconButton';
+import { FigmaSearchInput } from './FigmaSearchInput';
 import { AVAILABLE_ICONS } from './FigmaIcons';
 
 // Figma property definition type
@@ -1000,6 +1006,326 @@ export const COMPONENT_REGISTRY: Record<string, {
             },
         ],
     },
+    // TextField components
+    'TextField/LightMode': {
+        component: FigmaTextField,
+        defaultProps: {
+            label: 'Label',
+            placeholder: 'Placeholder',
+            value: '',
+            helperText: 'Helper text',
+            variant: 'Outlined',
+            size: 'Medium',
+            state: 'Enabled',
+            showLabel: true,
+            showHelperText: false,
+            required: false,
+            fullWidth: false,
+            darkMode: false,
+        },
+        nodeId: 'textfield:light',
+        figmaProperties: [
+            { name: 'Label', type: 'TEXT', defaultValue: 'Label' },
+            { name: 'Placeholder', type: 'TEXT', defaultValue: 'Placeholder' },
+            { name: 'Helper Text', type: 'TEXT', defaultValue: 'Helper text' },
+            { name: 'Show Label', type: 'BOOLEAN', defaultValue: true },
+            { name: 'Show Helper Text', type: 'BOOLEAN', defaultValue: false },
+            { name: 'Required', type: 'BOOLEAN', defaultValue: false },
+            { name: 'Full Width', type: 'BOOLEAN', defaultValue: false },
+            { name: 'Variant', type: 'VARIANT', defaultValue: 'Outlined', options: ['Outlined', 'Filled', 'Standard'] },
+            { name: 'Size', type: 'VARIANT', defaultValue: 'Medium', options: ['Small', 'Medium'] },
+            { name: 'State', type: 'VARIANT', defaultValue: 'Enabled', options: ['Enabled', 'Hovered', 'Focused', 'Disabled', 'Error'] },
+        ],
+    },
+    'TextField/DarkMode': {
+        component: FigmaTextField,
+        defaultProps: {
+            label: 'Label',
+            placeholder: 'Placeholder',
+            value: '',
+            helperText: 'Helper text',
+            variant: 'Outlined',
+            size: 'Medium',
+            state: 'Enabled',
+            showLabel: true,
+            showHelperText: false,
+            required: false,
+            fullWidth: false,
+            darkMode: true,
+        },
+        nodeId: 'textfield:dark',
+        figmaProperties: [
+            { name: 'Label', type: 'TEXT', defaultValue: 'Label' },
+            { name: 'Placeholder', type: 'TEXT', defaultValue: 'Placeholder' },
+            { name: 'Helper Text', type: 'TEXT', defaultValue: 'Helper text' },
+            { name: 'Show Label', type: 'BOOLEAN', defaultValue: true },
+            { name: 'Show Helper Text', type: 'BOOLEAN', defaultValue: false },
+            { name: 'Required', type: 'BOOLEAN', defaultValue: false },
+            { name: 'Full Width', type: 'BOOLEAN', defaultValue: false },
+            { name: 'Variant', type: 'VARIANT', defaultValue: 'Outlined', options: ['Outlined', 'Filled', 'Standard'] },
+            { name: 'Size', type: 'VARIANT', defaultValue: 'Medium', options: ['Small', 'Medium'] },
+            { name: 'State', type: 'VARIANT', defaultValue: 'Enabled', options: ['Enabled', 'Hovered', 'Focused', 'Disabled', 'Error'] },
+        ],
+    },
+    // TextArea components
+    'TextArea/LightMode': {
+        component: FigmaTextArea,
+        defaultProps: {
+            label: 'Label',
+            placeholder: 'Body text (optional)',
+            value: '',
+            helperText: 'Helper text',
+            variant: 'Outlined',
+            state: 'Enabled',
+            showLabel: true,
+            showHelperText: false,
+            showCharCount: true,
+            required: false,
+            fullWidth: false,
+            rows: 4,
+            maxLength: 300,
+            darkMode: false,
+        },
+        nodeId: 'textarea:light',
+        figmaProperties: [
+            { name: 'Label', type: 'TEXT', defaultValue: 'Label' },
+            { name: 'Placeholder', type: 'TEXT', defaultValue: 'Body text (optional)' },
+            { name: 'Helper Text', type: 'TEXT', defaultValue: 'Helper text' },
+            { name: 'Show Label', type: 'BOOLEAN', defaultValue: true },
+            { name: 'Show Helper Text', type: 'BOOLEAN', defaultValue: false },
+            { name: 'Show Char Count', type: 'BOOLEAN', defaultValue: true },
+            { name: 'Required', type: 'BOOLEAN', defaultValue: false },
+            { name: 'Full Width', type: 'BOOLEAN', defaultValue: false },
+            { name: 'Variant', type: 'VARIANT', defaultValue: 'Outlined', options: ['Outlined', 'Filled'] },
+            { name: 'State', type: 'VARIANT', defaultValue: 'Enabled', options: ['Enabled', 'Hovered', 'Focused', 'Disabled', 'Error'] },
+        ],
+    },
+    'TextArea/DarkMode': {
+        component: FigmaTextArea,
+        defaultProps: {
+            label: 'Label',
+            placeholder: 'Body text (optional)',
+            value: '',
+            helperText: 'Helper text',
+            variant: 'Outlined',
+            state: 'Enabled',
+            showLabel: true,
+            showHelperText: false,
+            showCharCount: true,
+            required: false,
+            fullWidth: false,
+            rows: 4,
+            maxLength: 300,
+            darkMode: true,
+        },
+        nodeId: 'textarea:dark',
+        figmaProperties: [
+            { name: 'Label', type: 'TEXT', defaultValue: 'Label' },
+            { name: 'Placeholder', type: 'TEXT', defaultValue: 'Body text (optional)' },
+            { name: 'Helper Text', type: 'TEXT', defaultValue: 'Helper text' },
+            { name: 'Show Label', type: 'BOOLEAN', defaultValue: true },
+            { name: 'Show Helper Text', type: 'BOOLEAN', defaultValue: false },
+            { name: 'Show Char Count', type: 'BOOLEAN', defaultValue: true },
+            { name: 'Required', type: 'BOOLEAN', defaultValue: false },
+            { name: 'Full Width', type: 'BOOLEAN', defaultValue: false },
+            { name: 'Variant', type: 'VARIANT', defaultValue: 'Outlined', options: ['Outlined', 'Filled'] },
+            { name: 'State', type: 'VARIANT', defaultValue: 'Enabled', options: ['Enabled', 'Hovered', 'Focused', 'Disabled', 'Error'] },
+        ],
+    },
+    // Tabs components
+    'Tabs/LightMode': {
+        component: FigmaTabs,
+        defaultProps: {
+            tabs: [
+                { label: 'Tab One', value: 'one' },
+                { label: 'Tab Two', value: 'two' },
+                { label: 'Tab Three', value: 'three' },
+            ],
+            activeTab: 'one',
+            variant: 'Standard',
+            color: 'Primary',
+            orientation: 'Horizontal',
+            indicatorPosition: 'Bottom',
+            showIcon: false,
+            centered: false,
+            darkMode: false,
+        },
+        nodeId: 'tabs:light',
+        figmaProperties: [
+            { name: 'Show Icon', type: 'BOOLEAN', defaultValue: false },
+            { name: 'Centered', type: 'BOOLEAN', defaultValue: false },
+            { name: 'Variant', type: 'VARIANT', defaultValue: 'Standard', options: ['Standard', 'Fullwidth'] },
+            { name: 'Color', type: 'VARIANT', defaultValue: 'Primary', options: ['Primary', 'Secondary'] },
+            { name: 'Orientation', type: 'VARIANT', defaultValue: 'Horizontal', options: ['Horizontal', 'Vertical'] },
+            { name: 'Indicator Position', type: 'VARIANT', defaultValue: 'Bottom', options: ['Bottom', 'Top'] },
+        ],
+    },
+    'Tabs/DarkMode': {
+        component: FigmaTabs,
+        defaultProps: {
+            tabs: [
+                { label: 'Tab One', value: 'one' },
+                { label: 'Tab Two', value: 'two' },
+                { label: 'Tab Three', value: 'three' },
+            ],
+            activeTab: 'one',
+            variant: 'Standard',
+            color: 'Primary',
+            orientation: 'Horizontal',
+            indicatorPosition: 'Bottom',
+            showIcon: false,
+            centered: false,
+            darkMode: true,
+        },
+        nodeId: 'tabs:dark',
+        figmaProperties: [
+            { name: 'Show Icon', type: 'BOOLEAN', defaultValue: false },
+            { name: 'Centered', type: 'BOOLEAN', defaultValue: false },
+            { name: 'Variant', type: 'VARIANT', defaultValue: 'Standard', options: ['Standard', 'Fullwidth'] },
+            { name: 'Color', type: 'VARIANT', defaultValue: 'Primary', options: ['Primary', 'Secondary'] },
+            { name: 'Orientation', type: 'VARIANT', defaultValue: 'Horizontal', options: ['Horizontal', 'Vertical'] },
+            { name: 'Indicator Position', type: 'VARIANT', defaultValue: 'Bottom', options: ['Bottom', 'Top'] },
+        ],
+    },
+    // NavItem components
+    'NavItem/LightMode': {
+        component: FigmaNavItem,
+        defaultProps: {
+            label: 'Home',
+            icon: 'Home',
+            href: '#',
+            variant: 'Default',
+            state: 'Default',
+            showIcon: true,
+            showBadge: false,
+            badgeContent: '',
+            selected: false,
+            darkMode: false,
+        },
+        nodeId: 'navitem:light',
+        figmaProperties: [
+            { name: 'Label', type: 'TEXT', defaultValue: 'Home' },
+            { name: 'Show Icon', type: 'BOOLEAN', defaultValue: true },
+            { name: 'Show Badge', type: 'BOOLEAN', defaultValue: false },
+            { name: 'Selected', type: 'BOOLEAN', defaultValue: false },
+            { name: 'Icon', type: 'INSTANCE_SWAP', defaultValue: 'Home', options: AVAILABLE_ICONS },
+            { name: 'Variant', type: 'VARIANT', defaultValue: 'Default', options: ['Default', 'Compact'] },
+            { name: 'State', type: 'VARIANT', defaultValue: 'Default', options: ['Default', 'Hovered', 'Active', 'Disabled'] },
+        ],
+    },
+    'NavItem/DarkMode': {
+        component: FigmaNavItem,
+        defaultProps: {
+            label: 'Home',
+            icon: 'Home',
+            href: '#',
+            variant: 'Default',
+            state: 'Default',
+            showIcon: true,
+            showBadge: false,
+            badgeContent: '',
+            selected: false,
+            darkMode: true,
+        },
+        nodeId: 'navitem:dark',
+        figmaProperties: [
+            { name: 'Label', type: 'TEXT', defaultValue: 'Home' },
+            { name: 'Show Icon', type: 'BOOLEAN', defaultValue: true },
+            { name: 'Show Badge', type: 'BOOLEAN', defaultValue: false },
+            { name: 'Selected', type: 'BOOLEAN', defaultValue: false },
+            { name: 'Icon', type: 'INSTANCE_SWAP', defaultValue: 'Home', options: AVAILABLE_ICONS },
+            { name: 'Variant', type: 'VARIANT', defaultValue: 'Default', options: ['Default', 'Compact'] },
+            { name: 'State', type: 'VARIANT', defaultValue: 'Default', options: ['Default', 'Hovered', 'Active', 'Disabled'] },
+        ],
+    },
+    // IconButton components
+    'IconButton/LightMode': {
+        component: FigmaIconButton,
+        defaultProps: {
+            icon: 'Settings',
+            ariaLabel: 'Icon button',
+            variant: 'Standard',
+            size: 'Medium',
+            color: 'Default',
+            state: 'Enabled',
+            darkMode: false,
+        },
+        nodeId: 'iconbutton:light',
+        figmaProperties: [
+            { name: 'Aria Label', type: 'TEXT', defaultValue: 'Icon button' },
+            { name: 'Icon', type: 'INSTANCE_SWAP', defaultValue: 'Settings', options: AVAILABLE_ICONS },
+            { name: 'Variant', type: 'VARIANT', defaultValue: 'Standard', options: ['Standard', 'Contained', 'Outlined'] },
+            { name: 'Size', type: 'VARIANT', defaultValue: 'Medium', options: ['Small', 'Medium', 'Large'] },
+            { name: 'Color', type: 'VARIANT', defaultValue: 'Default', options: ['Default', 'Primary', 'Secondary', 'Error', 'Warning', 'Info', 'Success'] },
+            { name: 'State', type: 'VARIANT', defaultValue: 'Enabled', options: ['Enabled', 'Hovered', 'Focused', 'Disabled'] },
+        ],
+    },
+    'IconButton/DarkMode': {
+        component: FigmaIconButton,
+        defaultProps: {
+            icon: 'Settings',
+            ariaLabel: 'Icon button',
+            variant: 'Standard',
+            size: 'Medium',
+            color: 'Default',
+            state: 'Enabled',
+            darkMode: true,
+        },
+        nodeId: 'iconbutton:dark',
+        figmaProperties: [
+            { name: 'Aria Label', type: 'TEXT', defaultValue: 'Icon button' },
+            { name: 'Icon', type: 'INSTANCE_SWAP', defaultValue: 'Settings', options: AVAILABLE_ICONS },
+            { name: 'Variant', type: 'VARIANT', defaultValue: 'Standard', options: ['Standard', 'Contained', 'Outlined'] },
+            { name: 'Size', type: 'VARIANT', defaultValue: 'Medium', options: ['Small', 'Medium', 'Large'] },
+            { name: 'Color', type: 'VARIANT', defaultValue: 'Default', options: ['Default', 'Primary', 'Secondary', 'Error', 'Warning', 'Info', 'Success'] },
+            { name: 'State', type: 'VARIANT', defaultValue: 'Enabled', options: ['Enabled', 'Hovered', 'Focused', 'Disabled'] },
+        ],
+    },
+    // SearchInput components
+    'SearchInput/LightMode': {
+        component: FigmaSearchInput,
+        defaultProps: {
+            placeholder: 'Search',
+            value: '',
+            variant: 'Filled',
+            size: 'Medium',
+            state: 'Enabled',
+            showClearButton: true,
+            fullWidth: false,
+            darkMode: false,
+        },
+        nodeId: 'searchinput:light',
+        figmaProperties: [
+            { name: 'Placeholder', type: 'TEXT', defaultValue: 'Search' },
+            { name: 'Show Clear Button', type: 'BOOLEAN', defaultValue: true },
+            { name: 'Full Width', type: 'BOOLEAN', defaultValue: false },
+            { name: 'Variant', type: 'VARIANT', defaultValue: 'Filled', options: ['Outlined', 'Filled'] },
+            { name: 'Size', type: 'VARIANT', defaultValue: 'Medium', options: ['Small', 'Medium'] },
+            { name: 'State', type: 'VARIANT', defaultValue: 'Enabled', options: ['Enabled', 'Hovered', 'Focused', 'Disabled'] },
+        ],
+    },
+    'SearchInput/DarkMode': {
+        component: FigmaSearchInput,
+        defaultProps: {
+            placeholder: 'Search',
+            value: '',
+            variant: 'Filled',
+            size: 'Medium',
+            state: 'Enabled',
+            showClearButton: true,
+            fullWidth: false,
+            darkMode: true,
+        },
+        nodeId: 'searchinput:dark',
+        figmaProperties: [
+            { name: 'Placeholder', type: 'TEXT', defaultValue: 'Search' },
+            { name: 'Show Clear Button', type: 'BOOLEAN', defaultValue: true },
+            { name: 'Full Width', type: 'BOOLEAN', defaultValue: false },
+            { name: 'Variant', type: 'VARIANT', defaultValue: 'Filled', options: ['Outlined', 'Filled'] },
+            { name: 'Size', type: 'VARIANT', defaultValue: 'Medium', options: ['Small', 'Medium'] },
+            { name: 'State', type: 'VARIANT', defaultValue: 'Enabled', options: ['Enabled', 'Hovered', 'Focused', 'Disabled'] },
+        ],
+    },
 };
 
 // Name aliases to handle Figma naming variations (e.g., "ButtonVariant/LightMode" -> "Button/LightMode")
@@ -1070,6 +1396,56 @@ const NAME_ALIASES: Record<string, string> = {
     // Breadcrumb aliases
     'Breadcrumb/LightMode': 'Breadcrumb/Light Mode',
     'Breadcrumb/DarkMode': 'Breadcrumb/Dark Mode',
+    // TextField aliases
+    'TextField/Light Mode': 'TextField/LightMode',
+    'TextField/Dark Mode': 'TextField/DarkMode',
+    'TextFieldVariant/LightMode': 'TextField/LightMode',
+    'TextFieldVariant/DarkMode': 'TextField/DarkMode',
+    'Input/LightMode': 'TextField/LightMode',
+    'Input/DarkMode': 'TextField/DarkMode',
+    'Input/Light Mode': 'TextField/LightMode',
+    'Input/Dark Mode': 'TextField/DarkMode',
+    // TextArea aliases
+    'TextArea/Light Mode': 'TextArea/LightMode',
+    'TextArea/Dark Mode': 'TextArea/DarkMode',
+    'TextAreaVariant/LightMode': 'TextArea/LightMode',
+    'TextAreaVariant/DarkMode': 'TextArea/DarkMode',
+    'Textarea/LightMode': 'TextArea/LightMode',
+    'Textarea/DarkMode': 'TextArea/DarkMode',
+    // Tabs aliases
+    'Tabs/Light Mode': 'Tabs/LightMode',
+    'Tabs/Dark Mode': 'Tabs/DarkMode',
+    'TabsVariant/LightMode': 'Tabs/LightMode',
+    'TabsVariant/DarkMode': 'Tabs/DarkMode',
+    'TabBar/LightMode': 'Tabs/LightMode',
+    'TabBar/DarkMode': 'Tabs/DarkMode',
+    // NavItem aliases
+    'NavItem/Light Mode': 'NavItem/LightMode',
+    'NavItem/Dark Mode': 'NavItem/DarkMode',
+    'NavItemVariant/LightMode': 'NavItem/LightMode',
+    'NavItemVariant/DarkMode': 'NavItem/DarkMode',
+    'ListItem/LightMode': 'NavItem/LightMode',
+    'ListItem/DarkMode': 'NavItem/DarkMode',
+    'ListItem/Light Mode': 'NavItem/LightMode',
+    'ListItem/Dark Mode': 'NavItem/DarkMode',
+    'NavigationItem/LightMode': 'NavItem/LightMode',
+    'NavigationItem/DarkMode': 'NavItem/DarkMode',
+    // IconButton aliases
+    'IconButton/Light Mode': 'IconButton/LightMode',
+    'IconButton/Dark Mode': 'IconButton/DarkMode',
+    'IconButtonVariant/LightMode': 'IconButton/LightMode',
+    'IconButtonVariant/DarkMode': 'IconButton/DarkMode',
+    'Icon Button/LightMode': 'IconButton/LightMode',
+    'Icon Button/DarkMode': 'IconButton/DarkMode',
+    // SearchInput aliases
+    'SearchInput/Light Mode': 'SearchInput/LightMode',
+    'SearchInput/Dark Mode': 'SearchInput/DarkMode',
+    'SearchInputVariant/LightMode': 'SearchInput/LightMode',
+    'SearchInputVariant/DarkMode': 'SearchInput/DarkMode',
+    'Search/LightMode': 'SearchInput/LightMode',
+    'Search/DarkMode': 'SearchInput/DarkMode',
+    'SearchBar/LightMode': 'SearchInput/LightMode',
+    'SearchBar/DarkMode': 'SearchInput/DarkMode',
 };
 
 // Resolve name to canonical form (handles aliases)
@@ -1178,3 +1554,9 @@ export { FigmaCheckbox } from './FigmaCheckbox';
 export { FigmaChip } from './FigmaChip';
 export { FigmaDropdown } from './FigmaDropdown';
 export { FigmaProgressBar } from './FigmaProgressBar';
+export { FigmaTextField } from './FigmaTextField';
+export { FigmaTextArea } from './FigmaTextArea';
+export { FigmaTabs } from './FigmaTabs';
+export { FigmaNavItem } from './FigmaNavItem';
+export { FigmaIconButton } from './FigmaIconButton';
+export { FigmaSearchInput } from './FigmaSearchInput';
