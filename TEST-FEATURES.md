@@ -9,6 +9,7 @@ This document covers experimental and in-development features available in the `
 - [Screenshot Analyzer](#screenshot-analyzer)
 - [Codebase Analyzer](#codebase-analyzer)
 - [Accessibility Knowledge Base](#accessibility-knowledge-base)
+- [Design System Audit AI](#design-system-audit-ai)
 - [Design Token Management](#design-token-management)
 - [Deep Component Extraction](#deep-component-extraction)
 - [MCP Server Architecture](#mcp-server-architecture)
@@ -329,6 +330,281 @@ const examples = getCodeExamples('Checkbox');
 // List all supported components
 const componentNames = getComponentNames();
 ```
+
+---
+
+# Design System Audit AI
+
+## Overview
+
+Train an AI to audit Design Systems like a seasoned designer. The AI analyzes Figma component sets and identifies structural inconsistencies, missing variants, naming convention violations, and accessibility gaps.
+
+## What the Audit Checks
+
+### 1. Structural Consistency
+- Naming conventions (are all components named consistently?)
+- Variant property coverage (are all combinations accounted for?)
+- Property type consistency (same property using same types across components?)
+- Missing variants (gaps in the matrix)
+
+### 2. Visual Consistency
+- Color token usage (are components using the same tokens for similar purposes?)
+- Spacing patterns (consistent padding/margins across similar components?)
+- Typography consistency (correct text styles applied?)
+- Border radius consistency
+- Shadow/elevation patterns
+
+### 3. Component Completeness
+- State coverage (does every interactive component have all states?)
+- Accessibility considerations (contrast, touch targets, focus states)
+- Dark/Light mode parity
+- Responsive variants
+
+### 4. Documentation Quality
+- Component descriptions present?
+- Usage guidelines documented?
+- Links to external docs?
+
+## Architecture: Hybrid Approach
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│                     AUDIT PIPELINE                              │
+├────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐     │
+│  │   EXTRACT    │───▶│   ANALYZE    │───▶│   REPORT     │     │
+│  │              │    │              │    │              │     │
+│  │ • Metadata   │    │ • Rule-based │    │ • Summary    │     │
+│  │ • Properties │    │   checks     │    │ • By severity│     │
+│  │ • Styles     │    │ • LLM review │    │ • Actionable │     │
+│  │ • Tokens     │    │ • Cross-ref  │    │ • Visual     │     │
+│  └──────────────┘    └──────────────┘    └──────────────┘     │
+│                                                                 │
+└────────────────────────────────────────────────────────────────┘
+```
+
+**Rule-Based Engine:** Deterministic checks for naming, variant coverage, required states
+**LLM-Powered Analysis:** Semantic analysis for nuanced issues, design intent validation
+
+## Data Structures
+
+### Input: Normalized Component Data
+
+```typescript
+interface ComponentAuditData {
+  name: string;
+  nodeId: string;
+  type: 'COMPONENT_SET' | 'COMPONENT';
+
+  // Variant structure
+  variants: {
+    name: string;
+    nodeId: string;
+    properties: Record<string, string>; // e.g., {Size: "Large", Color: "Primary"}
+    dimensions: { width: number; height: number };
+  }[];
+
+  // Property definitions
+  propertyDefinitions: {
+    name: string;
+    type: 'VARIANT' | 'BOOLEAN' | 'TEXT' | 'INSTANCE_SWAP';
+    options?: string[];
+    defaultValue?: string | boolean;
+  }[];
+
+  // Design tokens used
+  tokens: {
+    colors: string[];
+    typography: string[];
+    spacing: string[];
+  };
+
+  // Documentation
+  description?: string;
+  documentationLinks?: string[];
+}
+```
+
+### Output: Audit Report
+
+```typescript
+interface AuditReport {
+  component: string;
+  score: number; // 0-100
+
+  findings: {
+    severity: 'error' | 'warning' | 'suggestion';
+    category: 'naming' | 'variants' | 'states' | 'tokens' | 'accessibility' | 'documentation';
+    message: string;
+    details?: string;
+    affectedNodes?: string[];
+    suggestion?: string;
+  }[];
+
+  coverage: {
+    states: { expected: string[]; found: string[]; missing: string[] };
+    colors: { expected: string[]; found: string[]; missing: string[] };
+    sizes: { expected: string[]; found: string[]; missing: string[] };
+  };
+}
+```
+
+## Audit Rules Examples
+
+### Category: Variant Completeness
+
+```typescript
+const variantCompletenessRules = {
+  // Check state coverage
+  checkStateCoverage: (component: ComponentAuditData) => {
+    const requiredStates = ['Enabled', 'Hovered', 'Focused', 'Disabled'];
+    const foundStates = new Set(
+      component.variants.map(v => v.properties.State).filter(Boolean)
+    );
+
+    const missing = requiredStates.filter(s => !foundStates.has(s));
+
+    if (missing.length > 0) {
+      return {
+        severity: 'error',
+        category: 'states',
+        message: `Missing states: ${missing.join(', ')}`,
+        suggestion: `Add variants for ${missing.join(', ')} states`
+      };
+    }
+  },
+
+  // Check variant matrix completeness
+  checkVariantMatrix: (component: ComponentAuditData) => {
+    const props = component.propertyDefinitions.filter(p => p.type === 'VARIANT');
+    const expectedCount = props.reduce((acc, p) => acc * (p.options?.length || 1), 1);
+    const actualCount = component.variants.length;
+
+    if (actualCount < expectedCount) {
+      return {
+        severity: 'warning',
+        category: 'variants',
+        message: `Variant matrix incomplete: ${actualCount}/${expectedCount} combinations`,
+        details: `Expected ${expectedCount} variants but found ${actualCount}`
+      };
+    }
+  }
+};
+```
+
+### Category: Naming Conventions
+
+```typescript
+const namingRules = {
+  checkPropertyNaming: (component: ComponentAuditData) => {
+    const findings = [];
+    const props = component.propertyDefinitions.map(p => p.name);
+
+    // Check for inconsistent casing
+    if (props.includes('color') && props.includes('Color')) {
+      findings.push({
+        severity: 'error',
+        category: 'naming',
+        message: 'Inconsistent casing: "color" and "Color" both exist'
+      });
+    }
+
+    // Check for non-standard property names
+    const standardNames = ['Size', 'Color', 'State', 'Type', 'Variant'];
+    props.forEach(p => {
+      if (!standardNames.includes(p) && !p.startsWith('Icon') && p !== 'Text') {
+        findings.push({
+          severity: 'suggestion',
+          category: 'naming',
+          message: `Non-standard property name: "${p}"`,
+          suggestion: `Consider using standard names: ${standardNames.join(', ')}`
+        });
+      }
+    });
+
+    return findings;
+  }
+};
+```
+
+## Button Component Audit Example (January 31, 2026)
+
+### Analyzed Component
+- **File:** Artemis - Modular Design System
+- **Component Sets:** ButtonVariant/DarkMode, ButtonVariant/LightMode
+- **Total Variants:** 252 (126 per mode)
+
+### Variant Properties Discovered
+
+| Property | Values | Count |
+|----------|--------|-------|
+| **Size** | Large, Medium, Small | 3 |
+| **Color** | Primary, Secondary, Error, Warning, Info, Success, Disabled | 7 |
+| **State** | Enabled, Hovered, Focused (+ Disabled for Color=Disabled) | 3-4 |
+| **Type** | Contained, Outlined, Text | 3 |
+
+### Consistent Properties (Present in ALL variants)
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `text` | TEXT | "Button" | Button label |
+| `iconLeft` | BOOLEAN | true | Show left icon |
+| `iconRight` | BOOLEAN | true | Show right icon |
+| `lightIcon` | INSTANCE_SWAP | Icons/Lightmode | Left icon slot |
+| `rightIcon` | INSTANCE_SWAP | Icons/Lightmode | Right icon slot |
+
+### Issues Identified
+
+| Issue | Severity | Description |
+|-------|----------|-------------|
+| **Missing variant props** | Warning | Some variants don't expose Size/Color/State/Type as component properties |
+| **Incomplete state options** | Warning | State property shows only 2-3 options instead of all available |
+| **Disabled handling** | Suggestion | Disabled variants lack proper property exposure |
+
+### Size Specifications Verified
+
+| Size | Height | Typical Width |
+|------|--------|---------------|
+| Large | 40px | 156px |
+| Medium | 36px | 131px |
+| Small | 30px | 106px |
+
+## Implementation Options
+
+### Option 1: Standalone Audit Tool
+- CLI that connects to Figma via API
+- Runs audit rules, generates reports (JSON, HTML, PDF)
+
+### Option 2: Integrated into UI Forge
+- Audit tab in the UI
+- Real-time feedback as user browses components
+- Export audit reports
+
+### Option 3: Claude Code Skill/Agent
+- User provides Figma URL
+- Agent extracts all component data
+- Runs analysis (rules + LLM reasoning)
+- Returns comprehensive report
+
+## Key Files (Planned)
+
+| File | Purpose |
+|------|---------|
+| `/apps/frontend/src/services/audit/auditEngine.ts` | Core audit rule engine |
+| `/apps/frontend/src/services/audit/rules/variantRules.ts` | Variant completeness rules |
+| `/apps/frontend/src/services/audit/rules/namingRules.ts` | Naming convention rules |
+| `/apps/frontend/src/services/audit/rules/accessibilityRules.ts` | A11y audit rules |
+| `/apps/frontend/src/services/audit/reportGenerator.ts` | Report generation (JSON, HTML, Markdown) |
+| `/apps/frontend/src/components/AuditReportModal.tsx` | Audit UI modal |
+
+## Questions for Implementation
+
+1. **Scope**: Audit single component vs. entire design system?
+2. **Baseline**: What's the "gold standard"? MUI? Custom rules? Both?
+3. **Customization**: Should users define their own rules?
+4. **Output format**: Interactive report? Markdown? Figma comments?
+5. **Automation**: One-time audit or continuous monitoring?
 
 ---
 
