@@ -17,6 +17,7 @@ This document covers experimental and in-development features available in the `
 - [Zeroheight Integration](#zeroheight-integration)
 - [Product Strategy & Roadmap](#product-strategy--roadmap)
 - [External Codebase Analysis](#external-codebase-analysis-creative-hire-case-study)
+- [Future Proposals](#future-proposals)
 
 ---
 
@@ -1211,3 +1212,210 @@ This case study validates that UI Forge's component coverage (~73%) can support 
 | **Consistency** | Generated code, stories, and docs always match Figma |
 | **Scalability** | AI agents can process entire design systems in minutes |
 | **Discoverability** | AI assistants can query the design system for guidance |
+
+---
+
+# Future Proposals
+
+## Design System Engine
+
+### Vision
+
+Build a **Design System Engine** analogous to a game engine (like Unreal Engine 5) - a compiler and runtime that generates, maintains, updates, and deletes components, tokens, documentation, and code. Figma remains the visual editor and source of truth; the engine handles everything else.
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    DESIGN SYSTEM ENGINE                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  INPUTS                    ENGINE                    OUTPUTS     │
+│                                                                  │
+│  ┌─────────┐           ┌──────────────┐         ┌─────────────┐ │
+│  │ Figma   │───────────│              │─────────│ Components  │ │
+│  │ (API)   │           │  Universal   │         │ React/Vue/  │ │
+│  └─────────┘           │  IR          │         │ Svelte/etc  │ │
+│                        │              │         └─────────────┘ │
+│  ┌─────────┐           │  ┌────────┐  │         ┌─────────────┐ │
+│  │ Tokens  │───────────│  │Resolver│  │─────────│ Tokens      │ │
+│  │ (Figma  │           │  │Diffing │  │         │ CSS/TW/SD   │ │
+│  │  Vars)  │           │  │Validate│  │         └─────────────┘ │
+│  └─────────┘           │  └────────┘  │         ┌─────────────┐ │
+│                        │              │─────────│ Docs        │ │
+│  ┌─────────┐           │              │         │ Storybook/  │ │
+│  │ Existing│───────────│              │         │ Zeroheight  │ │
+│  │ Code    │ (audit)   │              │         └─────────────┘ │
+│  └─────────┘           └──────────────┘                         │
+│                                                                  │
+│  ┌──────────────────────────────────────────────────────────────┐│
+│  │                      SYNC DAEMON                              ││
+│  │   Watch Figma → Detect Changes → Regenerate → PR/Commit      ││
+│  └──────────────────────────────────────────────────────────────┘│
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Core Operations
+
+| Operation | Description |
+|-----------|-------------|
+| **GENERATE** | Figma → React/Vue/Svelte/iOS/Android + Tokens + Docs |
+| **MAINTAIN** | Watch Figma, detect changes, keep outputs in sync |
+| **UPDATE** | Classify changes (breaking/non-breaking), auto-merge or create PR |
+| **DELETE** | Check dependencies, remove cleanly or deprecate with warnings |
+
+### Universal IR (Intermediate Representation)
+
+The heart of the engine - a canonical format representing any component:
+
+```typescript
+interface ComponentIR {
+  // Identity
+  id: string;                    // Figma node ID
+  name: string;                  // "Button"
+  version: string;               // Semantic version
+
+  // Structure
+  slots: Slot[];                 // Named insertion points
+  variants: VariantMatrix;       // All variant combinations
+
+  // Tokens
+  tokenBindings: {
+    [property: string]: TokenReference | RawValue;
+  };
+
+  // States & Behavior
+  states: StateMachine;          // hover, focus, disabled, etc.
+
+  // Metadata
+  description: string;
+  accessibility: A11yRequirements;
+  dependencies: ComponentRef[];
+
+  // Source tracking
+  figmaSource: {
+    fileKey: string;
+    nodeId: string;
+    lastSync: Date;
+    hash: string;                // For change detection
+  };
+}
+```
+
+### Change Detection
+
+```typescript
+interface ChangeSet {
+  component: string;
+  changeType: 'added' | 'modified' | 'removed';
+  breaking: boolean;
+
+  changes: {
+    field: string;           // "variants.size.options"
+    before: any;
+    after: any;
+    impact: 'none' | 'visual' | 'api' | 'breaking';
+  }[];
+
+  affectedConsumers: string[];   // Components/apps using this
+  suggestedMigration?: string;   // Auto-generated migration guide
+}
+```
+
+**Breaking changes (require PR):**
+- Removed variant option
+- Renamed prop
+- Changed prop type
+- Removed slot
+
+**Non-breaking (auto-merge):**
+- Added variant option
+- Visual tweaks (color, spacing)
+- Added optional prop
+- Documentation updates
+
+### CLI Interface
+
+```bash
+# Generate everything from Figma
+ds-engine generate --figma-file <file-key> --output ./packages/ui
+
+# Watch for changes and auto-sync
+ds-engine sync --watch --figma-file <file-key>
+
+# Audit existing code against Figma source
+ds-engine audit ./src/components --figma-file <file-key>
+
+# Show what would change (dry run)
+ds-engine diff --figma-file <file-key>
+
+# Generate specific targets
+ds-engine generate --target react,vue,storybook
+```
+
+### MCP Server Interface
+
+For AI-assisted workflows (Claude Code, Cursor, etc.):
+
+```typescript
+tools: [
+  "dsengine_generate_component",    // Figma → Code
+  "dsengine_sync_tokens",           // Figma vars → Token files
+  "dsengine_diff",                  // Show pending changes
+  "dsengine_audit",                 // Check code against Figma
+  "dsengine_deprecate",             // Mark for removal
+  "dsengine_migrate",               // Generate migration code
+  "dsengine_document",              // Generate docs
+]
+```
+
+### Game Engine Parallels
+
+| Unreal Engine 5 | Design System Engine |
+|-----------------|---------------------|
+| 3D Meshes/Models | Components |
+| Materials/Shaders | Tokens/Themes |
+| Animations | Transitions/Micro-interactions |
+| Physics Engine | Layout Engine (flexbox, grid) |
+| Blueprints | Component Composition/Variants |
+| Cross-platform Build | Multi-framework Output |
+| Asset Marketplace | Component/Theme Marketplace |
+
+### What We're NOT Building
+
+- ❌ Visual editor (Figma does this)
+- ❌ Design tool (Figma does this)
+- ❌ Code editor (VS Code/Cursor does this)
+- ❌ Version control (Git does this)
+
+### What We ARE Building
+
+- ✅ Compiler (Figma IR → Code)
+- ✅ Sync daemon (Change detection + propagation)
+- ✅ Validator (Consistency checking)
+- ✅ Generator (Docs, types, stories)
+
+### Comparison to Existing Tools
+
+| Tool | Generates | Syncs | Diffs | Multi-target | Deps Tracking |
+|------|-----------|-------|-------|--------------|---------------|
+| Figma Dev Mode | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Style Dictionary | Tokens | ❌ | ❌ | ✅ | ❌ |
+| Storybook | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Mitosis | ✅ | ❌ | ❌ | ✅ | ❌ |
+| **DS Engine** | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+### Why This Is Achievable
+
+| Challenge | Solution |
+|-----------|----------|
+| Figma data extraction | Figma API (mature and documented) |
+| Multi-framework output | Mitosis-style IR compilation |
+| Token transformation | Style Dictionary patterns |
+| Change detection | Hash-based diffing (like Git) |
+| Dependency tracking | Static analysis + declarations |
+
+### Status
+
+**Proposal Stage** - Brainstorming feasibility and architecture. No implementation yet.
