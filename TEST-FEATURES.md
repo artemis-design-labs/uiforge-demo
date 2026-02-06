@@ -6,6 +6,7 @@ This document covers experimental and in-development features available in the `
 
 ## Table of Contents
 
+- [React to Figma Converter](#react-to-figma-converter)
 - [Screenshot Analyzer](#screenshot-analyzer)
 - [Codebase Analyzer](#codebase-analyzer)
 - [Accessibility Knowledge Base](#accessibility-knowledge-base)
@@ -18,6 +19,90 @@ This document covers experimental and in-development features available in the `
 - [Product Strategy & Roadmap](#product-strategy--roadmap)
 - [External Codebase Analysis](#external-codebase-analysis-creative-hire-case-study)
 - [Future Proposals](#future-proposals)
+
+---
+
+# React to Figma Converter
+
+## Overview
+
+Convert React components to downloadable SVG/PNG files that can be imported directly into Figma. Paste any React code, see a live preview, and export it as a vector or raster image.
+
+## Features
+
+- **Live React Preview**: Sandpack-powered live preview of your React component
+- **Tailwind CSS Support**: Preview includes Tailwind CSS via CDN
+- **Dual Export Formats**: Export as SVG (vector, editable in Figma) or PNG (raster, 2x resolution)
+- **Auto-naming**: File names are automatically extracted from the component name
+- **Dark Theme UI**: Modal designed with the same dark theme as the rest of the app
+
+## Access
+
+Accessible via teal "React to Figma" button in the header.
+
+## How It Works
+
+1. Click the "React to Figma" button in the header
+2. Paste or edit React code in the left panel (Monaco-style editor)
+3. See the live preview update in the right panel
+4. Select export format (SVG recommended for Figma)
+5. Click "Export SVG" or "Export PNG" to download
+6. Import the downloaded file into Figma (File > Place Image or drag-and-drop)
+
+## Supported Code
+
+- Inline styles (recommended for best export fidelity)
+- Tailwind CSS classes
+- Basic React functional components
+- Default export pattern: `export default function Component() { ... }`
+
+## Example Code
+
+```jsx
+export default function Component() {
+  return (
+    <div style={{
+      padding: 24,
+      background: '#ffffff',
+      borderRadius: 8,
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      fontFamily: 'system-ui, sans-serif'
+    }}>
+      <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600, color: '#1a1a1a' }}>
+        Hello World
+      </h1>
+      <p style={{ margin: '12px 0 0', fontSize: 16, color: '#666666' }}>
+        Edit this component and export to Figma
+      </p>
+    </div>
+  );
+}
+```
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `/apps/frontend/src/components/ReactToFigmaModal.tsx` | Main modal with code editor and preview |
+| `/apps/frontend/src/services/svgExporter.ts` | SVG/PNG export utilities using html-to-image |
+| `/apps/frontend/src/components/layout/AppHeader.tsx` | Header with trigger button |
+
+## Dependencies
+
+- `html-to-image` - DOM to SVG/PNG conversion
+- `@codesandbox/sandpack-react` - Live React preview
+
+## Limitations
+
+- Cross-origin images may not render in exports (CORS restrictions)
+- Complex CSS animations may not capture correctly
+- External fonts require inline embedding or may fall back to system fonts
+
+## Figma Import Tips
+
+1. **SVG** (recommended): Drag into Figma canvas. SVG preserves vectors, text remains editable.
+2. **PNG**: Place as image. Use 2x export for retina-quality.
+3. **Best practice**: Use inline styles for most predictable export results.
 
 ---
 
