@@ -164,12 +164,12 @@ export function ReactToFigmaModal({ isOpen, onClose }: ReactToFigmaModalProps) {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden min-h-0">
           <SandpackProvider
-            template="react"
+            template="react-ts"
             theme="dark"
             files={{
-              '/App.js': {
+              '/App.tsx': {
                 code: code,
                 active: true,
               },
@@ -180,19 +180,19 @@ export function ReactToFigmaModal({ isOpen, onClose }: ReactToFigmaModalProps) {
               ],
             }}
           >
-            <div className="h-full grid grid-cols-2">
+            <div className="h-full grid grid-cols-2" style={{ minHeight: 0 }}>
               {/* Code Editor Panel */}
-              <div className="border-r border-gray-700 flex flex-col">
-                <div className="px-4 py-2 border-b border-gray-700 bg-gray-800/50">
+              <div className="border-r border-gray-700 flex flex-col min-h-0">
+                <div className="px-4 py-2 border-b border-gray-700 bg-gray-800/50 flex-shrink-0">
                   <span className="text-sm text-gray-400">Code Editor</span>
                 </div>
-                <div className="flex-1 overflow-hidden">
+                <div className="flex-1 overflow-hidden min-h-0">
                   {/* @ts-expect-error Sandpack types incompatible with React 19 */}
                   <Sandpack
-                    template="react"
+                    template="react-ts"
                     theme="dark"
                     files={{
-                      '/App.js': {
+                      '/App.tsx': {
                         code: code,
                         active: true,
                       },
@@ -212,18 +212,18 @@ export function ReactToFigmaModal({ isOpen, onClose }: ReactToFigmaModalProps) {
               </div>
 
               {/* Preview Panel */}
-              <div className="flex flex-col" ref={previewRef}>
-                <div className="px-4 py-2 border-b border-gray-700 bg-gray-800/50 flex items-center justify-between">
+              <div className="flex flex-col min-h-0" ref={previewRef}>
+                <div className="px-4 py-2 border-b border-gray-700 bg-gray-800/50 flex items-center justify-between flex-shrink-0">
                   <span className="text-sm text-gray-400">Live Preview</span>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-500">This will be exported</span>
                   </div>
                 </div>
-                <div className="flex-1 bg-white overflow-auto">
+                <div className="flex-1 bg-white overflow-auto min-h-0">
                   <SandpackPreview
                     showNavigator={false}
                     showRefreshButton={true}
-                    style={{ height: '100%' }}
+                    style={{ height: '100%', minHeight: '400px' }}
                   />
                 </div>
               </div>
