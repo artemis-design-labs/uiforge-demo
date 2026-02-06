@@ -9,6 +9,7 @@ import { UserDropdown } from './UserDropdown';
 import { PackageGeneratorModal } from '@/components/PackageGeneratorModal';
 import { CodebaseAnalyzerModal } from '@/components/CodebaseAnalyzerModal';
 import { ScreenshotAnalyzerModal } from '@/components/screenshot/ScreenshotAnalyzerModal';
+import { ReactToFigmaModal } from '@/components/ReactToFigmaModal';
 
 export function AppHeader() {
   const dispatch = useAppDispatch();
@@ -16,6 +17,7 @@ export function AppHeader() {
   const { user } = useAppSelector((state) => state.auth);
   const { fileComponentDefinitions, currentFileKey } = useAppSelector((state) => state.figma);
   const [showPackageModal, setShowPackageModal] = useState(false);
+  const [showReactToFigmaModal, setShowReactToFigmaModal] = useState(false);
 
   const componentCount = Object.keys(fileComponentDefinitions).length;
   const hasComponents = componentCount > 0;
@@ -58,6 +60,15 @@ export function AppHeader() {
 
         {/* Right Section */}
         <div className="flex items-center gap-3">
+          {/* React to Figma Button */}
+          <button
+            onClick={() => setShowReactToFigmaModal(true)}
+            className="flex items-center gap-2 px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium rounded-md transition-colors"
+          >
+            <FigmaIcon className="w-4 h-4" />
+            <span className="hidden sm:inline">React to Figma</span>
+          </button>
+
           {/* Screenshot Analyzer Button */}
           <button
             onClick={() => dispatch(openScreenshotModal())}
@@ -112,6 +123,12 @@ export function AppHeader() {
 
       {/* Screenshot Analyzer Modal */}
       <ScreenshotAnalyzerModal />
+
+      {/* React to Figma Modal */}
+      <ReactToFigmaModal
+        isOpen={showReactToFigmaModal}
+        onClose={() => setShowReactToFigmaModal(false)}
+      />
     </>
   );
 }
@@ -143,6 +160,18 @@ function ScreenshotIcon({ className }: { className?: string }) {
       <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
       <circle cx="9" cy="9" r="2" />
       <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+    </svg>
+  );
+}
+
+function FigmaIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M5 5.5A3.5 3.5 0 0 1 8.5 2H12v7H8.5A3.5 3.5 0 0 1 5 5.5z" />
+      <path d="M12 2h3.5a3.5 3.5 0 1 1 0 7H12V2z" />
+      <path d="M12 12.5a3.5 3.5 0 1 1 7 0 3.5 3.5 0 1 1-7 0z" />
+      <path d="M5 19.5A3.5 3.5 0 0 1 8.5 16H12v3.5a3.5 3.5 0 1 1-7 0z" />
+      <path d="M5 12.5A3.5 3.5 0 0 1 8.5 9H12v7H8.5A3.5 3.5 0 0 1 5 12.5z" />
     </svg>
   );
 }

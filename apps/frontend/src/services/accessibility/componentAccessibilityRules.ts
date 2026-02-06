@@ -17,6 +17,9 @@
 
 import { ComponentAccessibilityRule, KeyboardRequirement, Violation, AccessibilityRequirement } from './wcagKnowledgeBase';
 
+// Re-export types for use in other modules
+export type { ComponentAccessibilityRule, Violation };
+
 // ============================================================================
 // COMPONENT ACCESSIBILITY RULES
 // ============================================================================
