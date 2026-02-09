@@ -6,196 +6,17 @@ This document covers experimental and in-development features available in the `
 
 ## Table of Contents
 
-- [React to Figma Converter](#react-to-figma-converter)
-- [Screenshot Analyzer](#screenshot-analyzer)
-- [Codebase Analyzer](#codebase-analyzer)
 - [Accessibility Knowledge Base](#accessibility-knowledge-base)
 - [Design System Audit AI](#design-system-audit-ai)
 - [Design Token Management](#design-token-management)
 - [Deep Component Extraction](#deep-component-extraction)
+- [Figma MCP Data Extraction](#figma-mcp-data-extraction)
 - [MCP Server Architecture](#mcp-server-architecture)
 - [Storybook Integration](#storybook-integration)
 - [Zeroheight Integration](#zeroheight-integration)
 - [Product Strategy & Roadmap](#product-strategy--roadmap)
 - [External Codebase Analysis](#external-codebase-analysis-creative-hire-case-study)
 - [Future Proposals](#future-proposals)
-
----
-
-# React to Figma Converter
-
-## Overview
-
-Convert React components to downloadable SVG/PNG files that can be imported directly into Figma. Paste any React code, see a live preview, and export it as a vector or raster image.
-
-## Features
-
-- **Live React Preview**: Sandpack-powered live preview of your React component
-- **Tailwind CSS Support**: Preview includes Tailwind CSS via CDN
-- **Dual Export Formats**: Export as SVG (vector, editable in Figma) or PNG (raster, 2x resolution)
-- **Auto-naming**: File names are automatically extracted from the component name
-- **Dark Theme UI**: Modal designed with the same dark theme as the rest of the app
-
-## Access
-
-Accessible via teal "React to Figma" button in the header.
-
-## How It Works
-
-1. Click the "React to Figma" button in the header
-2. Paste or edit React code in the left panel (Monaco-style editor)
-3. See the live preview update in the right panel
-4. Select export format (SVG recommended for Figma)
-5. Click "Export SVG" or "Export PNG" to download
-6. Import the downloaded file into Figma (File > Place Image or drag-and-drop)
-
-## Supported Code
-
-- Inline styles (recommended for best export fidelity)
-- Tailwind CSS classes
-- Basic React functional components
-- Default export pattern: `export default function Component() { ... }`
-
-## Example Code
-
-```jsx
-export default function Component() {
-  return (
-    <div style={{
-      padding: 24,
-      background: '#ffffff',
-      borderRadius: 8,
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-      fontFamily: 'system-ui, sans-serif'
-    }}>
-      <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600, color: '#1a1a1a' }}>
-        Hello World
-      </h1>
-      <p style={{ margin: '12px 0 0', fontSize: 16, color: '#666666' }}>
-        Edit this component and export to Figma
-      </p>
-    </div>
-  );
-}
-```
-
-## Key Files
-
-| File | Purpose |
-|------|---------|
-| `/apps/frontend/src/components/ReactToFigmaModal.tsx` | Main modal with code editor and preview |
-| `/apps/frontend/src/services/svgExporter.ts` | SVG/PNG export utilities using html-to-image |
-| `/apps/frontend/src/components/layout/AppHeader.tsx` | Header with trigger button |
-
-## Dependencies
-
-- `html-to-image` - DOM to SVG/PNG conversion
-- `@codesandbox/sandpack-react` - Live React preview
-
-## Limitations
-
-- Cross-origin images may not render in exports (CORS restrictions)
-- Complex CSS animations may not capture correctly
-- External fonts require inline embedding or may fall back to system fonts
-
-## Figma Import Tips
-
-1. **SVG** (recommended): Drag into Figma canvas. SVG preserves vectors, text remains editable.
-2. **PNG**: Place as image. Use 2x export for retina-quality.
-3. **Best practice**: Use inline styles for most predictable export results.
-
----
-
-# Screenshot Analyzer
-
-## Overview
-
-Upload PNG/JPG screenshots of any web UI and let AI identify all UI components with bounding boxes. Cross-references against BOTH codebase AND Figma components.
-
-## Three-Panel Layout
-
-- **Left**: Screenshot preview with bounding box overlays + hierarchical component tree
-- **Center**: Live component preview
-- **Right**: Properties panel + generated React code
-
-## Features
-
-- Click-to-select components (highlights in screenshot)
-- Confidence scores for each identified component
-- Fuzzy matching using Fuse.js
-- Editable component props
-- Copyable generated React code
-
-## Access
-
-Modal accessible via orange "Screenshot Analyzer" button in header.
-
-## How It Works
-
-1. User uploads a PNG/JPG screenshot
-2. Claude Vision API analyzes the image and identifies UI components with bounding boxes
-3. Components are cross-referenced against codebase AND Figma components using fuzzy matching
-4. Results displayed in three-panel layout with tree view, preview, and code generation
-
-## Key Files
-
-| File | Purpose |
-|------|---------|
-| `/apps/frontend/src/types/screenshotAnalyzer.ts` | TypeScript interfaces (BoundingBox, IdentifiedComponent, ComponentMatch, ScreenshotAnalysis) |
-| `/apps/frontend/src/store/screenshotSlice.ts` | Redux state management for screenshot analyzer |
-| `/apps/frontend/src/app/api/screenshot/analyze/route.ts` | Claude Vision API endpoint |
-| `/apps/frontend/src/services/screenshotAnalyzer.ts` | Analysis orchestration and code generation |
-| `/apps/frontend/src/services/componentMatcher.ts` | Fuzzy matching using Fuse.js |
-| `/apps/frontend/src/components/screenshot/ScreenshotAnalyzerModal.tsx` | Main modal (three-panel layout) |
-| `/apps/frontend/src/components/screenshot/ImageUploadZone.tsx` | Drag-drop image upload |
-| `/apps/frontend/src/components/screenshot/ComponentTree.tsx` | Hierarchical tree view with confidence badges |
-| `/apps/frontend/src/components/screenshot/ScreenshotPreview.tsx` | Screenshot with SVG bounding box overlays |
-| `/apps/frontend/src/components/screenshot/ComponentPreview.tsx` | Sandpack live preview |
-| `/apps/frontend/src/components/screenshot/IdentifiedComponentDetail.tsx` | Props editor and code panel |
-
-## Dependencies
-
-- `@codesandbox/sandpack-react` - Live React component preview
-- `fuse.js` - Fuzzy string matching
-
----
-
-# Codebase Analyzer
-
-## Overview
-
-Analyze existing React codebases to extract component information.
-
-## Input Methods
-
-- Upload ZIP file (drag-drop)
-- Enter GitHub URL (automatically fetched via backend proxy)
-
-## Extracted Information
-
-- Component names
-- Props
-- File paths
-- Dependencies
-
-## Access
-
-Modal accessible via purple "Analyze Codebase" button in header.
-
-## Key Files
-
-| File | Purpose |
-|------|---------|
-| `/apps/frontend/src/components/CodebaseAnalyzerModal.tsx` | Main modal for codebase analysis |
-| `/apps/frontend/src/services/codebaseAnalyzer.ts` | Codebase analysis service |
-| `/apps/frontend/src/services/githubFetcher.ts` | GitHub repo fetching (via backend proxy) |
-| `/apps/backend/routes/github.js` | Backend proxy for GitHub ZIP downloads (CORS bypass) |
-
-## GitHub Repo Fetching
-
-**Problem:** CORS restrictions prevented fetching GitHub repos directly from the browser
-
-**Solution:** Created backend proxy endpoint `/api/v1/github/fetch-repo` that downloads repo ZIP and streams to frontend.
 
 ---
 
@@ -822,6 +643,166 @@ The extracted data enables generating comprehensive AI profiles:
 | `/apps/frontend/src/app/api/figma/deep-extract/[fileKey]/[nodeId]/route.ts` | API endpoint |
 | `/apps/frontend/src/services/figma.ts` | `figmaService.deepExtract()` method |
 | `/docs/sample-button-extraction.json` | Sample output |
+
+---
+
+# Figma MCP Data Extraction
+
+## Overview
+
+Using Figma's MCP (Model Context Protocol) tools, AI assistants can extract comprehensive design system data directly from Figma URLs. This enables AI to act as a design systems architect, understanding components at a deep level.
+
+## Available MCP Tools
+
+| Tool | Purpose |
+|------|---------|
+| `get_screenshot` | Capture visual screenshot of any Figma node |
+| `get_metadata` | Extract component structure in XML format (hierarchy, node IDs, positions, dimensions) |
+| `get_design_context` | Generate React + Tailwind code with full design specifications |
+| `get_variable_defs` | Extract design tokens/variables (colors, spacing, typography, elevation) |
+| `get_code_connect_map` | Get code-to-Figma mappings (Enterprise only) |
+
+## What Data Can Be Extracted
+
+### From a Single Figma URL
+
+| Data Type | Extracted | Source Tool |
+|-----------|-----------|-------------|
+| Component structure | ✅ | `get_metadata` |
+| Variant matrix | ✅ | `get_metadata` |
+| Design tokens | ✅ | `get_variable_defs` |
+| Generated React code | ✅ | `get_design_context` |
+| TypeScript interfaces | ✅ | `get_design_context` |
+| Typography styles | ✅ | `get_design_context` |
+| Elevation/shadows | ✅ | `get_design_context` |
+| Component descriptions | ✅ | `get_design_context` |
+| Documentation links | ✅ | `get_design_context` |
+| Screenshots | ✅ | `get_screenshot` |
+| Asset URLs (icons) | ✅ | `get_design_context` |
+| Node IDs | ✅ | All tools |
+
+### Limitations (Enterprise/Code Connect Required)
+
+| Data Type | Status |
+|-----------|--------|
+| Code Connect mappings | ❌ Enterprise only |
+| Figma Variables API | ❌ Enterprise only |
+| Dev Mode data | ❌ Enterprise only |
+| Interaction/prototype data | ❌ Not exposed via API |
+| Animation specifications | ❌ Not in REST API |
+
+## Example: Accordion Component Audit
+
+**Source:** `https://www.figma.com/design/qyrtCkpQQ1yq1Nv3h0mbkq/Artemis---Modular-Design-System?node-id=16408-26546`
+
+### Extracted Metadata (Component Structure)
+
+```xml
+<canvas id="16408:26546" name="↳ Accordion">
+  <frame id="6583:46084" name="AccordionTextVariant / Light Mode">
+    <symbol id="6583:46085" name="Expanded=False, Disabled=False, First-of-type=False, Last-of-type=False" />
+    <symbol id="6583:46093" name="Expanded=True, Disabled=False, First-of-type=False, Last-of-type=False" />
+    <!-- 9 variants total -->
+  </frame>
+  <frame id="16408:27481" name="AccordionTextVariant / Dark Mode">
+    <!-- 9 variants total -->
+  </frame>
+</canvas>
+```
+
+### Extracted Variant Matrix (18 Total)
+
+| Property | Values | Description |
+|----------|--------|-------------|
+| `Expanded` | True, False | Content visibility |
+| `Disabled` | True, False | Interactive state |
+| `First-of-type` | True, False | Top border radius |
+| `Last-of-type` | True, False | Bottom border radius |
+
+### Extracted Design Tokens
+
+```json
+{
+  "Component Tokens/color-accordiontext-primary-enabled-contained-bg": "#ffffff",
+  "Component Tokens/color-accordiontext-primary-enabled-contained-text": "#000000de",
+  "Component Tokens/padding-top-accordiontext-light-mode-accordiontext": "12",
+  "Component Tokens/padding-bottom-accordiontext-light-mode-accordiontext": "12",
+  "Component Tokens/padding-left-accordiontext-light-mode-accordiontext": "48",
+  "Global Tokens/XS": "16",
+  "Font/Family/Primary": "Roboto",
+  "Font/Weight/Regular": "Regular",
+  "Font/Letter-Spacing/S": "0.15",
+  "Elevation/1": "Effect(type: DROP_SHADOW, color: #0000001F, offset: (0, 1), radius: 3, spread: 0)..."
+}
+```
+
+### Extracted TypeScript Interface
+
+```typescript
+interface AccordionTextVariantProps {
+  heading?: string;              // Default: "Heading"
+  secondaryHeading?: string;     // Default: "Secondary heading"
+  content?: string;              // Default: "Content"
+  expanded?: boolean;            // Default: false
+  disabled?: "True" | "False";   // Default: "False"
+  firstOfType?: "True" | "False"; // Default: "False"
+  lastOfType?: "True" | "False";  // Default: "False"
+  secondaryHeading1?: boolean;   // Show/hide secondary heading
+  className?: string;
+}
+```
+
+### Extracted Component Documentation
+
+```markdown
+**Description:** The accordion component allows the user to show and hide
+sections of related content on a page.
+
+**Documentation Link:** https://mui.com/api/accordion
+```
+
+### Extracted Visual Specifications
+
+```css
+/* Typography */
+font-family: var(--font/family/primary, 'Roboto:Regular', sans-serif);
+font-size: var(--global-tokens/xs, 16px);
+line-height: 1.5;
+letter-spacing: var(--font/letter-spacing/s, 0.15px);
+
+/* Colors */
+--light-mode-bg: white;
+--light-mode-text: rgba(0, 0, 0, 0.87);
+--dark-mode-bg: black;
+--dark-mode-text: white;
+--dark-mode-secondary: rgba(255, 255, 255, 0.7);
+
+/* Elevation */
+box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),
+            0px 1px 1px 0px rgba(0,0,0,0.14),
+            0px 1px 3px 0px rgba(0,0,0,0.12);
+```
+
+## Use Cases
+
+### 1. Design System Onboarding
+AI can analyze any component and provide comprehensive documentation for new team members.
+
+### 2. Code Generation
+Extract design specs and generate production-ready React components with proper TypeScript types.
+
+### 3. Accessibility Auditing
+Cross-reference extracted code against WCAG criteria for compliance checks.
+
+### 4. Token Extraction
+Pull design tokens directly from components for theme file generation.
+
+### 5. Component Diffing
+Compare extracted data over time to detect design system changes.
+
+## Configuration
+
+The Figma MCP tools are configured in Claude Code's MCP settings. No additional setup required beyond Figma authentication.
 
 ---
 
