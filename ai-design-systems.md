@@ -263,6 +263,226 @@ AI can review new components against established patterns and flag inconsistenci
 
 ---
 
+## Component Prompt Framework for AI Generators
+
+Use this framework to create precise prompts for AI design tools (UX Pilot, Galileo, v0, etc.) that regenerate components with exact specifications.
+
+### The 6-Layer Component Prompt Structure
+
+| Layer | Purpose | Key Details to Include |
+|-------|---------|------------------------|
+| **Context** | Anchors the AI in the design system | Design system name, component library base, theme mode, usage context |
+| **Description** | Defines this component's job | Core behavior, design principles, what problem it solves |
+| **Platform** | Eliminates layout guesswork | Dimensions, spacing system, borders, border-radius |
+| **Visual Style** | Prevents generic defaults | Colors with semantic roles, typography scale, elevation, anti-patterns to avoid |
+| **Elements** | Specifies every piece | Numbered list with all 4 content types (title/text/icon/picture) + position + styling |
+| **Interactions** | Makes it functional | States, hover behavior, transitions, click targets, signifiers |
+
+---
+
+### Reusable Component Prompt Template
+
+```markdown
+## [COMPONENT NAME] Prompt
+
+### Layer 1 — Context
+```
+DESIGN SYSTEM: [Name of design system]
+COMPONENT LIBRARY: [Base library, e.g., Material Design, Ant Design, Custom]
+THEME: [Light Mode / Dark Mode]
+USAGE CONTEXT: [Where this component appears, what flows it belongs to]
+DESIGN LANGUAGE: [Mood, feel, reference products]
+```
+
+### Layer 2 — Description
+```
+COMPONENT PURPOSE: [One sentence explaining what this component does]
+
+CORE BEHAVIOR:
+- [Primary state/behavior]
+- [Secondary state/behavior]
+- [Any constraints or rules]
+
+DESIGN PRINCIPLES:
+- [Key principle 1]
+- [Key principle 2]
+- [Key principle 3]
+```
+
+### Layer 3 — Platform & Dimensions
+```
+COMPONENT DIMENSIONS:
+- Width: [value, fixed or flexible]
+- Height: [value per state]
+
+SPACING SYSTEM:
+- Base unit: [value, e.g., 4px or 8px]
+- Vertical padding: [value]
+- Horizontal padding: [value]
+- Internal gaps: [value]
+
+BORDER:
+- Style: [value or "none"]
+- Radius: [value per element]
+```
+
+### Layer 4 — Visual Style
+```
+COLORS (with semantic roles):
+- Background: [hex] — [role]
+- Primary text: [hex with opacity] — [role]
+- Secondary text: [hex with opacity] — [role]
+- Icon: [hex with opacity] — [role]
+- Border: [rgba value] — [role]
+- Hover state: [rgba value] — [role]
+
+TYPOGRAPHY:
+- Font family: [value]
+- Font weight: [value]
+- Font size: [value]
+- Line height: [value]
+- Letter spacing: [value]
+
+ELEVATION:
+- [Shadow definition or "none"]
+
+ANTI-PATTERNS TO AVOID:
+- [Thing to avoid 1]
+- [Thing to avoid 2]
+- [Thing to avoid 3]
+```
+
+### Layer 5 — Component Elements
+```
+ELEMENT BREAKDOWN:
+
+1. [ELEMENT NAME]
+   - Title: [text or "None"]
+   - Text: [text or "None"]
+   - Icon: [description or "None"]
+   - Picture: [description or "None"]
+   - Position: [alignment and placement]
+   - Styling: [specific overrides]
+
+2. [ELEMENT NAME]
+   - Title: [text or "None"]
+   - Text: [text or "None"]
+   - Icon: [description or "None"]
+   - Picture: [description or "None"]
+   - Position: [alignment and placement]
+   - Styling: [specific overrides]
+
+[Repeat for all elements...]
+```
+
+### Layer 6 — Interactions & States
+```
+STATES:
+
+| State | Visual Changes |
+|-------|----------------|
+| Default | [description] |
+| Hover | [description] |
+| Focus | [description] |
+| Active | [description] |
+| Disabled | [description] |
+| [Custom state] | [description] |
+
+CLICK TARGET: [dimensions and area]
+
+TRANSITIONS:
+- [Property]: [duration] [easing]
+
+SIGNIFIERS:
+- [How the component communicates its affordances]
+```
+
+---
+
+### Evaluation Checklist
+
+After AI generation, verify against this checklist:
+
+| Check | Criteria |
+|-------|----------|
+| ☐ | **Elements present**: All specified title/text/icon/picture elements exist |
+| ☐ | **Dimensions match**: Width, height match specifications |
+| ☐ | **Layout correct**: Flex/grid direction, alignment, spacing accurate |
+| ☐ | **Colors accurate**: Background, text, icon colors match hex values |
+| ☐ | **Typography matches**: Font family, size, weight, line-height, letter-spacing correct |
+| ☐ | **Spacing correct**: Padding, margins, gaps match specifications |
+| ☐ | **Elevation applied**: Shadows render correctly (if specified) |
+| ☐ | **Borders present**: Border style, width, color, radius correct |
+| ☐ | **States work**: Hover, focus, disabled states render properly |
+| ☐ | **Signifiers clear**: Affordances communicate correctly (clickable looks clickable) |
+| ☐ | **No invented elements**: AI didn't add unrequested decorations |
+| ☐ | **Anti-patterns avoided**: None of the "avoid" items present |
+
+---
+
+### Condensed Single-Prompt Format
+
+For tools with character limits, use this compressed format:
+
+```
+CONTEXT: [Design system], [Library base], [Theme]
+
+COMPONENT: [Name] ([State])
+PURPOSE: [One sentence]
+
+DIMENSIONS: [W×H] | SPACING: [padding], [gaps]
+
+ELEMENTS:
+1. [Name]: [Description], [Position] — Title: [x] | Text: [x] | Icon: [x] | Picture: [x]
+2. [Name]: [Description], [Position] — Title: [x] | Text: [x] | Icon: [x] | Picture: [x]
+
+VISUAL STYLE:
+- Background: [hex]
+- Text: [hex]
+- Icon: [hex]
+- Typography: [font] [size]/[line-height] [weight], letter-spacing [value]
+- Border: [style or "none"]
+- Shadow: [value or "none"]
+
+STATES: [List states with key visual changes]
+
+AVOID: [Comma-separated anti-patterns]
+```
+
+---
+
+### Example: Accordion Component (Collapsed, Light Mode)
+
+```
+CONTEXT: Artemis Design System, Material Design 2, Light Mode
+
+COMPONENT: Accordion Item (Collapsed State)
+PURPOSE: Expandable content container with progressive disclosure
+
+DIMENSIONS: 600×48px | SPACING: 12px vertical, 48px horizontal padding, 16px gap
+
+ELEMENTS:
+1. Icon: Chevron-down, 24px, left-aligned — Title: None | Text: None | Icon: Yes | Picture: None
+2. Primary heading: "Heading", after icon — Title: Yes | Text: None | Icon: None | Picture: None
+3. Secondary heading: "Secondary heading", right-aligned — Title: None | Text: Yes | Icon: None | Picture: None
+4. Content area: Not visible in collapsed state — Title: None | Text: None | Icon: None | Picture: None
+
+VISUAL STYLE:
+- Background: #FFFFFF
+- Text: #000000DE (87% black)
+- Icon: #0000008A (54% black)
+- Typography: Roboto 16px/1.5 Regular, letter-spacing 0.15px
+- Border: 1px bottom rgba(0,0,0,0.12)
+- Shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 1px rgba(0,0,0,0.14), 0 2px 1px -1px rgba(0,0,0,0.2)
+
+STATES: Default, Hover (bg: rgba(0,0,0,0.04)), Focus (2px outline), Disabled (opacity: 0.38)
+INTERACTIONS: Full row clickable, chevron rotates 180° on expand, 200ms ease transition
+
+AVOID: Colored backgrounds, bold text, rounded container corners, extra decorations
+```
+
+---
+
 ## Summary
 
 From a single Figma URL, the AI Design Systems Architect extracted:
